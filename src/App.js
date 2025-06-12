@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import './App.css'; // ✅ import styles
 
 function App() {
   const [loanAmount, setLoanAmount] = useState('');
@@ -34,13 +35,11 @@ function App() {
       return;
     }
 
-    // --- Initial Monthly Payment ---
     const months = g ? g : n;
     const pmt = basePMT(P, r1, months);
     const initial = Math.abs(pmt + op);
     setInitialPayment(initial.toFixed(2));
 
-    // --- Secondary Monthly Payment ---
     if (n - t > 0) {
       const altPMT = g
         ? basePMT(P, r1, g) + op
@@ -56,7 +55,6 @@ function App() {
       setSecondPayment('');
     }
 
-    // --- Years Remaining ---
     if (P === 0) {
       setYearsRemaining('');
     } else {
@@ -79,7 +77,6 @@ function App() {
       setYearsRemaining(result);
     }
 
-    // --- Remaining Balance at Fixed Term ---
     if (P === 0 || n - t <= 0) {
       setRemainingBalance('');
     } else {
@@ -96,29 +93,47 @@ function App() {
   };
 
   return (
-    <div style={{ padding: '2rem', fontFamily: 'sans-serif', maxWidth: '600px', margin: 'auto' }}>
-      <h1>Mortgage Calculator</h1>
+    <div className="container">
+      <h1>
+        Mortgage Calculator
+        <a
+          href={window.location.href}
+          title="Share this app"
+          style={{ color: 'white', fontSize: '1.4rem', textDecoration: 'none' }}
+        >
+          🔗
+        </a>
+      </h1>
+
       <label>Loan Amount (£)</label>
       <input type="number" placeholder="e.g. 200000" value={loanAmount} onChange={(e) => setLoanAmount(e.target.value)} />
+
       <label>Loan Term (Years)</label>
       <input type="number" placeholder="e.g. 25" value={loanTermYears} onChange={(e) => setLoanTermYears(e.target.value)} />
+
       <label>Fixed Term Rate (%)</label>
       <input type="number" placeholder="e.g. 4.5" value={initialRate} onChange={(e) => setInitialRate(e.target.value)} />
+
       <label>Fixed Term Length (Years)</label>
       <input type="number" placeholder="e.g. 5" value={fixedTermYears} onChange={(e) => setFixedTermYears(e.target.value)} />
+
       <label>Secondary Rate (%)</label>
       <input type="number" placeholder="e.g. 6.5" value={secondaryRate} onChange={(e) => setSecondaryRate(e.target.value)} />
+
       <label>Overpayment (Optional)</label>
       <input type="number" placeholder="e.g. 100" value={overpayment} onChange={(e) => setOverpayment(e.target.value)} />
+
       <label>Target Years (Optional)</label>
       <input type="number" placeholder="e.g. 15" value={targetYears} onChange={(e) => setTargetYears(e.target.value)} />
-      <br /><br />
+
       <button onClick={calculate}>Submit</button>
-      <br /><br />
-      {initialPayment && <p><strong>Initial Monthly Payment:</strong> £{initialPayment}</p>}
-      {secondPayment && <p><strong>Secondary Monthly Payment:</strong> £{secondPayment}</p>}
-      {yearsRemaining && <p><strong>Years Remaining:</strong> {yearsRemaining}</p>}
-      {remainingBalance && <p><strong>Remaining Balance After Fixed Term:</strong> £{remainingBalance}</p>}
+
+      <div className="results">
+        {initialPayment && <p><span>Initial Monthly Payment:</span> <span>£{initialPayment}</span></p>}
+        {secondPayment && <p><span>Secondary Monthly Payment:</span> <span>£{secondPayment}</span></p>}
+        {yearsRemaining && <p><span>Years Remaining:</span> <span>{yearsRemaining}</span></p>}
+        {remainingBalance && <p><span>Remaining Balance After Fixed Term:</span> <span>£{remainingBalance}</span></p>}
+      </div>
     </div>
   );
 }
