@@ -96,43 +96,114 @@ function App() {
     <div className="container">
       <h1>
         Mortgage Calculator
-        <a
-          href={window.location.href}
+        <button
+          onClick={() => {
+            if (navigator.share) {
+              navigator.share({
+                title: 'Mortgage Calculator',
+                text: 'Check out this mortgage calculator app!',
+                url: window.location.href,
+              });
+            } else {
+              alert('Sharing is not supported on this device.');
+            }
+          }}
+          style={{
+            background: 'none',
+            border: 'none',
+            color: 'white',
+            fontSize: '1.4rem',
+            cursor: 'pointer',
+          }}
           title="Share this app"
-          style={{ color: 'white', fontSize: '1.4rem', textDecoration: 'none' }}
         >
           🔗
-        </a>
+        </button>
       </h1>
 
       <label>Loan Amount (£)</label>
-      <input type="number" placeholder="e.g. 200000" value={loanAmount} onChange={(e) => setLoanAmount(e.target.value)} />
+      <input
+        type="number"
+        placeholder="e.g. 200000"
+        value={loanAmount}
+        onChange={(e) => setLoanAmount(e.target.value)}
+      />
 
       <label>Loan Term (Years)</label>
-      <input type="number" placeholder="e.g. 25" value={loanTermYears} onChange={(e) => setLoanTermYears(e.target.value)} />
+      <input
+        type="number"
+        placeholder="e.g. 25"
+        value={loanTermYears}
+        onChange={(e) => setLoanTermYears(e.target.value)}
+      />
 
       <label>Fixed Term Rate (%)</label>
-      <input type="number" placeholder="e.g. 4.5" value={initialRate} onChange={(e) => setInitialRate(e.target.value)} />
+      <input
+        type="number"
+        placeholder="e.g. 4.5"
+        value={initialRate}
+        onChange={(e) => setInitialRate(e.target.value)}
+      />
 
       <label>Fixed Term Length (Years)</label>
-      <input type="number" placeholder="e.g. 5" value={fixedTermYears} onChange={(e) => setFixedTermYears(e.target.value)} />
+      <input
+        type="number"
+        placeholder="e.g. 5"
+        value={fixedTermYears}
+        onChange={(e) => setFixedTermYears(e.target.value)}
+      />
 
       <label>Secondary Rate (%)</label>
-      <input type="number" placeholder="e.g. 6.5" value={secondaryRate} onChange={(e) => setSecondaryRate(e.target.value)} />
+      <input
+        type="number"
+        placeholder="e.g. 6.5"
+        value={secondaryRate}
+        onChange={(e) => setSecondaryRate(e.target.value)}
+      />
 
       <label>Overpayment (Optional)</label>
-      <input type="number" placeholder="e.g. 100" value={overpayment} onChange={(e) => setOverpayment(e.target.value)} />
+      <input
+        type="number"
+        placeholder="e.g. 100"
+        value={overpayment}
+        onChange={(e) => setOverpayment(e.target.value)}
+      />
 
       <label>Target Years (Optional)</label>
-      <input type="number" placeholder="e.g. 15" value={targetYears} onChange={(e) => setTargetYears(e.target.value)} />
+      <input
+        type="number"
+        placeholder="e.g. 15"
+        value={targetYears}
+        onChange={(e) => setTargetYears(e.target.value)}
+      />
 
       <button onClick={calculate}>Submit</button>
 
       <div className="results">
-        {initialPayment && <p><span>Initial Monthly Payment:</span> <span>£{initialPayment}</span></p>}
-        {secondPayment && <p><span>Secondary Monthly Payment:</span> <span>£{secondPayment}</span></p>}
-        {yearsRemaining && <p><span>Years Remaining:</span> <span>{yearsRemaining}</span></p>}
-        {remainingBalance && <p><span>Remaining Balance After Fixed Term:</span> <span>£{remainingBalance}</span></p>}
+        {initialPayment && (
+          <p>
+            <span>Initial Monthly Payment:</span>{' '}
+            <span>£{initialPayment}</span>
+          </p>
+        )}
+        {secondPayment && (
+          <p>
+            <span>Secondary Monthly Payment:</span>{' '}
+            <span>£{secondPayment}</span>
+          </p>
+        )}
+        {yearsRemaining && (
+          <p>
+            <span>Years Remaining:</span>{' '}
+            <span>{yearsRemaining}</span>
+          </p>
+        )}
+        {remainingBalance && (
+          <p>
+            <span>Remaining Balance After Fixed Term:</span>{' '}
+            <span>£{remainingBalance}</span>
+          </p>
+        )}
       </div>
     </div>
   );
