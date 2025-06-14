@@ -119,10 +119,12 @@ function App() {
 
   return (
     <div className="app-container">
-      <h1>
-        Mortgage Calculator
-        <button className="share-btn" onClick={() => navigator.share ? navigator.share({ title: 'Mortgage Calculator', url: window.location.href }) : navigator.clipboard.writeText(window.location.href)}>Share</button>
-      </h1>
+      <header>
+        <h1>Mortgage Calculator</h1>
+        <div className="top-buttons">
+          <button className="share-btn" onClick={() => navigator.share ? navigator.share({ title: 'Mortgage Calculator', url: window.location.href }) : navigator.clipboard.writeText(window.location.href)}>Share</button>
+        </div>
+      </header>
 
       <div className="input-group">
         <label>Loan Amount</label>
@@ -137,7 +139,18 @@ function App() {
           <button onClick={() => setLoanAmount('')}>Clear</button>
         </div>
 
-        <label>Initial Fixed Rate</label>
+        <label>Loan Term (Years)</label>
+        <div className="input-prefix">
+          <input
+            type="number"
+            value={loanTermYears}
+            onChange={(e) => setLoanTermYears(e.target.value)}
+            placeholder="e.g. 25"
+          />
+          <button onClick={() => setLoanTermYears('')}>Clear</button>
+        </div>
+
+        <label>Initial Fixed Rate (%)</label>
         <div className="input-prefix">
           <input
             type="number"
@@ -148,17 +161,6 @@ function App() {
           />
           <span>%</span>
           <button onClick={() => setInitialRate('')}>Clear</button>
-        </div>
-
-        <label>Loan Term (Years)</label>
-        <div className="input-prefix">
-          <input
-            type="number"
-            value={loanTermYears}
-            onChange={(e) => setLoanTermYears(e.target.value)}
-            placeholder="e.g. 25"
-          />
-          <button onClick={() => setLoanTermYears('')}>Clear</button>
         </div>
 
         <label>Fixed Rate Term (Years)</label>
@@ -172,7 +174,7 @@ function App() {
           <button onClick={() => setFixedTermYears('')}>Clear</button>
         </div>
 
-        <label>Secondary Rate</label>
+        <label>Secondary Rate (%)</label>
         <div className="input-prefix">
           <input
             type="number"
@@ -182,46 +184,4 @@ function App() {
             placeholder="e.g. 6.5"
           />
           <span>%</span>
-          <button onClick={() => setSecondaryRate('')}>Clear</button>
-        </div>
-
-        <label>Overpayment (Optional)</label>
-        <div className="input-prefix">
-          <span>£</span>
-          <input
-            type="number"
-            value={overpayment}
-            onChange={(e) => setOverpayment(e.target.value)}
-            placeholder="e.g. 100"
-          />
-          <button onClick={() => setOverpayment('')}>Clear</button>
-        </div>
-
-        <label>Target Years (Optional)</label>
-        <div className="input-prefix">
-          <input
-            type="number"
-            value={targetYears}
-            onChange={(e) => setTargetYears(e.target.value)}
-            placeholder="e.g. 15"
-          />
-          <button onClick={() => setTargetYears('')}>Clear</button>
-        </div>
-      </div>
-
-      <div className="button-row">
-        <button className="submit-btn" onClick={handleSubmit}>Submit</button>
-        <button className="reset-btn" onClick={resetAll}>Reset All</button>
-      </div>
-
-      <div className="results">
-        {initialPayment && <p><strong>Initial Monthly Payment:</strong> £{initialPayment}</p>}
-        {secondPayment && <p><strong>Secondary Monthly Payment:</strong> £{secondPayment}</p>}
-        {yearsRemaining && <p><strong>Years Remaining:</strong> {yearsRemaining}</p>}
-        {remainingBalance && <p><strong>Remaining Balance After Fixed Term:</strong> £{remainingBalance}</p>}
-      </div>
-    </div>
-  );
-}
-
-export default App;
+          <button onClick={() => setSecondaryRate('
