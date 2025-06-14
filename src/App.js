@@ -14,18 +14,81 @@ function App() {
   const [secondPayment, setSecondPayment] = useState('');
   const [yearsRemaining, setYearsRemaining] = useState('');
   const [remainingBalance, setRemainingBalance] = useState('');
-
   const [showResults, setShowResults] = useState(false);
 
   const basePMT = (pv, rate, nper) =>
     (rate * pv) / (1 - Math.pow(1 + rate, -nper));
 
-  const formatNumber = (num) => {
-    if (isNaN(num)) return '';
-    return parseFloat(num).toLocaleString(undefined, {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
-    });
+  const formatNumber = (num) =>
+    Number(num).toLocaleString('en-GB', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+  const calculate = () => {
+    const P = parseFloat(loanAmount.replace(/,/g, ''));
+    const r1 = parseFloat(initialRate) / 100 / 12;
+    const r2 = parseFloat(secondaryRate) / 100 / 12;
+    const n = parseInt(loanTermYears) * 12;
+    const t = parseInt(fixedTermYears) * 12;
+    const op = overpayment ? parseFloat(overpayment.replace(/,/g, '')) : 0;
+    const g = targetYears ? parseInt(targetYears) * 12 : null;
+
+    if (!P || !r1 || !n || !r2) {
+      setInitialPayment('');
+      setSecondPayment('');
+      setYearsRemaining('');
+      setRemainingBalance('');
+      setShowResults(false);
+      return;
+    }
+
+    const months = g ? g : n;
+    const pmt = basePMT(P, r1, months);
+    const initial = Math.abs(pmt + op);
+    setInitialPayment(formatNumber(initial));
+
+    if (n - t > 0) {
+      const altPMT = g ? basePMT(P, r1, g) + op : basePMT(P, r1, n) + op;
+      const futureValue = P * Math.pow(1 + r1, t);
+      const paid = altPMT * ((Math.pow(1 + r1, t) - 1) / r1);
+      const balance = futureValue - paid;
+      const second = basePMT(balance, r2, n - t);
+      setSecondPayment(formatNumber(Math.abs(second)));
+    } else {
+      setSecondPayment('');
+    }
+
+    if (P === 0) {
+      setYearsRemaining('');
+    } else {
+      let result;
+
+      if (g && op) {
+        const termPmt = basePMT(P, r1, g) + op;
+        const nper = Math.log(1 + (P * r1) / -termPmt) / Math.log(1 + r1);
+        result = nper < 0 ? 'N/A' : (nper / 12).toFixed(2);
+      } else if (g) {
+        result = (g / 12).toFixed(2);
+      } else if (op) {
+        const termPmt = basePMT(P, r1, n) + op;
+        const nper = Math.log(1 + (P * r1) / -termPmt) / Math.log(1 + r1);
+        result = (nper / 12).toFixed(2);
+      } else {
+        result = (n / 12).toFixed(2);
+      }
+
+      setYearsRemaining(result);
+    }
+
+    if (P === 0 || n - t <= 0) {
+      setRemainingBalance('');
+    } else {
+      const altPMT = g ? basePMT(P, r1, g) + op : basePMT(P, r1, n) + op;
+      const futureValue = P * Math.pow(1 + r1, t);
+      const paid = altPMT * ((Math.pow(1 + r1, t) - 1) / r1);
+      const balance = futureValue - paid;
+      setRemainingBalance(formatNumber(Math.abs(balance)));
+    }
+
+    setShowResults(true);
   };
 
   const resetAll = () => {
@@ -43,77 +106,20 @@ function App() {
     setShowResults(false);
   };
 
-  const calculate = () => {
-    const P = parseFloat(loanAmount.replace(/,/g, ''));
-    const r1 = parseFloat(initialRate) / 100 / 12;
-    const r2 = parseFloat(secondaryRate) / 100 / 12;
-    const n = parseInt(loanTermYears) * 12;
-    const t = parseInt(fixedTermYears) * 12;
-    const op = overpayment ? parseFloat(overpayment) : 0;
-    const g = targetYears ? parseInt(targetYears) * 12 : null;
-
-    if (!P || !r1 || !n || isNaN(r2)) {
-      setInitialPayment('');
-      setSecondPayment('');
-      setYearsRemaining('');
-      setRemainingBalance('');
-      setShowResults(false);
-      return;
-    }
-
-    const months = g || n;
-    const pmt = basePMT(P, r1, months);
-    const initial = Math.abs(pmt + op);
-    setInitialPayment(formatNumber(initial));
-
-    if (n - t > 0 && !isNaN(r2)) {
-      const altPMT = g ? basePMT(P, r1, g) + op : basePMT(P, r1, n) + op;
-      const futureValue = P * Math.pow(1 + r1, t);
-      const paid = altPMT * ((Math.pow(1 + r1, t) - 1) / r1);
-      const balance = futureValue - paid;
-      const second = basePMT(balance, r2, n - t);
-      setSecondPayment(formatNumber(Math.abs(second)));
-      setRemainingBalance(formatNumber(Math.abs(balance)));
-    } else {
-      setSecondPayment('');
-      setRemainingBalance('');
-    }
-
-    let result = '';
-    if (g && op) {
-      const termPmt = basePMT(P, r1, g) + op;
-      const nper = Math.log(1 + (P * r1) / -termPmt) / Math.log(1 + r1);
-      result = nper < 0 ? 'N/A' : (nper / 12).toFixed(2);
-    } else if (g) {
-      result = (g / 12).toFixed(2);
-    } else if (op) {
-      const termPmt = basePMT(P, r1, n) + op;
-      const nper = Math.log(1 + (P * r1) / -termPmt) / Math.log(1 + r1);
-      result = (nper / 12).toFixed(2);
-    } else {
-      result = (n / 12).toFixed(2);
-    }
-
-    if (result < 0) result = Math.abs(result);
-    setYearsRemaining(result);
-    setShowResults(true);
-  };
-
   return (
     <div className="container">
       <div className="header">
         <h1>Mortgage Calculator</h1>
-        <button className="share-btn" onClick={() => navigator.share?.({ title: 'Mortgage Calculator', url: window.location.href })}>
-          Share
-        </button>
+        <button className="share-btn" onClick={() => navigator.share?.({ title: 'Mortgage Calculator', url: window.location.href })}>Share</button>
       </div>
 
+      {/* Input Fields */}
       <div className="input-row">
         <label>Loan Amount (£)</label>
         <input
           type="text"
+          inputMode="decimal"
           value={loanAmount}
-          inputMode="numeric"
           onChange={(e) => {
             let rawValue = e.target.value.replace(/,/g, '').replace(/[^\d.]/g, '');
             if (!isNaN(rawValue) && rawValue !== '') {
@@ -130,69 +136,38 @@ function App() {
 
       <div className="input-row">
         <label>Loan Term (Years)</label>
-        <input
-          type="number"
-          value={loanTermYears}
-          inputMode="numeric"
-          onChange={(e) => setLoanTermYears(e.target.value)}
-        />
+        <input type="number" inputMode="numeric" value={loanTermYears} onChange={(e) => setLoanTermYears(e.target.value)} />
         <button className="clear-btn" onClick={() => setLoanTermYears('')}>Clear</button>
       </div>
 
       <div className="input-row">
         <label>Initial Fixed Rate (%)</label>
-        <input
-          type="number"
-          step="0.01"
-          value={initialRate}
-          inputMode="decimal"
-          onChange={(e) => setInitialRate(e.target.value)}
-        />
+        <input type="number" inputMode="decimal" value={initialRate} onChange={(e) => setInitialRate(e.target.value)} />
         <button className="clear-btn" onClick={() => setInitialRate('')}>Clear</button>
       </div>
 
       <div className="input-row">
-        <label>Fixed Rate Term (Years)</label>
-        <input
-          type="number"
-          value={fixedTermYears}
-          inputMode="numeric"
-          onChange={(e) => setFixedTermYears(e.target.value)}
-        />
+        <label>Fixed Term Length (Years)</label>
+        <input type="number" inputMode="numeric" value={fixedTermYears} onChange={(e) => setFixedTermYears(e.target.value)} />
         <button className="clear-btn" onClick={() => setFixedTermYears('')}>Clear</button>
       </div>
 
       <div className="input-row">
         <label>Secondary Rate (%)</label>
-        <input
-          type="number"
-          step="0.01"
-          value={secondaryRate}
-          inputMode="decimal"
-          onChange={(e) => setSecondaryRate(e.target.value)}
-        />
-        <button className="clear-btn" onClick={() => setSecondaryRate('')}>Clear</button>
+        <input type="number" inputMode="decimal" value={secondaryRate} onChange={(e) => setSecondaryRate(e.target.value)} />
+        <button className="clear-btn" onClick={()
+=> setSecondaryRate('')}>Clear</button>
       </div>
 
       <div className="input-row">
         <label>Overpayment (£) (Optional)</label>
-        <input
-          type="text"
-          value={overpayment}
-          inputMode="numeric"
-          onChange={(e) => setOverpayment(e.target.value)}
-        />
+        <input type="text" inputMode="decimal" value={overpayment} onChange={(e) => setOverpayment(e.target.value)} />
         <button className="clear-btn" onClick={() => setOverpayment('')}>Clear</button>
       </div>
 
       <div className="input-row">
         <label>Target Years (Optional)</label>
-        <input
-          type="number"
-          value={targetYears}
-          inputMode="numeric"
-          onChange={(e) => setTargetYears(e.target.value)}
-        />
+        <input type="number" inputMode="numeric" value={targetYears} onChange={(e) => setTargetYears(e.target.value)} />
         <button className="clear-btn" onClick={() => setTargetYears('')}>Clear</button>
       </div>
 
