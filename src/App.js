@@ -114,15 +114,25 @@ function App() {
         </div>
       </div>
 
-      <div className="input-row">
-        <label>Loan Amount (£)</label>
-        <input
-          type="text"
-          value={loanAmount}
-          onChange={(e) => formatInput(e.target.value, setLoanAmount)}
-        />
-        <button className="clear-btn" onClick={() => setLoanAmount('')}>Clear</button>
-      </div>
+<div className="input-row">
+  <label>Loan Amount (£)</label>
+  <input
+    type="text"
+    value={loanAmount}
+    onChange={(e) => {
+      let rawValue = e.target.value.replace(/,/g, '').replace(/[^\d.]/g, '');
+      if (!isNaN(rawValue) && rawValue !== '') {
+        const parts = rawValue.split('.');
+        parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+        setLoanAmount(parts.join('.'));
+      } else {
+        setLoanAmount('');
+      }
+    }}
+  />
+  <button className="clear-btn" onClick={() => setLoanAmount('')}>Clear</button>
+</div>
+
 
       <div className="input-row">
         <label>Loan Term (Years)</label>
