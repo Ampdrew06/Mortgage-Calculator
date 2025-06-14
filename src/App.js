@@ -15,19 +15,24 @@ function App() {
   const [yearsRemaining, setYearsRemaining] = useState('');
   const [remainingBalance, setRemainingBalance] = useState('');
 
+  const formatCurrency = (value) => {
+    const num = parseFloat(value.replace(/[£,]/g, ''));
+    if (isNaN(num)) return '';
+    return '£' + num.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  };
+
+  const parseCurrency = (value) => parseFloat(value.replace(/[£,]/g, '') || 0);
+
   const basePMT = (pv, rate, nper) =>
     (rate * pv) / (1 - Math.pow(1 + rate, -nper));
 
-  const formatNumber = (num) =>
-    Number(num).toLocaleString('en-UK', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-
   const calculate = () => {
-    const P = parseFloat(loanAmount.replace(/,/g, ''));
+    const P = parseCurrency(loanAmount);
     const r1 = parseFloat(initialRate) / 100 / 12;
     const r2 = parseFloat(secondaryRate) / 100 / 12;
     const n = parseInt(loanTermYears) * 12;
     const t = parseInt(fixedTermYears) * 12;
-    const op = overpayment ? parseFloat(overpayment.replace(/,/g, '')) : 0;
+    const op = parseCurrency(overpayment);
     const g = targetYears ? parseInt(targetYears) * 12 : null;
 
     if (!P || !r1 || !n || !t || !r2) {
@@ -38,31 +43,28 @@ function App() {
       return;
     }
 
-    const months = g ? g : n;
+    const months = g || n;
     const pmt = basePMT(P, r1, months);
     const initial = Math.abs(pmt + op);
-    setInitialPayment(formatNumber(initial));
+    setInitialPayment(initial.toFixed(2));
 
     if (n - t > 0) {
-      const altPMT = g
-        ? basePMT(P, r1, g) + op
-        : basePMT(P, r1, n) + op;
-
+      const altPMT = g ? basePMT(P, r1, g) + op : basePMT(P, r1, n) + op;
       const futureValue = P * Math.pow(1 + r1, t);
       const paid = altPMT * ((Math.pow(1 + r1, t) - 1) / r1);
       const balance = futureValue - paid;
-
       const second = basePMT(balance, r2, n - t);
-      setSecondPayment(formatNumber(Math.abs(second)));
+      setSecondPayment(Math.abs(second).toFixed(2));
+      setRemainingBalance(balance.toLocaleString(undefined, { minimumFractionDigits: 2 }));
     } else {
       setSecondPayment('');
+      setRemainingBalance('');
     }
 
     if (P === 0) {
       setYearsRemaining('');
     } else {
       let result;
-
       if (g && op) {
         const termPmt = basePMT(P, r1, g) + op;
         const nper = Math.log(1 + (P * r1) / -termPmt) / Math.log(1 + r1);
@@ -77,21 +79,7 @@ function App() {
         result = (n / 12).toFixed(2);
       }
 
-      setYearsRemaining(result.toString().replace(/^[-]+/, ''));
-    }
-
-    if (P === 0 || n - t <= 0) {
-      setRemainingBalance('');
-    } else {
-      const altPMT = g
-        ? basePMT(P, r1, g) + op
-        : basePMT(P, r1, n) + op;
-
-      const futureValue = P * Math.pow(1 + r1, t);
-      const paid = altPMT * ((Math.pow(1 + r1, t) - 1) / r1);
-      const balance = futureValue - paid;
-
-      setRemainingBalance(formatNumber(Math.abs(balance)));
+      setYearsRemaining(Math.abs(parseFloat(result)).toFixed(2));
     }
   };
 
@@ -111,17 +99,27 @@ function App() {
 
   return (
     <div className="container">
-      <header>
+      <div className="header">
         <h1>Mortgage Calculator</h1>
-        <button className="share-btn" onClick={() => navigator.share?.({
-          title: 'Mortgage Calculator',
-          url: window.location.href,
-        })}>Share</button>
-      </header>
+        <div className="header-buttons">
+          <button title="Share this app" onClick={() => navigator.share?.({ title: 'Mortgage Calculator', url: window.location.href })}>
+            Share
+          </button>
+          <button title="More Info (coming soon)">i</button>
+        </div>
+      </div>
 
       <div className="input-row">
         <label>Loan Amount (£)</label>
-        <input type="text" value={loanAmount} onChange={(e) => setLoanAmount(e.target.value)} />
+        <input
+          type="text"
+          value={loanAmount}
+          onChange={(e) => {
+            const raw = e.target.value.replace(/[£,]/g, '');
+            if (!isNaN(raw)) setLoanAmount(raw);
+          }}
+          onBlur={() => setLoanAmount(formatCurrency(loanAmount))}
+        />
         <button className="clear-btn" onClick={() => setLoanAmount('')}>Clear</button>
       </div>
 
@@ -133,7 +131,7 @@ function App() {
 
       <div className="input-row">
         <label>Initial Rate (%)</label>
-        <input type="number" value={initialRate} onChange={(e) => setInitialRate(e.target.value)} />
+        <input type="number" step="0.01" value={initialRate} onChange={(e) => setInitialRate(e.target.value)} />
         <button className="clear-btn" onClick={() => setInitialRate('')}>Clear</button>
       </div>
 
@@ -145,13 +143,21 @@ function App() {
 
       <div className="input-row">
         <label>Secondary Rate (%)</label>
-        <input type="number" value={secondaryRate} onChange={(e) => setSecondaryRate(e.target.value)} />
+        <input type="number" step="0.01" value={secondaryRate} onChange={(e) => setSecondaryRate(e.target.value)} />
         <button className="clear-btn" onClick={() => setSecondaryRate('')}>Clear</button>
       </div>
 
       <div className="input-row">
         <label>Overpayment (£) (Optional)</label>
-        <input type="text" value={overpayment} onChange={(e) => setOverpayment(e.target.value)} />
+        <input
+          type="text"
+          value={overpayment}
+          onChange={(e) => {
+            const raw = e.target.value.replace(/[£,]/g, '');
+            if (!isNaN(raw)) setOverpayment(raw);
+          }}
+          onBlur={() => setOverpayment(formatCurrency(overpayment))}
+        />
         <button className="clear-btn" onClick={() => setOverpayment('')}>Clear</button>
       </div>
 
@@ -170,8 +176,7 @@ function App() {
         {initialPayment && <p><strong>Initial Monthly Payment:</strong> £{initialPayment}</p>}
         {secondPayment && <p><strong>Secondary Monthly Payment:</strong> £{secondPayment}</p>}
         {yearsRemaining && <p><strong>Years Remaining:</strong> {yearsRemaining}</p>}
-        {remainingBalance
-        && <p><strong>Remaining Balance After Fixed Term:</strong> £{remainingBalance}</p>}
+        {remainingBalance && <p><strong>Remaining Balance After Fixed Term:</strong> £{remainingBalance}</p>}
       </div>
     </div>
   );
