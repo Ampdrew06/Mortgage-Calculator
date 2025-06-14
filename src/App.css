@@ -29,5 +29,63 @@ body {
 
 .share-button {
   background: white;
- 
+  color: #2a7a42;
+  border: none;
+  padding: 0.3rem 0.7rem;
+  font-weight: bold;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 0.8rem;
+}
 
+.input-group label {
+  display: block;
+  margin-top: 1rem;
+  font-weight: bold;
+}
+
+.input-row {
+  display: flex;
+  align-items: center;
+  margin-top: 0.3rem;
+}
+
+.input-row input {
+  flex: 1;
+  padding: 0.5rem;
+  margin-right: 0.5rem;
+  font-size: 1rem;
+}
+
+.input-row button {
+  padding: 0.45rem 0.75rem;
+  background: #ddd;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.submit-group {
+  margin-top: 1.5rem;
+  text-align: center;
+}
+
+.submit-button {
+  background-color: #4CAF50;
+  color: black;
+  padding: 0.7rem 2rem;
+  font-size: 1rem;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.results {
+  margin-top: 2rem;
+}
+
+.results p {
+  margin: 0.5rem 0;
+  display: flex;
+  justify-content: space-between;
+}
