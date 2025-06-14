@@ -1,118 +1,145 @@
+/* App.css */
+
 body {
   margin: 0;
-  padding: 0;
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  background-color: #f4f4f4;
+  background-color: #f4f6f8;
+  color: #333;
 }
 
 .container {
-  max-width: 420px;
-  margin: auto;
-  padding: 1rem;
-  background: white;
-  min-height: 100vh;
-  box-shadow: 0 0 8px rgba(0, 0, 0, 0.1);
-  box-sizing: border-box;
-  display: flex;
-  flex-direction: column;
-  justify-content: flex-start;
+  max-width: 500px;
+  margin: 0 auto;
+  padding: 2rem 1rem 1rem 1rem;
+  background-color: white;
+  border-radius: 10px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
 }
 
 header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  background-color: #006341;
-  color: white;
-  padding: 0.75rem 1rem;
-  margin: -1rem -1rem 1rem -1rem;
-}
-
-header h1 {
-  font-size: 1.3rem;
-  margin: 0;
-}
-
-.share-btn {
-  background: white;
-  color: #006341;
-  font-weight: bold;
-  border: none;
-  border-radius: 4px;
-  padding: 0.4rem 0.7rem;
-  cursor: pointer;
-}
-
-label {
-  font-weight: bold;
-  margin-bottom: 0.25rem;
-  display: block;
-  font-size: 0.95rem;
-  color: #333;
-}
-
-.input-group {
+  padding-bottom: 1rem;
+  border-bottom: 2px solid #ccc;
   margin-bottom: 1rem;
 }
 
-.input-wrapper {
+h1 {
+  font-size: 1.5rem;
+  margin: 0;
+  color: #2e7d32;
+}
+
+.share-button {
+  background-color: #2e7d32;
+  color: white;
+  border: none;
+  padding: 0.4rem 0.8rem;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.85rem;
+}
+
+label {
+  display: block;
+  margin-top: 1rem;
+  margin-bottom: 0.2rem;
+  font-weight: bold;
+}
+
+.input-row {
+  display: flex;
+  flex-direction: column;
+}
+
+.input-prefix {
   display: flex;
   align-items: center;
-  gap: 0.4rem;
+  gap: 0.3rem;
+  margin-bottom: 0.5rem;
 }
 
-.input-wrapper span {
-  font-weight: bold;
-  color: #333;
-}
-
-input[type="number"] {
+.input-prefix input {
   flex: 1;
-  padding: 0.5rem;
+  padding: 0.4rem 0.6rem;
+  font-size: 1rem;
   border: 1px solid #ccc;
   border-radius: 4px;
-  font-size: 1rem;
 }
 
-.clear {
-  padding: 0.4rem 0.6rem;
-  font-size: 0.8rem;
-  border: none;
-  border-radius: 4px;
+.input-prefix span {
+  font-weight: bold;
+}
+
+.input-prefix button {
+  padding: 0.3rem 0.6rem;
+  font-size: 0.75rem;
   background-color: #eee;
-  color: #333;
+  border: 1px solid #ccc;
+  border-radius: 4px;
   cursor: pointer;
-  white-space: nowrap;
 }
 
-.clear:hover {
+.input-prefix button:hover {
   background-color: #ddd;
 }
 
-button.submit {
-  background-color: #00cc66;
-  color: black;
-  font-weight: bold;
-  border: none;
-  padding: 0.7rem;
-  border-radius: 6px;
-  font-size: 1.05rem;
-  cursor: pointer;
-  margin-top: 0.5rem;
+.button-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-top: 1rem;
 }
 
-button.submit:hover {
-  background-color: #00b359;
+button.submit {
+  flex: 1;
+  padding: 0.6rem;
+  font-size: 1rem;
+  font-weight: bold;
+  background-color: #66bb6a;
+  border: none;
+  color: white;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+button.clear {
+  flex: 1;
+  padding: 0.6rem;
+  font-size: 1rem;
+  font-weight: bold;
+  background-color: #ef5350;
+  border: none;
+  color: white;
+  border-radius: 5px;
+  cursor: pointer;
 }
 
 .results {
-  margin-top: 1.2rem;
-  font-size: 1rem;
+  margin-top: 1.5rem;
+  padding-top: 1rem;
+  border-top: 2px solid #eee;
 }
 
 .results p {
+  margin: 0.5rem 0;
+  font-size: 1rem;
   display: flex;
   justify-content: space-between;
-  margin: 0.6rem 0;
-  font-weight: bold;
+}
+
+@media screen and (max-height: 700px) {
+  .container {
+    padding: 1rem;
+  }
+
+  .button-row button {
+    font-size: 0.9rem;
+    padding: 0.4rem;
+  }
+
+  .results p {
+    font-size: 0.95rem;
+  }
 }
