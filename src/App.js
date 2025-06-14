@@ -1,3 +1,4 @@
+console.log("App.js is loaded");
 import React, { useState } from 'react';
 import './App.css';
 
