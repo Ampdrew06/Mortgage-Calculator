@@ -1,4 +1,4 @@
-console.log("App.js is loaded");
+console.log("App.js latest is loaded");
 import React, { useState } from 'react';
 import './App.css';
 
