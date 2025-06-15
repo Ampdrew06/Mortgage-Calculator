@@ -134,37 +134,67 @@ function App() {
 
       <div className="input-row">
         <label>Loan Term (Years)</label>
-        <input type="number" inputMode="numeric" value={loanTermYears} onChange={(e) => setLoanTermYears(e.target.value)} />
+        <input
+          type="number"
+          inputMode="numeric"
+          value={loanTermYears}
+          onChange={(e) => setLoanTermYears(e.target.value)}
+        />
         <button className="clear-btn" onClick={() => setLoanTermYears('')}>Clear</button>
       </div>
 
       <div className="input-row">
         <label>Initial Fixed Rate (%)</label>
-        <input type="number" inputMode="decimal" value={initialRate} onChange={(e) => setInitialRate(e.target.value)} />
+        <input
+          type="number"
+          inputMode="decimal"
+          value={initialRate}
+          onChange={(e) => setInitialRate(e.target.value)}
+        />
         <button className="clear-btn" onClick={() => setInitialRate('')}>Clear</button>
       </div>
 
       <div className="input-row">
         <label>Fixed Term Length (Years)</label>
-        <input type="number" inputMode="numeric" value={fixedTermYears} onChange={(e) => setFixedTermYears(e.target.value)} />
+        <input
+          type="number"
+          inputMode="numeric"
+          value={fixedTermYears}
+          onChange={(e) => setFixedTermYears(e.target.value)}
+        />
         <button className="clear-btn" onClick={() => setFixedTermYears('')}>Clear</button>
       </div>
 
       <div className="input-row">
         <label>Secondary Rate (%)</label>
-        <input type="number" inputMode="decimal" value={secondaryRate} onChange={(e) => setSecondaryRate(e.target.value)} />
+        <input
+          type="number"
+          inputMode="decimal"
+          value={secondaryRate}
+          onChange={(e) => setSecondaryRate(e.target.value)}
+        />
         <button className="clear-btn" onClick={() => setSecondaryRate('')}>Clear</button>
       </div>
 
       <div className="input-row">
         <label>Overpayment (£) (Optional)</label>
-        <input type="text" inputMode="numeric" value={overpayment} onChange={(e) => setOverpayment(e.target.value)} />
+        <input
+          type="text"
+          inputMode="numeric"
+          value={overpayment}
+          onChange={(e) => setOverpayment(e.target.value)}
+        />
         <button className="clear-btn" onClick={() => setOverpayment('')}>Clear</button>
       </div>
 
       <div className="input-row">
         <label>Target Years (Optional)</label>
-        <input type="number" inputMode="numeric" value={targetYears} onChange={(e) => setTargetYears(e.target.value)} />
+        <input
+          type="number"
+          inputMode="numeric"
+          value={targetYears}
+          onChange={(e) => setTargetYears(e.target.value)}
+        />
         <button className="clear-btn" onClick={() => setTargetYears('')}>Clear</button>
       </div>
 
@@ -186,5 +216,3 @@ function App() {
 }
 
 export default App;
-
-// Clean end of file - June 15
