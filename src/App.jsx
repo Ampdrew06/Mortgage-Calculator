@@ -50,6 +50,10 @@ function App() {
     const op = overpayment ? parseFloat(overpayment) : 0;
     const g = targetYears ? parseInt(targetYears) * 12 : null;
     console.log('CALCULATING', { P, r1, r2, n, t });
+    if (!P || !r1 || !n || !t || !r2) {
+  console.warn('One or more required values are invalid:', { P, r1, r2, n, t });
+}
+
 
 
     if (!P || !r1 || !n || !t || !r2) {
