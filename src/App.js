@@ -1,190 +1,145 @@
-import React, { useState } from 'react';
-import './App.css';
-
-function App() {
-  const [loanAmount, setLoanAmount] = useState('');
-  const [initialRate, setInitialRate] = useState('');
-  const [loanTermYears, setLoanTermYears] = useState('');
-  const [fixedTermYears, setFixedTermYears] = useState('');
-  const [secondaryRate, setSecondaryRate] = useState('');
-  const [overpayment, setOverpayment] = useState('');
-  const [targetYears, setTargetYears] = useState('');
-
-  const [initialPayment, setInitialPayment] = useState('');
-  const [secondPayment, setSecondPayment] = useState('');
-  const [yearsRemaining, setYearsRemaining] = useState('');
-  const [remainingBalance, setRemainingBalance] = useState('');
-  const [submitted, setSubmitted] = useState(false);
-
-  const basePMT = (pv, rate, nper) =>
-    (rate * pv) / (1 - Math.pow(1 + rate, -nper));
-
-  const formatNumber = (value) => {
-    const parts = value.toString().split('.');
-    parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',');
-    return parts.join('.');
-  };
-
-  const resetAll = () => {
-    setLoanAmount('');
-    setInitialRate('');
-    setLoanTermYears('');
-    setFixedTermYears('');
-    setSecondaryRate('');
-    setOverpayment('');
-    setTargetYears('');
-    setInitialPayment('');
-    setSecondPayment('');
-    setYearsRemaining('');
-    setRemainingBalance('');
-    setSubmitted(false);
-  };
-
-  const calculate = () => {
-    setSubmitted(true);
-    const P = parseFloat(loanAmount.replace(/,/g, ''));
-    const r1 = parseFloat(initialRate) / 100 / 12;
-    const r2 = parseFloat(secondaryRate) / 100 / 12;
-    const n = parseInt(loanTermYears) * 12;
-    const t = parseInt(fixedTermYears) * 12;
-    const op = overpayment ? parseFloat(overpayment) : 0;
-    const g = targetYears ? parseInt(targetYears) * 12 : null;
-
-    if (!P || !r1 || !n || !t || !r2) {
-      setInitialPayment('');
-      setSecondPayment('');
-      setYearsRemaining('');
-      setRemainingBalance('');
-      return;
-    }
-
-    const months = g ? g : n;
-    const pmt = basePMT(P, r1, months);
-    const initial = Math.abs(pmt + op);
-    setInitialPayment(initial.toFixed(2));
-
-    if (n - t > 0) {
-      const altPMT = g ? basePMT(P, r1, g) + op : basePMT(P, r1, n) + op;
-      const futureValue = P * Math.pow(1 + r1, t);
-      const paid = altPMT * ((Math.pow(1 + r1, t) - 1) / r1);
-      const balance = futureValue - paid;
-      const second = basePMT(balance, r2, n - t);
-      setSecondPayment(Math.abs(second).toFixed(2));
-    } else {
-      setSecondPayment('');
-    }
-
-    if (P === 0) {
-      setYearsRemaining('');
-    } else {
-      let result;
-      if (g && op) {
-        const termPmt = basePMT(P, r1, g) + op;
-        const nper = Math.log(1 + (P * r1) / -termPmt) / Math.log(1 + r1);
-        result = nper < 0 ? 'N/A' : (nper / 12).toFixed(2);
-      } else if (g) {
-        result = (g / 12).toFixed(2);
-      } else if (op) {
-        const termPmt = basePMT(P, r1, n) + op;
-        const nper = Math.log(1 + (P * r1) / -termPmt) / Math.log(1 + r1);
-        result = (nper / 12).toFixed(2);
-      } else {
-        result = (n / 12).toFixed(2);
-      }
-      setYearsRemaining(result);
-    }
-
-    if (P === 0 || n - t <= 0) {
-      setRemainingBalance('');
-    } else {
-      const altPMT = g ? basePMT(P, r1, g) + op : basePMT(P, r1, n) + op;
-      const futureValue = P * Math.pow(1 + r1, t);
-      const paid = altPMT * ((Math.pow(1 + r1, t) - 1) / r1);
-      const balance = futureValue - paid;
-      setRemainingBalance(Math.abs(balance).toFixed(2));
-    }
-  };
-
-  return (
-    <div className="container">
-      <div className="header">
-        <h1>Mortgage Calculator</h1>
-        <button className="share-btn" title="Share this app">Share</button>
-      </div>
-
-      <div className="input-row">
-        <label>Loan Amount (£)</label>
-        <input
-          type="text"
-          inputMode="numeric"
-          value={loanAmount}
-          onChange={(e) => {
-            let raw = e.target.value.replace(/,/g, '').replace(/[^\d.]/g, '');
-            if (!isNaN(raw) && raw !== '') {
-              const parts = raw.split('.');
-              parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',');
-              setLoanAmount(parts.join('.'));
-            } else {
-              setLoanAmount('');
-            }
-          }}
-        />
-        <button className="clear-btn" onClick={() => setLoanAmount('')}>Clear</button>
-      </div>
-
-      <div className="input-row">
-        <label>Loan Term (Years)</label>
-        <input type="number" inputMode="numeric" value={loanTermYears} onChange={(e) => setLoanTermYears(e.target.value)} />
-        <button className="clear-btn" onClick={() => setLoanTermYears('')}>Clear</button>
-      </div>
-
-      <div className="input-row">
-        <label>Initial Fixed Rate (%)</label>
-        <input type="number" inputMode="decimal" value={initialRate} onChange={(e) => setInitialRate(e.target.value)} />
-        <button className="clear-btn" onClick={() => setInitialRate('')}>Clear</button>
-      </div>
-
-      <div className="input-row">
-        <label>Fixed Term Length (Years)</label>
-        <input type="number" inputMode="numeric" value={fixedTermYears} onChange={(e) => setFixedTermYears(e.target.value)} />
-        <button className="clear-btn" onClick={() => setFixedTermYears('')}>Clear</button>
-      </div>
-
-      <div className="input-row">
-        <label>Secondary Rate (%)</label>
-        <input type="number" inputMode="decimal" value={secondaryRate} onChange={(e) => setSecondaryRate(e.target.value)} />
-        <button className="clear-btn" onClick={() => setSecondaryRate('')}>Clear</button>
-      </div>
-
-      <div className="input-row">
-        <label>Overpayment (£) (Optional)</label>
-        <input type="text" input
-        <input type="text" inputMode="numeric" value={overpayment} onChange={(e) => setOverpayment(e.target.value)} />
-        <button className="clear-btn" onClick={() => setOverpayment('')}>Clear</button>
-      </div>
-
-      <div className="input-row">
-        <label>Target Years (Optional)</label>
-        <input type="number" inputMode="numeric" value={targetYears} onChange={(e) => setTargetYears(e.target.value)} />
-        <button className="clear-btn" onClick={() => setTargetYears('')}>Clear</button>
-      </div>
-
-      <div className="action-row">
-        <button className="submit-btn" onClick={calculate}>Submit</button>
-        <button className="reset-btn" onClick={resetAll}>Reset All</button>
-      </div>
-
-      {submitted && (
-        <div className="results">
-          {initialPayment && <p><strong>Initial Monthly Payment:</strong> £{formatNumber(initialPayment)}</p>}
-          {secondPayment && <p><strong>Secondary Monthly Payment:</strong> £{formatNumber(secondPayment)}</p>}
-          {yearsRemaining && <p><strong>Years Remaining:</strong> {yearsRemaining}</p>}
-          {remainingBalance && <p><strong>Remaining Balance After Fixed Term:</strong> £{formatNumber(remainingBalance)}</p>}
-        </div>
-      )}
-    </div>
-  );
+body {
+  font-family: Arial, sans-serif;
+  background-color: #f4f4f4;
+  margin: 0;
+  padding: 0;
 }
 
-export default App;
+.container {
+  max-width: 600px;
+  margin: 2rem auto;
+  padding: 1.5rem;
+  background-color: #ffffff;
+  border-radius: 8px;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+}
 
+.header {
+  background-color: #4caf50;
+  color: white;
+  padding: 1rem 1.5rem;
+  border-radius: 8px 8px 0 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin: -1.5rem -1.5rem 1rem -1.5rem;
+}
+
+.header h1 {
+  font-size: 1.5rem;
+  margin: 0;
+}
+
+.header .share-btn {
+  background: none;
+  border: none;
+  color: white;
+  font-size: 1.2rem;
+  cursor: pointer;
+}
+
+.input-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.input-row label {
+  flex: 2;
+}
+
+.input-row input {
+  flex: 2;
+  padding: 0.5rem;
+  font-size: 1rem;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+}
+
+.clear-btn {
+  flex: 1;
+  padding: 0.5rem;
+  background-color: #e0e0e0;
+  color: #333;
+  border: none;
+  border-radius: 4px;
+  font-size: 0.9rem;
+  cursor: pointer;
+}
+
+.clear-btn:hover {
+  background-color: #d5d5d5;
+}
+
+.action-row {
+  display: flex;
+  justify-content: space-between;
+  margin: 1.5rem 0;
+}
+
+.submit-btn,
+.reset-btn {
+  flex: 1;
+  padding: 0.75rem;
+  border: none;
+  border-radius: 4px;
+  font-weight: bold;
+  cursor: pointer;
+  margin-right: 0.5rem;
+  font-size: 1rem;
+}
+
+.submit-btn {
+  background-color: #4caf50;
+  color: white;
+}
+
+.submit-btn:hover {
+  background-color: #388e3c;
+}
+
+.reset-btn {
+  background-color: #9e9e9e;
+  color: white;
+  margin-right: 0;
+}
+
+.reset-btn:hover {
+  background-color: #7e7e7e;
+}
+
+.results {
+  background-color: #e9fce9;
+  padding: 1rem;
+  border-radius: 6px;
+  margin-top: 1rem;
+}
+
+.results p {
+  margin: 0.5rem 0;
+  display: flex;
+  justify-content: space-between;
+}
+
+@media screen and (max-width: 480px) {
+  .input-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .input-row input,
+  .clear-btn {
+    width: 100%;
+  }
+
+  .action-row {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .submit-btn,
+  .reset-btn {
+    margin-right: 0;
+  }
+}
