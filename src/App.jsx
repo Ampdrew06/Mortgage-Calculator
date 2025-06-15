@@ -2,6 +2,18 @@ import React, { useState } from 'react';
 import './App.css';
 
 function InfoPage({ onBack }) {
+  const handleShare = async () => {
+    try {
+      await navigator.share({
+        title: 'Mortgage Calculator',
+        text: 'Try this Mortgage Calculator App!',
+        url: window.location.href,
+      });
+    } catch (err) {
+      alert('Sharing not supported or cancelled.');
+    }
+  };
+
   return (
     <div className="info-page">
       <h2>App Information</h2>
@@ -21,10 +33,14 @@ function InfoPage({ onBack }) {
       <p className="disclaimer">
         <strong>Disclaimer:</strong> This tool is for illustrative purposes only. It is not financial advice. Always consult a qualified advisor before making mortgage decisions.
       </p>
-      <button className="reset-btn" onClick={onBack}>Back to Calculator</button>
+      <div className="info-actions">
+        <button className="submit-btn" onClick={handleShare}>Share This App</button>
+        <button className="reset-btn" onClick={onBack}>Back to Calculator</button>
+      </div>
     </div>
   );
 }
+
 
 function App() {
   const [loanAmount, setLoanAmount] = useState('');
