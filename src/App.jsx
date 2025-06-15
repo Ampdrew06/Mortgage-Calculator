@@ -122,13 +122,56 @@ return (
       <>
         <div className="header">
           <h1>Mortgage Calculator</h1>
-          <button className="share-btn" onClick={() => setShowInfo(true)} title="View Info">ℹ️</button>
+          <button
+            className="share-btn"
+            onClick={() => setShowInfo(true)}
+            title="View Info"
+          >
+            ℹ️
+          </button>
         </div>
 
-        {/* ↓↓↓ PLACE ALL your input + result stuff here ↓↓↓ */}
+        {/* Your existing input rows, buttons, and results go here */}
+
         <div className="input-row">
-          {/* Your form rows */}
+          <label>Loan Amount (£)</label>
+          <input
+            type="text"
+            inputMode="numeric"
+            value={loanAmount}
+            onChange={(e) => {
+              let raw = e.target.value.replace(/,/g, '').replace(/[^\d.]/g, '');
+              if (!isNaN(raw) && raw !== '') {
+                const parts = raw.split('.');
+                parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+                setLoanAmount(parts.join('.'));
+              } else {
+                setLoanAmount('');
+              }
+            }}
+          />
+          <button className="clear-btn" onClick={() => setLoanAmount('')}>Clear</button>
         </div>
+
+        {/* Continue adding the rest of your input sections here... */}
+
+        <div className="action-row">
+          <button className="submit-btn" onClick={calculate}>Submit</button>
+          <button className="reset-btn" onClick={resetAll}>Reset All</button>
+        </div>
+
+        {submitted && (
+          <div className="results visible">
+            {initialPayment && <p><strong>Initial Monthly Payment:</strong> £{formatNumber(initialPayment)}</p>}
+            {secondPayment && <p><strong>Secondary Monthly Payment:</strong> £{formatNumber(secondPayment)}</p>}
+            {yearsRemaining && <p><strong>Years Remaining:</strong> {yearsRemaining}</p>}
+            {remainingBalance && <p><strong>Remaining Balance After Fixed Term:</strong> £{formatNumber(remainingBalance)}</p>}
+          </div>
+        )}
+      </>
+    )}
+  </div>
+);
 
         {/* Buttons and results follow here... */}
       </>
