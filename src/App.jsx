@@ -1,5 +1,8 @@
 import React, { useState } from 'react';
 import './App.css';
+import InfoPage from './InfoPage';
+const [showInfo, setShowInfo] = useState(false);
+
 
 function App() {
   const [loanAmount, setLoanAmount] = useState('');
@@ -111,12 +114,24 @@ function App() {
     }
   };
 
-  return (
-    <div className="container">
-      <div className="header">
-        <h1>Mortgage Calculator</h1>
-        <button className="share-btn" title="Share this app">Share</button>
-      </div>
+return (
+  <div className="container">
+    {showInfo ? (
+      <InfoPage onBack={() => setShowInfo(false)} />
+    ) : (
+      <>
+        <div className="header">
+          <h1>Mortgage Calculator</h1>
+          <button className="share-btn" onClick={() => setShowInfo(true)} title="View Info">ℹ️</button>
+        </div>
+
+        {/* Your existing form + results go here, unchanged */}
+        {/* ... keep all input rows, buttons, results ... */}
+      </>
+    )}
+  </div>
+);
+
 
       <div className="input-row">
         <label>Loan Amount (£)</label>
