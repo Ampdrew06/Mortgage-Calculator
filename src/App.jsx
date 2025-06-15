@@ -125,12 +125,17 @@ return (
           <button className="share-btn" onClick={() => setShowInfo(true)} title="View Info">ℹ️</button>
         </div>
 
-        {/* Your existing form + results go here, unchanged */}
-        {/* ... keep all input rows, buttons, results ... */}
+        {/* ↓↓↓ PLACE ALL your input + result stuff here ↓↓↓ */}
+        <div className="input-row">
+          {/* Your form rows */}
+        </div>
+
+        {/* Buttons and results follow here... */}
       </>
     )}
   </div>
 );
+
 
 
       <div className="input-row">
