@@ -60,7 +60,6 @@ function App() {
       setYearsRemaining('');
     } else {
       let result;
-
       if (g && op) {
         const termPmt = basePMT(P, r1, g) + op;
         const nper = Math.log(1 + (P * r1) / -termPmt) / Math.log(1 + r1);
@@ -74,7 +73,6 @@ function App() {
       } else {
         result = (n / 12).toFixed(2);
       }
-
       setYearsRemaining(result);
     }
 
@@ -84,7 +82,7 @@ function App() {
       const altPMT = g ? basePMT(P, r1, g) + op : basePMT(P, r1, n) + op;
       const futureValue = P * Math.pow(1 + r1, t);
       const paid = altPMT * ((Math.pow(1 + r1, t) - 1) / r1);
-      const balance = futureValue - paid;
+   ;
       setRemainingBalance(formatNumber(Math.abs(balance)));
     }
 
@@ -110,10 +108,14 @@ function App() {
     <div className="container">
       <div className="header">
         <h1>Mortgage Calculator</h1>
-        <button className="share-btn" onClick={() => navigator.share?.({ title: 'Mortgage Calculator', url: window.location.href })}>Share</button>
+        <button className="share-btn" onClick={() => navigator.share?.({
+          title: 'Mortgage Calculator',
+          url: window.location.href
+        })}>
+          Share
+        </button>
       </div>
 
-      {/* Input Fields */}
       <div className="input-row">
         <label>Loan Amount (£)</label>
         <input
@@ -155,8 +157,7 @@ function App() {
       <div className="input-row">
         <label>Secondary Rate (%)</label>
         <input type="number" inputMode="decimal" value={secondaryRate} onChange={(e) => setSecondaryRate(e.target.value)} />
-        <button className="clear-btn" onClick={()
-=> setSecondaryRate('')}>Clear</button>
+        <button className="clear-btn" onClick={() => setSecondaryRate('')}>Clear</button>
       </div>
 
       <div className="input-row">
@@ -173,11 +174,13 @@ function App() {
 
       <div className="action-row">
         <button className="submit-btn" onClick={calculate}>Submit</button>
-        <button className="reset-btn" onClick={resetAll}>Reset All</button>
+        <button className="reset-btn" onClick={
+   const balance = futureValue - paid
+onClick={resetAll}>Reset All</button>
       </div>
 
       {showResults && (
-        <div className="results">
+        <div className="results show">
           {initialPayment && <p><strong>Initial Monthly Payment:</strong> £{initialPayment}</p>}
           {secondPayment && <p><strong>Secondary Monthly Payment:</strong> £{secondPayment}</p>}
           {yearsRemaining && <p><strong>Years Remaining:</strong> {yearsRemaining}</p>}
