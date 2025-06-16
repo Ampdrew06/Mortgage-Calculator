@@ -63,11 +63,6 @@ body {
 
 .clear-btn {
   flex: 1 1 80px;
-}
-
-
-.clear-btn {
-  flex: 1;
   padding: 0.5rem;
   background-color: #e0e0e0;
   color: #333;
@@ -80,6 +75,7 @@ body {
 .clear-btn:hover {
   background-color: #d5d5d5;
 }
+
 
 .action-row {
   display: flex;
