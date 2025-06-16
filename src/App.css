@@ -1,4 +1,5 @@
-/* force rebuild - June 15 */
+/* Updated App.css – June 16 */
+
 body {
   font-family: Arial, sans-serif;
   background-color: #f4f4f4;
@@ -33,11 +34,11 @@ body {
   flex: 1;
 }
 
-.header .share-btn {
+.share-btn {
   background: none;
   border: none;
   color: white;
-  font-size: 1.2rem;
+  font-size: 1.4rem;
   cursor: pointer;
 }
 
@@ -50,11 +51,11 @@ body {
 }
 
 .input-row label {
-  flex: 2 1 100px;
+  flex: 1 1 120px;
 }
 
 .input-row input {
-  flex: 2 1 150px;
+  flex: 2 1 140px;
   padding: 0.5rem;
   font-size: 1rem;
   border: 1px solid #ccc;
@@ -76,11 +77,11 @@ body {
   background-color: #d5d5d5;
 }
 
-
 .action-row {
   display: flex;
   justify-content: space-between;
   margin: 1.5rem 0;
+  gap: 0.5rem;
 }
 
 .submit-btn,
@@ -90,9 +91,8 @@ body {
   border: none;
   border-radius: 4px;
   font-weight: bold;
-  cursor: pointer;
-  margin-right: 0.5rem;
   font-size: 1rem;
+  cursor: pointer;
 }
 
 .submit-btn {
@@ -107,7 +107,6 @@ body {
 .reset-btn {
   background-color: #9e9e9e;
   color: white;
-  margin-right: 0;
 }
 
 .reset-btn:hover {
@@ -133,34 +132,6 @@ body {
   font-weight: bold;
 }
 
-@media screen and (max-width: 480px) {
-  .input-row {
-    flex-direction: column;
-    align-items: stretch;
-  }
-
-  .input-row input,
-  .clear-btn {
-    width: 100%;
-  }
-
-  .action-row {
-    flex-direction: column;
-    gap: 0.5rem;
-  }
-
-  .submit-btn,
-  .reset-btn {
-    margin-right: 0;
-  }
-}
-
-
-.results p {
-  margin: 0.5rem 0;
-  font-size: 1rem;
-  font-weight: bold;
-}
 .info-section {
   margin-top: 1rem;
 }
@@ -184,4 +155,31 @@ body {
   padding: 1rem;
   border-left: 5px solid #fbc02d;
   border-radius: 4px;
+}
+
+@media screen and (max-width: 480px) {
+  .input-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .input-row input,
+  .clear-btn {
+    width: 100%;
+  }
+
+  .action-row {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .submit-btn,
+  .reset-btn {
+    width: 100%;
+  }
+
+  .results p {
+    flex-direction: column;
+    align-items: flex-start;
+  }
 }
