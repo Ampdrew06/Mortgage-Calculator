@@ -44,38 +44,27 @@ body {
 
 .input-row {
   display: flex;
-  flex-wrap: wrap;
+  justify-content: space-between;
   align-items: center;
-  gap: 0.5rem;
   margin-bottom: 1rem;
+  flex-wrap: wrap;
 }
 
 .input-row label {
-  flex: 2 1 100px;
+  flex: 1 1 100px;
 }
 
 .input-row input {
-  flex: 2 1 150px;
+  flex: 2 1 200px;
+  min-width: 0;
   padding: 0.5rem;
   font-size: 1rem;
   border: 1px solid #ccc;
   border-radius: 4px;
 }
 
-/* FORCE FIX: consistent layout on all screens */
-.input-row input,
 .clear-btn {
-  display: inline-block !important;
-  width: calc(100% - 90px) !important;
-  max-width: 420px !important;
-  height: 40px !important;
-  box-sizing: border-box !important;
-  vertical-align: middle !important;
-}
-
-.clear-btn {
-  width: 80px !important;
-  margin-left: 10px !important;
+  flex: 0 0 auto;
   padding: 0.5rem;
   background-color: #e0e0e0;
   color: #333;
@@ -83,6 +72,7 @@ body {
   border-radius: 4px;
   font-size: 0.9rem;
   cursor: pointer;
+  height: 40px;
 }
 
 .clear-btn:hover {
@@ -141,6 +131,34 @@ body {
   justify-content: space-between;
 }
 
+@media screen and (max-width: 480px) {
+  .input-row {
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: center;
+  }
+
+  .input-row input {
+    flex: 2 1 200px;
+  }
+
+  .clear-btn {
+    flex: 0 0 auto;
+    margin-top: 0.5rem;
+  }
+
+  .action-row {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .submit-btn,
+  .reset-btn {
+    margin-right: 0;
+  }
+}
+
+/* Pie Chart Styling */
 .pie-wrapper {
   max-width: 280px;
   margin: 2rem auto;
@@ -158,6 +176,7 @@ body {
   margin: 0 0.5rem;
 }
 
+/* Info Page Styling */
 .info-section {
   margin-top: 1rem;
 }
@@ -181,28 +200,4 @@ body {
   padding: 1rem;
   border-left: 5px solid #fbc02d;
   border-radius: 4px;
-}
-
-/* Responsive layout fixes */
-@media screen and (max-width: 480px) {
-  .input-row {
-    flex-direction: column;
-    align-items: stretch;
-  }
-
-  .input-row input,
-  .clear-btn {
-    width: 100% !important;
-    margin-left: 0 !important;
-  }
-
-  .action-row {
-    flex-direction: column;
-    gap: 0.5rem;
-  }
-
-  .submit-btn,
-  .reset-btn {
-    margin-right: 0;
-  }
 }
