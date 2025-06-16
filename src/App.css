@@ -1,4 +1,4 @@
-/* Updated June 16 */
+/* Final CSS - Mortgage Calculator */
 body {
   font-family: Arial, sans-serif;
   background-color: #f4f4f4;
@@ -29,16 +29,17 @@ body {
 .header h1 {
   font-size: 1.5rem;
   margin: 0;
-  text-align: left;
   flex: 1;
+  text-align: left;
 }
 
-.info-btn {
+.share-btn {
   background: none;
   border: none;
+  color: #fff;
   font-size: 1.5rem;
   cursor: pointer;
-  color: #ffffff;
+  padding: 0;
 }
 
 .input-row {
@@ -120,10 +121,6 @@ body {
   margin-top: 1rem;
 }
 
-.results.visible {
-  display: block;
-}
-
 .results p {
   margin: 0.5rem 0;
   font-size: 1rem;
@@ -132,47 +129,10 @@ body {
   justify-content: space-between;
 }
 
-/* Make pie chart responsive */
-.canvas-container {
-  display: flex;
-  justify-content: center;
-  margin-top: 1rem;
-}
-
-.canvas-container canvas {
-  max-width: 250px;
-  height: auto;
-}
-
-.info-section {
-  margin-top: 1rem;
-}
-
-.info-section h2 {
-  margin-top: 1rem;
-  color: #4caf50;
-}
-
-.info-section ul {
-  padding-left: 1.25rem;
-  margin-bottom: 1rem;
-}
-
-.info-section li {
-  margin-bottom: 0.5rem;
-}
-
-.info-section p {
-  background-color: #fff8e1;
-  padding: 1rem;
-  border-left: 5px solid #fbc02d;
-  border-radius: 4px;
-}
-
 @media screen and (max-width: 480px) {
   .input-row {
-    flex-direction: row;
-    flex-wrap: wrap;
+    flex-direction: column;
+    align-items: stretch;
   }
 
   .input-row input,
@@ -189,8 +149,22 @@ body {
   .reset-btn {
     margin-right: 0;
   }
+}
 
-  .canvas-container canvas {
-    max-width: 200px;
-  }
+/* Pie Chart Styling */
+.pie-wrapper {
+  max-width: 280px;
+  margin: 2rem auto;
+  text-align: center;
+}
+
+.pie-labels {
+  margin-top: 1rem;
+  font-size: 0.95rem;
+  font-weight: bold;
+}
+
+.pie-labels span {
+  display: inline-block;
+  margin: 0 0.5rem;
 }
