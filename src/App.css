@@ -33,13 +33,21 @@ body {
   text-align: left;
 }
 
-.share-btn {
+.share-btn,
+.info-btn {
   background: none;
   border: none;
-  color: #fff;
+  color: #2196f3;
   font-size: 1.5rem;
   cursor: pointer;
   padding: 0;
+  margin-left: 0.5rem;
+  transition: transform 0.2s ease;
+}
+
+.info-btn:hover,
+.share-btn:hover {
+  transform: scale(1.2);
 }
 
 .input-row {
@@ -156,6 +164,7 @@ body {
   max-width: 280px;
   margin: 2rem auto;
   text-align: center;
+  min-height: 200px;
 }
 
 .pie-labels {
@@ -167,4 +176,30 @@ body {
 .pie-labels span {
   display: inline-block;
   margin: 0 0.5rem;
+}
+
+/* Info Section Styling */
+.info-section {
+  margin-top: 1rem;
+}
+
+.info-section h2 {
+  margin-top: 1rem;
+  color: #4caf50;
+}
+
+.info-section ul {
+  padding-left: 1.25rem;
+  margin-bottom: 1rem;
+}
+
+.info-section li {
+  margin-bottom: 0.5rem;
+}
+
+.info-section p {
+  background-color: #fff8e1;
+  padding: 1rem;
+  border-left: 5px solid #fbc02d;
+  border-radius: 4px;
 }
