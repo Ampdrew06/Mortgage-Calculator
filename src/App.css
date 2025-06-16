@@ -43,22 +43,28 @@ body {
 
 .input-row {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: 0.5rem;
   margin-bottom: 1rem;
 }
 
 .input-row label {
-  flex: 2;
+  flex: 2 1 100px;
 }
 
 .input-row input {
-  flex: 2;
+  flex: 2 1 150px;
   padding: 0.5rem;
   font-size: 1rem;
   border: 1px solid #ccc;
   border-radius: 4px;
 }
+
+.clear-btn {
+  flex: 1 1 80px;
+}
+
 
 .clear-btn {
   flex: 1;
