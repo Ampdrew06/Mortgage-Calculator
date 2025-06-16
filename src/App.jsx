@@ -10,18 +10,17 @@ function App() {
   const [secondaryRate, setSecondaryRate] = useState('');
   const [overpayment, setOverpayment] = useState('');
   const [targetYears, setTargetYears] = useState('');
-
   const [initialPayment, setInitialPayment] = useState('');
   const [secondPayment, setSecondPayment] = useState('');
   const [yearsRemaining, setYearsRemaining] = useState('');
   const [remainingBalance, setRemainingBalance] = useState('');
   const [interestPaid, setInterestPaid] = useState(0);
   const [principalPaid, setPrincipalPaid] = useState(0);
-
   const [submitted, setSubmitted] = useState(false);
   const [showInfo, setShowInfo] = useState(false);
 
-  const basePMT = (pv, rate, nper) => (rate * pv) / (1 - Math.pow(1 + rate, -nper));
+  const basePMT = (pv, rate, nper) =>
+    (rate * pv) / (1 - Math.pow(1 + rate, -nper));
 
   const formatNumber = (value) => {
     const parts = value.toString().split('.');
@@ -46,9 +45,7 @@ function App() {
     setSubmitted(false);
   };
 
-  const toggleInfo = () => {
-    setShowInfo(!showInfo);
-  };
+  const toggleInfo = () => setShowInfo(!showInfo);
 
   const calculate = () => {
     setSubmitted(true);
@@ -62,32 +59,35 @@ function App() {
 
     if (!P || !r1 || !n) return;
 
-    const months = g ? g : n;
+    const months = g || n;
     const pmt = basePMT(P, r1, months);
     const initial = Math.abs(pmt + op);
     setInitialPayment(initial.toFixed(2));
 
-    let interest = 0;
-    let principal = 0;
+    let balance = P;
+    let totalInterest = 0;
+    let totalPrincipal = 0;
 
     for (let i = 0; i < months; i++) {
-      const monthlyInterest = P * r1;
+      const monthlyInterest = balance * r1;
       const monthlyPrincipal = initial - monthlyInterest;
-      interest += monthlyInterest;
-      principal += monthlyPrincipal;
-      P -= monthlyPrincipal;
+      totalInterest += monthlyInterest;
+      totalPrincipal += monthlyPrincipal;
+      balance -= monthlyPrincipal;
+      if (balance <= 0) break;
     }
 
-    setInterestPaid(interest);
-    setPrincipalPaid(principal);
+    setInterestPaid(totalInterest);
+    setPrincipalPaid(totalPrincipal);
 
     if (n - t > 0 && r2) {
+      const altPMT = g ? basePMT(P, r1, g) + op : basePMT(P, r1, n) + op;
       const futureValue = P * Math.pow(1 + r1, t);
-      const paid = initial * ((Math.pow(1 + r1, t) - 1) / r1);
-      const balance = futureValue - paid;
-      const second = basePMT(balance, r2, n - t);
+      const paid = altPMT * ((Math.pow(1 + r1, t) - 1) / r1);
+      const newBalance = futureValue - paid;
+      const second = basePMT(newBalance, r2, n - t);
       setSecondPayment(Math.abs(second).toFixed(2));
-      setRemainingBalance(Math.abs(balance).toFixed(2));
+      setRemainingBalance(Math.abs(newBalance).toFixed(2));
     } else {
       setSecondPayment('');
       setRemainingBalance('');
@@ -97,16 +97,17 @@ function App() {
     if (g && op) {
       const termPmt = basePMT(P, r1, g) + op;
       const nper = Math.log(1 + (P * r1) / -termPmt) / Math.log(1 + r1);
-      result = nper < 0 ? 'N/A' : (nper / 12).toFixed(2);
+      result = nper < 0 ? 'N/A' : Math.abs(nper / 12).toFixed(2);
     } else if (g) {
       result = (g / 12).toFixed(2);
     } else if (op) {
       const termPmt = basePMT(P, r1, n) + op;
       const nper = Math.log(1 + (P * r1) / -termPmt) / Math.log(1 + r1);
-      result = (nper / 12).toFixed(2);
+      result = Math.abs(nper / 12).toFixed(2);
     } else {
       result = (n / 12).toFixed(2);
     }
+
     setYearsRemaining(result);
   };
 
@@ -117,14 +118,29 @@ function App() {
         <button className="share-btn" onClick={toggleInfo} title="App Info">ℹ️</button>
       </div>
 
-      {!showInfo && (
+      {showInfo ? (
+        <div className="info-section">
+          <h2>How to Use</h2>
+          <ul>
+            <li><strong>Loan Amount (£)</strong> – Total mortgage borrowed.</li>
+            <li><strong>Loan Term</strong> – Years to repay full loan.</li>
+            <li><strong>Initial Fixed Rate (%)</strong> – Intro interest rate.</li>
+            <li><strong>Fixed Term</strong> – How long initial rate applies.</li>
+            <li><strong>Secondary Rate</strong> – Ongoing interest rate.</li>
+            <li><strong>Overpayment</strong> – Optional extra per month.</li>
+            <li><strong>Target Years</strong> – Goal for early repayment (optional).</li>
+          </ul>
+          <h2>Results Explained</h2>
+          <p>
+            The chart shows how much of your total repayment is paid in interest vs. how much goes toward the actual loan (principal). Overpayments reduce interest significantly.
+          </p>
+          <p className="disclaimer">This app is for illustration only — not financial advice.</p>
+        </div>
+      ) : (
         <>
           <div className="input-row">
             <label>Loan Amount (£)</label>
-            <input
-              type="text"
-              inputMode="numeric"
-              value={loanAmount}
+            <input type="text" inputMode="numeric" value={loanAmount}
               onChange={(e) => {
                 let raw = e.target.value.replace(/,/g, '').replace(/[^\d.]/g, '');
                 if (!isNaN(raw) && raw !== '') {
@@ -146,13 +162,13 @@ function App() {
           </div>
 
           <div className="input-row">
-            <label>Initial Rate (%)</label>
+            <label>Initial Fixed Rate (%)</label>
             <input type="number" inputMode="decimal" value={initialRate} onChange={(e) => setInitialRate(e.target.value)} />
             <button className="clear-btn" onClick={() => setInitialRate('')}>Clear</button>
           </div>
 
           <div className="input-row">
-            <label>Fixed Term (Years)</label>
+            <label>Fixed Term Length (Years)</label>
             <input type="number" inputMode="numeric" value={fixedTermYears} onChange={(e) => setFixedTermYears(e.target.value)} />
             <button className="clear-btn" onClick={() => setFixedTermYears('')}>Clear</button>
           </div>
@@ -190,23 +206,6 @@ function App() {
             </div>
           )}
         </>
-      )}
-
-      {showInfo && (
-        <div className="info-section">
-          <h2>How to Use This App</h2>
-          <ul>
-            <li><strong>Loan Amount (£)</strong> – The total amount borrowed.</li>
-            <li><strong>Loan Term</strong> – Duration of the mortgage in years.</li>
-            <li><strong>Initial Rate (%)</strong> – Starting interest rate (usually fixed for a period).</li>
-            <li><strong>Fixed Term (Years)</strong> – How long the initial rate lasts.</li>
-            <li><strong>Secondary Rate (%)</strong> – The rate after the fixed period ends.</li>
-            <li><strong>Overpayment (£)</strong> – Extra amount you want to pay monthly (optional).</li>
-            <li><strong>Target Years</strong> – Desired time to repay mortgage (optional).</li>
-          </ul>
-          <h2>Disclaimer</h2>
-          <p>This tool is for illustrative purposes only and should not be considered financial advice. Please consult a professional for accurate mortgage planning.</p>
-        </div>
       )}
     </div>
   );
