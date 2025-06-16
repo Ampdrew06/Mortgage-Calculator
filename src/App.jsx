@@ -1,6 +1,14 @@
 import React, { useState } from 'react';
 import './App.css';
-import PieChart from './PieChart';
+import { Pie } from 'react-chartjs-2';
+import {
+  Chart as ChartJS,
+  ArcElement,
+  Tooltip,
+  Legend
+} from 'chart.js';
+
+ChartJS.register(ArcElement, Tooltip, Legend);
 
 function App() {
   const [loanAmount, setLoanAmount] = useState('');
@@ -10,14 +18,14 @@ function App() {
   const [secondaryRate, setSecondaryRate] = useState('');
   const [overpayment, setOverpayment] = useState('');
   const [targetYears, setTargetYears] = useState('');
-
   const [initialPayment, setInitialPayment] = useState('');
   const [secondPayment, setSecondPayment] = useState('');
   const [yearsRemaining, setYearsRemaining] = useState('');
   const [remainingBalance, setRemainingBalance] = useState('');
   const [submitted, setSubmitted] = useState(false);
-
-  const [chartData, setChartData] = useState(null);
+  const [infoVisible, setInfoVisible] = useState(false);
+  const [interestPaid, setInterestPaid] = useState(0);
+  const [principalPaid, setPrincipalPaid] = useState(0);
 
   const basePMT = (pv, rate, nper) =>
     (rate * pv) / (1 - Math.pow(1 + rate, -nper));
@@ -41,7 +49,7 @@ function App() {
     setYearsRemaining('');
     setRemainingBalance('');
     setSubmitted(false);
-    setChartData(null);
+    setInfoVisible(false);
   };
 
   const calculate = () => {
@@ -54,21 +62,22 @@ function App() {
     const op = overpayment ? parseFloat(overpayment) : 0;
     const g = targetYears ? parseInt(targetYears) * 12 : null;
 
-    if (!P || !r1 || !n) {
+    if (!P || !r1 || !n || !t || !r2) {
       setInitialPayment('');
       setSecondPayment('');
       setYearsRemaining('');
       setRemainingBalance('');
-      setChartData(null);
+      setInterestPaid(0);
+      setPrincipalPaid(0);
       return;
     }
 
-    const months = g ? g : n;
+    const months = g || n;
     const pmt = basePMT(P, r1, months);
     const initial = Math.abs(pmt + op);
     setInitialPayment(initial.toFixed(2));
 
-    if (n - t > 0 && r2 > 0 && t > 0) {
+    if (n - t > 0) {
       const altPMT = g ? basePMT(P, r1, g) + op : basePMT(P, r1, n) + op;
       const futureValue = P * Math.pow(1 + r1, t);
       const paid = altPMT * ((Math.pow(1 + r1, t) - 1) / r1);
@@ -79,20 +88,21 @@ function App() {
       setSecondPayment('');
     }
 
+    // Calculate remaining years
     if (P === 0) {
       setYearsRemaining('');
     } else {
       let result;
       if (g && op) {
         const termPmt = basePMT(P, r1, g) + op;
-        const nper = Math.log(termPmt / (termPmt - P * r1)) / Math.log(1 + r1);
-        result = nper < 0 ? 'N/A' : (nper / 12).toFixed(2);
+        const nper = Math.log(1 + (P * r1) / -termPmt) / Math.log(1 + r1);
+        result = nper < 0 ? 'N/A' : Math.abs(nper / 12).toFixed(2);
       } else if (g) {
         result = (g / 12).toFixed(2);
       } else if (op) {
         const termPmt = basePMT(P, r1, n) + op;
-        const nper = Math.log(termPmt / (termPmt - P * r1)) / Math.log(1 + r1);
-        result = nper < 0 ? 'N/A' : (nper / 12).toFixed(2);
+        const nper = Math.log(1 + (P * r1) / -termPmt) / Math.log(1 + r1);
+        result = Math.abs(nper / 12).toFixed(2);
       } else {
         result = (n / 12).toFixed(2);
       }
@@ -101,123 +111,139 @@ function App() {
 
     if (P === 0 || n - t <= 0) {
       setRemainingBalance('');
-      setChartData(null);
     } else {
       const altPMT = g ? basePMT(P, r1, g) + op : basePMT(P, r1, n) + op;
+      const totalPaid = altPMT * n;
+      const interest = totalPaid - P;
+      setInterestPaid(interest);
+      setPrincipalPaid(P);
       const futureValue = P * Math.pow(1 + r1, t);
       const paid = altPMT * ((Math.pow(1 + r1, t) - 1) / r1);
       const balance = futureValue - paid;
       setRemainingBalance(Math.abs(balance).toFixed(2));
-
-      // Total paid = payment × total months
-      const totalMonths = g ? g : n;
-      const totalPaid = altPMT * totalMonths;
-      const interestPaid = totalPaid - P;
-
-      setChartData({
-        labels: ['Principal Paid', 'Interest Paid'],
-        datasets: [
-          {
-            data: [P, interestPaid],
-            backgroundColor: ['green', 'red'],
-            hoverOffset: 4,
-          },
-        ],
-      });
     }
+  };
+
+  const pieData = {
+    labels: ['Interest Paid', 'Principal Paid'],
+    datasets: [
+      {
+        data: [interestPaid, principalPaid],
+        backgroundColor: ['#e74c3c', '#2ecc71'],
+        hoverOffset: 4
+      }
+    ]
   };
 
   return (
     <div className="container">
       <div className="header">
         <h1>Mortgage Calculator</h1>
-        <button
-          className="info-btn"
-          title="Info"
-          onClick={() => window.location.href = '/info'}
-        >i</button>
+        <button className="share-btn" onClick={() => setInfoVisible(!infoVisible)}>
+          ℹ️
+        </button>
       </div>
 
-      {/* Input Fields */}
-      <div className="input-row">
-        <label>Loan Amount (£)</label>
-        <input
-          type="text"
-          inputMode="numeric"
-          value={loanAmount}
-          onChange={(e) => {
-            let raw = e.target.value.replace(/,/g, '').replace(/[^\d.]/g, '');
-            if (!isNaN(raw) && raw !== '') {
-              const parts = raw.split('.');
-              parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',');
-              setLoanAmount(parts.join('.'));
-            } else {
-              setLoanAmount('');
-            }
-          }}
-        />
-        <button className="clear-btn" onClick={() => setLoanAmount('')}>Clear</button>
-      </div>
+      {!infoVisible && (
+        <>
+          <div className="input-row">
+            <label>Loan Amount (£)</label>
+            <input
+              type="text"
+              inputMode="numeric"
+              value={loanAmount}
+              onChange={(e) => {
+                let raw = e.target.value.replace(/,/g, '').replace(/[^\d.]/g, '');
+                if (!isNaN(raw) && raw !== '') {
+                  const parts = raw.split('.');
+                  parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+                  setLoanAmount(parts.join('.'));
+                } else {
+                  setLoanAmount('');
+                }
+              }}
+            />
+            <button className="clear-btn" onClick={() => setLoanAmount('')}>Clear</button>
+          </div>
 
-      <div className="input-row">
-        <label>Loan Term (Years)</label>
-        <input type="number" value={loanTermYears} onChange={(e) => setLoanTermYears(e.target.value)} />
-        <button className="clear-btn" onClick={() => setLoanTermYears('')}>Clear</button>
-      </div>
+          <div className="input-row">
+            <label>Loan Term (Years)</label>
+            <input type="number" inputMode="numeric" value={loanTermYears} onChange={(e) => setLoanTermYears(e.target.value)} />
+            <button className="clear-btn" onClick={() => setLoanTermYears('')}>Clear</button>
+          </div>
 
-      <div className="input-row">
-        <label>Initial Fixed Rate (%)</label>
-        <input type="number" value={initialRate} onChange={(e) => setInitialRate(e.target.value)} />
-        <button className="clear-btn" onClick={() => setInitialRate('')}>Clear</button>
-      </div>
+          <div className="input-row">
+            <label>Initial Fixed Rate (%)</label>
+            <input type="number" inputMode="decimal" value={initialRate} onChange={(e) => setInitialRate(e.target.value)} />
+            <button className="clear-btn" onClick={() => setInitialRate('')}>Clear</button>
+          </div>
 
-      <div className="input-row">
-        <label>Fixed Term Length (Years)</label>
-        <input type="number" value={fixedTermYears} onChange={(e) => setFixedTermYears(e.target.value)} />
-        <button className="clear-btn" onClick={() => setFixedTermYears('')}>Clear</button>
-      </div>
+          <div className="input-row">
+            <label>Fixed Term Length (Years)</label>
+            <input type="number" inputMode="numeric" value={fixedTermYears} onChange={(e) => setFixedTermYears(e.target.value)} />
+            <button className="clear-btn" onClick={() => setFixedTermYears('')}>Clear</button>
+          </div>
 
-      <div className="input-row">
-        <label>Secondary Rate (%)</label>
-        <input type="number" value={secondaryRate} onChange={(e) => setSecondaryRate(e.target.value)} />
-        <button className="clear-btn" onClick={() => setSecondaryRate('')}>Clear</button>
-      </div>
+          <div className="input-row">
+            <label>Secondary Rate (%)</label>
+            <input type="number" inputMode="decimal" value={secondaryRate} onChange={(e) => setSecondaryRate(e.target.value)} />
+            <button className="clear-btn" onClick={() => setSecondaryRate('')}>Clear</button>
+          </div>
 
-      <div className="input-row">
-        <label>Overpayment (£) (Optional)</label>
-        <input type="text" value={overpayment} onChange={(e) => setOverpayment(e.target.value)} />
-        <button className="clear-btn" onClick={() => setOverpayment('')}>Clear</button>
-      </div>
+          <div className="input-row">
+            <label>Overpayment (£) (Optional)</label>
+            <input type="text" inputMode="numeric" value={overpayment} onChange={(e) => setOverpayment(e.target.value)} />
+            <button className="clear-btn" onClick={() => setOverpayment('')}>Clear</button>
+          </div>
 
-      <div className="input-row">
-        <label>Target Years (Optional)</label>
-        <input type="number" value={targetYears} onChange={(e) => setTargetYears(e.target.value)} />
-        <button className="clear-btn" onClick={() => setTargetYears('')}>Clear</button>
-      </div>
+          <div className="input-row">
+            <label>Target Years (Optional)</label>
+            <input type="number" inputMode="numeric" value={targetYears} onChange={(e) => setTargetYears(e.target.value)} />
+            <button className="clear-btn" onClick={() => setTargetYears('')}>Clear</button>
+          </div>
 
-      <div className="action-row">
-        <button className="submit-btn" onClick={calculate}>Submit</button>
-        <button className="reset-btn" onClick={resetAll}>Reset All</button>
-      </div>
+          <div className="action-row">
+            <button className="submit-btn" onClick={calculate}>Submit</button>
+            <button className="reset-btn" onClick={resetAll}>Reset All</button>
+          </div>
+        </>
+      )}
 
-      {submitted && (
+      {infoVisible && (
+        <div className="info-section">
+          <h2>App Information</h2>
+          <p>This tool gives you a forecast of your mortgage repayments.</p>
+          <ul>
+            <li><strong>Loan Amount:</strong> The total amount you're borrowing.</li>
+            <li><strong>Overpayment:</strong> Extra you pay monthly, beyond your required amount.</li>
+            <li><strong>Target Years:</strong> Set a goal for when you'd like the mortgage paid off.</li>
+          </ul>
+          <p><strong>Disclaimer:</strong> This tool is for guidance only. It's not financial advice.</p>
+        </div>
+      )}
+
+      {submitted && !infoVisible && (
         <div className="results visible">
           {initialPayment && <p><strong>Initial Monthly Payment:</strong> £{formatNumber(initialPayment)}</p>}
           {secondPayment && <p><strong>Secondary Monthly Payment:</strong> £{formatNumber(secondPayment)}</p>}
           {yearsRemaining && <p><strong>Years Remaining:</strong> {yearsRemaining}</p>}
           {remainingBalance && <p><strong>Remaining Balance After Fixed Term:</strong> £{formatNumber(remainingBalance)}</p>}
 
-          {chartData && (
-            <div style={{ maxWidth: '300px', margin: '1rem auto' }}>
-              <PieChart data={chartData} />
-              <p style={{ color: 'green' }}>Green: Principal Being Paid</p>
-              <p style={{ color: 'red' }}>Red: Interest Being Paid</p>
-            </div>
+          {principalPaid > 0 && interestPaid > 0 && (
+            <>
+              <Pie data={pieData} width={250} height={250} />
+              <p style={{ color: '#e74c3c' }}>Red = Interest Paid</p>
+              <p style={{ color: '#2ecc71' }}>Green = Principal Paid</p>
+            </>
           )}
         </div>
       )}
     </div>
   );
+}
+
+export default App;
+
 }
 
 export default App;
