@@ -36,7 +36,7 @@ body {
 .share-btn {
   background: none;
   border: none;
-  color: #2196f3;
+  color: #fff;
   font-size: 1.5rem;
   cursor: pointer;
   padding: 0;
@@ -58,15 +58,24 @@ body {
   flex: 2 1 150px;
   padding: 0.5rem;
   font-size: 1rem;
-  height: 40px;
   border: 1px solid #ccc;
   border-radius: 4px;
-  box-sizing: border-box;
+}
+
+/* FORCE FIX: consistent layout on all screens */
+.input-row input,
+.clear-btn {
+  display: inline-block !important;
+  width: calc(100% - 90px) !important;
+  max-width: 420px !important;
+  height: 40px !important;
+  box-sizing: border-box !important;
+  vertical-align: middle !important;
 }
 
 .clear-btn {
-  flex: 1 1 80px;
-  height: 40px;
+  width: 80px !important;
+  margin-left: 10px !important;
   padding: 0.5rem;
   background-color: #e0e0e0;
   color: #333;
@@ -132,12 +141,10 @@ body {
   justify-content: space-between;
 }
 
-/* Pie Chart Styling */
 .pie-wrapper {
   max-width: 280px;
   margin: 2rem auto;
   text-align: center;
-  min-height: 200px;
 }
 
 .pie-labels {
@@ -151,7 +158,6 @@ body {
   margin: 0 0.5rem;
 }
 
-/* Info Page Styling */
 .info-section {
   margin-top: 1rem;
 }
@@ -177,13 +183,7 @@ body {
   border-radius: 4px;
 }
 
-.disclaimer {
-  font-size: 0.9rem;
-  color: #555;
-  margin-top: 1rem;
-}
-
-/* Mobile Layout */
+/* Responsive layout fixes */
 @media screen and (max-width: 480px) {
   .input-row {
     flex-direction: column;
@@ -192,9 +192,8 @@ body {
 
   .input-row input,
   .clear-btn {
-    width: 100%;
-    font-size: 1rem;
-    height: 40px;
+    width: 100% !important;
+    margin-left: 0 !important;
   }
 
   .action-row {
@@ -207,4 +206,3 @@ body {
     margin-right: 0;
   }
 }
-/* force-refresh: v2025-06-16 */
