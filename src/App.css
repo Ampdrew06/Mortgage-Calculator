@@ -58,12 +58,15 @@ body {
   flex: 2 1 150px;
   padding: 0.5rem;
   font-size: 1rem;
+  height: 40px;
   border: 1px solid #ccc;
   border-radius: 4px;
+  box-sizing: border-box;
 }
 
 .clear-btn {
   flex: 1 1 80px;
+  height: 40px;
   padding: 0.5rem;
   background-color: #e0e0e0;
   color: #333;
@@ -190,6 +193,8 @@ body {
   .input-row input,
   .clear-btn {
     width: 100%;
+    font-size: 1rem;
+    height: 40px;
   }
 
   .action-row {
@@ -202,4 +207,3 @@ body {
     margin-right: 0;
   }
 }
-
