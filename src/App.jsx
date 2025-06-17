@@ -37,7 +37,7 @@ function App() {
     const n = parseFloat(loanTerm) * 12;
     const r1 = parseFloat(initialRate) / 100 / 12;
     const fixedN = parseFloat(fixedTerm) * 12 || 0;
-    const r2 = parseFloat(secondaryRate) / 100 / 12;
+    const r2 = parseFloat(secondaryRate) / 100 / 12 || 0;
     const extra = parseNumber(overpayment);
     const target = parseFloat(targetYears) || null;
 
@@ -46,57 +46,63 @@ function App() {
       return;
     }
 
-    const targetTerm = target ? target * 12 : n;
-    const baseMonthly = PMT(r1, targetTerm, P);
-    const fullMonthly = baseMonthly + extra;
-
     let totalInterest = 0;
     let totalPrincipal = 0;
-    let tempBalance = P;
+    let balance = P;
     let monthsElapsed = 0;
+    let monthly = 0;
+    let phaseTwoMonthly = null;
 
-    // Phase 1: Fixed Term (if exists)
-    if (fixedN > 0 && r1) {
-      const fixedMonthly = PMT(r1, targetTerm, P) + extra;
-      for (let i = 0; i < fixedN && tempBalance > 0; i++) {
-        const interest = tempBalance * r1;
-        const principal = fixedMonthly - interest;
+    if (fixedN > 0 && r2 > 0) {
+      // Fixed then secondary rate mortgage
+      const baseMonthly1 = PMT(r1, fixedN, P);
+      const fullMonthly1 = baseMonthly1 + extra;
+      for (let i = 0; i < fixedN && balance > 0; i++) {
+        const interest = balance * r1;
+        const principal = fullMonthly1 - interest;
         totalInterest += interest;
         totalPrincipal += principal;
-        tempBalance -= principal;
+        balance -= principal;
         monthsElapsed++;
+      }
+
+      if (balance > 0) {
+        const remainingMonths = n - fixedN;
+        const baseMonthly2 = PMT(r2, remainingMonths, balance);
+        const fullMonthly2 = baseMonthly2 + extra;
+        phaseTwoMonthly = baseMonthly2;
+
+        for (let i = 0; i < remainingMonths && balance > 0; i++) {
+          const interest = balance * r2;
+          const principal = fullMonthly2 - interest;
+          totalInterest += interest;
+          totalPrincipal += principal;
+          balance -= principal;
+          monthsElapsed++;
+        }
+
+        monthly = fullMonthly1;
       }
     } else {
-      // No fixed phase; calculate full term at r1
-      const simpleMonthly = PMT(r1, targetTerm, P) + extra;
-      for (let i = 0; i < targetTerm && tempBalance > 0; i++) {
-        const interest = tempBalance * r1;
-        const principal = simpleMonthly - interest;
+      // Standard mortgage or Target Term case
+      const fullTerm = target ? target * 12 : n;
+      const baseMonthly = PMT(r1, fullTerm, P);
+      const fullMonthly = baseMonthly + extra;
+      monthly = fullMonthly;
+
+      for (let i = 0; i < fullTerm && balance > 0; i++) {
+        const interest = balance * r1;
+        const principal = fullMonthly - interest;
         totalInterest += interest;
         totalPrincipal += principal;
-        tempBalance -= principal;
+        balance -= principal;
         monthsElapsed++;
       }
     }
 
-    // Phase 2: Secondary rate after fixed term (if applicable)
-    let payment2 = null;
-    if (tempBalance > 0 && r2 && n - fixedN > 0) {
-      const secondaryMonthly = PMT(r2, n - fixedN, tempBalance) + extra;
-      for (let i = 0; i < n - fixedN && tempBalance > 0; i++) {
-        const interest = tempBalance * r2;
-        const principal = secondaryMonthly - interest;
-        totalInterest += interest;
-        totalPrincipal += principal;
-        tempBalance -= principal;
-        monthsElapsed++;
-      }
-      payment2 = PMT(r2, n - fixedN, tempBalance + principal) || null;
-    }
-
-    setMonthlyPayment(fullMonthly.toFixed(2));
-    setSecondaryPayment(payment2 ? payment2.toFixed(2) : null);
-    setRemainingBalance(tempBalance > 0 ? tempBalance.toFixed(2) : '0.00');
+    setMonthlyPayment(monthly.toFixed(2));
+    setSecondaryPayment(phaseTwoMonthly ? phaseTwoMonthly.toFixed(2) : null);
+    setRemainingBalance(balance > 0 ? balance.toFixed(2) : '0.00');
     setTimeToComplete((monthsElapsed / 12).toFixed(2));
     setInterestPaid(totalInterest.toFixed(2));
     setPrincipalPaid(totalPrincipal.toFixed(2));
@@ -227,9 +233,7 @@ function App() {
 
           {submitted && (
             <div className="results visible">
-              {monthlyPayment && (
-                <p><strong>Monthly Payment:</strong> £{formatNumber(monthlyPayment)}</p>
-              )}
+              <p><strong>Monthly Payment:</strong> £{formatNumber(monthlyPayment)}</p>
               {secondaryPayment && (
                 <p><strong>Secondary Monthly Payment:</strong> £{formatNumber(secondaryPayment)}</p>
               )}
