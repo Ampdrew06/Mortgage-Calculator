@@ -14,7 +14,6 @@ function App() {
   const [submitted, setSubmitted] = useState(false);
   const [monthlyPayment, setMonthlyPayment] = useState(null);
   const [secondaryPayment, setSecondaryPayment] = useState(null);
-  const [totalOutlay, setTotalOutlay] = useState(null);
   const [timeToComplete, setTimeToComplete] = useState(null);
   const [remainingBalance, setRemainingBalance] = useState(null);
   const [interestPaid, setInterestPaid] = useState(0);
@@ -48,44 +47,59 @@ function App() {
     }
 
     const targetTerm = target ? target * 12 : n;
-    const payment1 = PMT(r1, targetTerm, P);
-    const fullMonthly = payment1 + extra;
-    const paymentUsed = fullMonthly;
+    const baseMonthly = PMT(r1, targetTerm, P);
+    const fullMonthly = baseMonthly + extra;
 
-    // Time to Complete
-    let actualMonths = 0;
+    let totalInterest = 0;
+    let totalPrincipal = 0;
     let tempBalance = P;
-    while (tempBalance > 0 && actualMonths < 1000) {
-      const interest = tempBalance * r1;
-      const principal = paymentUsed - interest;
-      tempBalance -= principal;
-      actualMonths++;
-      if (actualMonths > targetTerm) break;
+    let monthsElapsed = 0;
+
+    // Phase 1: Fixed Term (if exists)
+    if (fixedN > 0 && r1) {
+      const fixedMonthly = PMT(r1, targetTerm, P) + extra;
+      for (let i = 0; i < fixedN && tempBalance > 0; i++) {
+        const interest = tempBalance * r1;
+        const principal = fixedMonthly - interest;
+        totalInterest += interest;
+        totalPrincipal += principal;
+        tempBalance -= principal;
+        monthsElapsed++;
+      }
+    } else {
+      // No fixed phase; calculate full term at r1
+      const simpleMonthly = PMT(r1, targetTerm, P) + extra;
+      for (let i = 0; i < targetTerm && tempBalance > 0; i++) {
+        const interest = tempBalance * r1;
+        const principal = simpleMonthly - interest;
+        totalInterest += interest;
+        totalPrincipal += principal;
+        tempBalance -= principal;
+        monthsElapsed++;
+      }
     }
 
-    const timeComplete =
-      paymentUsed <= 0 ? 'N/A' : Math.round((actualMonths / 12) * 100) / 100;
-
-    // Remaining Balance after fixed term
-    const compoundBalance = P * Math.pow(1 + r1, fixedN);
-    const paidOff =
-      fullMonthly *
-      ((Math.pow(1 + r1, fixedN) - 1) / r1 || 0); // prevent div by 0
-    const balance = Math.max(0, compoundBalance - paidOff);
-
-    // Secondary payment
+    // Phase 2: Secondary rate after fixed term (if applicable)
     let payment2 = null;
-    if (fixedN > 0 && r2 && n - fixedN > 0) {
-      payment2 = PMT(r2, n - fixedN, balance);
+    if (tempBalance > 0 && r2 && n - fixedN > 0) {
+      const secondaryMonthly = PMT(r2, n - fixedN, tempBalance) + extra;
+      for (let i = 0; i < n - fixedN && tempBalance > 0; i++) {
+        const interest = tempBalance * r2;
+        const principal = secondaryMonthly - interest;
+        totalInterest += interest;
+        totalPrincipal += principal;
+        tempBalance -= principal;
+        monthsElapsed++;
+      }
+      payment2 = PMT(r2, n - fixedN, tempBalance + principal) || null;
     }
 
-    setMonthlyPayment(payment1.toFixed(2));
-    setTotalOutlay(extra > 0 ? (payment1 + extra).toFixed(2) : null);
+    setMonthlyPayment(fullMonthly.toFixed(2));
     setSecondaryPayment(payment2 ? payment2.toFixed(2) : null);
-    setRemainingBalance(balance.toFixed(2));
-    setTimeToComplete(timeComplete);
-    setInterestPaid(balance > 0 ? (P - balance).toFixed(2) : P.toFixed(2));
-    setPrincipalPaid((P - balance).toFixed(2));
+    setRemainingBalance(tempBalance > 0 ? tempBalance.toFixed(2) : '0.00');
+    setTimeToComplete((monthsElapsed / 12).toFixed(2));
+    setInterestPaid(totalInterest.toFixed(2));
+    setPrincipalPaid(totalPrincipal.toFixed(2));
     setSubmitted(true);
   };
 
@@ -99,7 +113,6 @@ function App() {
     setTargetYears('');
     setSubmitted(false);
     setMonthlyPayment(null);
-    setTotalOutlay(null);
     setSecondaryPayment(null);
     setRemainingBalance(null);
     setTimeToComplete(null);
@@ -125,11 +138,11 @@ function App() {
             <input
               type="text"
               value={loanAmount}
-              onChange={(e) =>
-                setLoanAmount(
-                  e.target.value.replace(/[^\d.,]/g, '')
-                )
-              }
+              onChange={(e) => {
+                const cleaned = e.target.value.replace(/[^\d.]/g, '');
+                const formatted = cleaned.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+                setLoanAmount(formatted);
+              }}
               inputMode="decimal"
             />
             <button className="clear-btn" onClick={() => setLoanAmount('')}>Clear</button>
@@ -215,10 +228,7 @@ function App() {
           {submitted && (
             <div className="results visible">
               {monthlyPayment && (
-                <p><strong>Initial Monthly Payment:</strong> £{formatNumber(monthlyPayment)}</p>
-              )}
-              {totalOutlay && (
-                <p><strong>Total Monthly Outlay:</strong> £{formatNumber(totalOutlay)}</p>
+                <p><strong>Monthly Payment:</strong> £{formatNumber(monthlyPayment)}</p>
               )}
               {secondaryPayment && (
                 <p><strong>Secondary Monthly Payment:</strong> £{formatNumber(secondaryPayment)}</p>
