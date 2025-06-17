@@ -28,7 +28,7 @@ const PieChart = ({ interest, principal }) => {
 
  return (
   <div
-    style={{ maxWidth: '240px', height: '240px', margin: '2rem auto' }}
+    style={{ maxWidth: '180px', height: '180px', margin: '2rem auto' }}
     role="img"
     aria-label="Pie chart showing interest versus principal paid"
   >
