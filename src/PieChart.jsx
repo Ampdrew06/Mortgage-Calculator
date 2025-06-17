@@ -17,8 +17,7 @@ const PieChart = ({ interest, principal }) => {
   };
 
   const options = {
-    responsive: true,
-    maintainAspectRatio: false, // This allows custom sizing below
+    maintainAspectRatio: false,
     plugins: {
       legend: {
         display: false,
@@ -27,16 +26,7 @@ const PieChart = ({ interest, principal }) => {
   };
 
   return (
-    <div
-      style={{
-        width: '180px',
-        height: '180px',
-        margin: '2rem auto',
-        position: 'relative',
-      }}
-      role="img"
-      aria-label="Pie chart showing interest versus principal paid"
-    >
+    <div style={{ maxWidth: '200px', height: '200px', margin: '1.5rem auto' }} role="img" aria-label="Pie chart showing interest versus principal paid">
       <Pie data={data} options={options} />
       <div style={{ textAlign: 'center', marginTop: '1rem', fontSize: '0.95rem' }}>
         <span style={{ color: '#f44336', fontWeight: 'bold' }}>Red:</span> Interest being paid&nbsp;|&nbsp;
@@ -45,9 +35,5 @@ const PieChart = ({ interest, principal }) => {
     </div>
   );
 };
-
-export default PieChart;
-
-
 
 export default PieChart;
