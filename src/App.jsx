@@ -49,7 +49,6 @@ function App() {
     let totalPaid = 0;
     let monthsUsed = 0;
 
-    // If using target, override full calculation path
     if (target) {
       const targetMonths = target * 12;
       const payment = r1
@@ -72,7 +71,6 @@ function App() {
       setMonthlyPayment(payment.toFixed(2));
       setSecondaryPayment(null);
     } else {
-      // Phase 1: Initial Rate
       payment1 = r1
         ? (balance * r1) / (1 - Math.pow(1 + r1, -n))
         : balance / n;
@@ -90,7 +88,6 @@ function App() {
         }
       }
 
-      // Phase 2: Secondary Rate
       if (balance > 0 && r2) {
         const remainingMonths = n - fixedN;
         payment2 = (balance * r2) / (1 - Math.pow(1 + r2, -remainingMonths));
@@ -287,10 +284,6 @@ function App() {
       )}
     </div>
   );
-}
-
-export default App;
-
 }
 
 export default App;
