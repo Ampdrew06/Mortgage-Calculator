@@ -26,11 +26,11 @@ const PieChart = ({ interest, principal }) => {
   };
 
   return (
-    <div style={{ maxWidth: '200px', height: '200px', margin: '1.5rem auto' }} role="img" aria-label="Pie chart showing interest versus principal paid">
+    <div className="pie-wrapper" role="img" aria-label="Pie chart showing interest versus principal paid">
       <Pie data={data} options={options} />
-      <div style={{ textAlign: 'center', marginTop: '1rem', fontSize: '0.95rem' }}>
-        <span style={{ color: '#f44336', fontWeight: 'bold' }}>Red:</span> Interest being paid&nbsp;|&nbsp;
-        <span style={{ color: '#4caf50', fontWeight: 'bold' }}>Green:</span> Principal being paid
+      <div className="pie-labels">
+        <span style={{ color: '#f44336' }}>Red: Interest</span> |{' '}
+        <span style={{ color: '#4caf50' }}>Green: Principal</span>
       </div>
     </div>
   );
