@@ -1,3 +1,4 @@
+// ... [Imports remain unchanged]
 import React, { useState } from 'react';
 import PieChart from './PieChart';
 import InfoPage from './InfoPage';
@@ -43,15 +44,15 @@ function App() {
       return;
     }
 
-    let payment, totalPaid = 0, totalInterest = 0, balance = P, fixedPayment, secPayment;
+    let payment, totalPaid = 0, totalInterest = 0, balance = P;
+    let fixedPayment, secPayment, balanceAfterFixed = 0;
 
     const getPMT = (rate, periods, principal) =>
       rate ? (principal * rate) / (1 - Math.pow(1 + rate, -periods)) : principal / periods;
 
-    // Target overrides standard payments
-    const targetN = target ? target * 12 : n;
-
+    // Handle target input first (overrides everything)
     if (target) {
+      const targetN = target * 12;
       const targetPayment = getPMT(r1, targetN, P) + extra;
       for (let i = 0; i < targetN; i++) {
         const interest = balance * r1;
@@ -64,7 +65,7 @@ function App() {
           break;
         }
       }
-      setMonthlyPayment((targetPayment).toFixed(2));
+      setMonthlyPayment(targetPayment.toFixed(2));
       setSecondaryPayment(null);
       setYearsRemaining((totalPaid / targetPayment / 12).toFixed(2));
       setRemainingBalance(balance.toFixed(2));
@@ -74,7 +75,7 @@ function App() {
       return;
     }
 
-    // FIXED period
+    // Fixed period
     fixedPayment = getPMT(r1, n, P) + extra;
     for (let i = 0; i < fixedN; i++) {
       const interest = balance * r1;
@@ -87,8 +88,9 @@ function App() {
         break;
       }
     }
+    balanceAfterFixed = balance;
 
-    // SECONDARY period
+    // Secondary period
     if (r2 && balance > 0) {
       const remainingMonths = n - fixedN;
       secPayment = getPMT(r2, remainingMonths, balance) + extra;
@@ -105,7 +107,7 @@ function App() {
       }
     }
 
-    // SIMPLE: no fixed term / no secondary rate
+    // If no fixed/secondary: basic case
     if (!fixedTerm || !secondaryRate) {
       fixedPayment = getPMT(r1, n, P) + extra;
       for (let i = 0; i < n; i++) {
@@ -121,14 +123,11 @@ function App() {
       }
     }
 
-    const finalMonthly = fixedPayment;
-    const months = totalPaid / finalMonthly;
-    const yearsLeft = months / 12;
-
-    setMonthlyPayment(finalMonthly.toFixed(2));
+    const yearsLeft = loanTerm; // default unless target or early payoff
+    setMonthlyPayment(fixedPayment.toFixed(2));
     setSecondaryPayment(secPayment ? secPayment.toFixed(2) : null);
     setYearsRemaining(yearsLeft.toFixed(2));
-    setRemainingBalance(balance.toFixed(2));
+    setRemainingBalance(balanceAfterFixed.toFixed(2));
     setInterestPaid(totalInterest.toFixed(2));
     setPrincipalPaid((P - balance).toFixed(2));
     setSubmitted(true);
@@ -260,24 +259,16 @@ function App() {
           {submitted && (
             <div className="results visible">
               {monthlyPayment && (
-                <p>
-                  <strong>Initial Monthly Payment:</strong> £{formatNumber(monthlyPayment)}
-                </p>
+                <p><strong>Initial Monthly Payment:</strong> £{formatNumber(monthlyPayment)}</p>
               )}
               {secondaryPayment && (
-                <p>
-                  <strong>Secondary Monthly Payment:</strong> £{formatNumber(secondaryPayment)}
-                </p>
+                <p><strong>Secondary Monthly Payment:</strong> £{formatNumber(secondaryPayment)}</p>
               )}
               {yearsRemaining && (
-                <p>
-                  <strong>Time to Complete Mortgage:</strong> {yearsRemaining} years
-                </p>
+                <p><strong>Time to Complete Mortgage:</strong> {yearsRemaining} years</p>
               )}
               {remainingBalance && (
-                <p>
-                  <strong>Remaining Balance After Fixed Term:</strong> £{formatNumber(remainingBalance)}
-                </p>
+                <p><strong>Remaining Balance After Fixed Term:</strong> £{formatNumber(remainingBalance)}</p>
               )}
               {(interestPaid > 0 || principalPaid > 0) && (
                 <PieChart
