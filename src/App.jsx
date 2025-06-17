@@ -42,9 +42,7 @@ function App() {
       return;
     }
 
-    const payment1 = r1
-      ? (P * r1) / (1 - Math.pow(1 + r1, -n))
-      : P / n;
+    const payment1 = r1 ? (P * r1) / (1 - Math.pow(1 + r1, -n)) : P / n;
 
     let totalPaid = 0;
     let totalInterest = 0;
@@ -62,10 +60,9 @@ function App() {
       }
     }
 
-    let payment2 = 0;
     if (balance > 0 && r2 && !target) {
       const remainingMonths = n - fixedN;
-      payment2 = (balance * r2) / (1 - Math.pow(1 + r2, -remainingMonths));
+      const payment2 = (balance * r2) / (1 - Math.pow(1 + r2, -remainingMonths));
       for (let i = 0; i < remainingMonths; i++) {
         const interest = balance * r2;
         const principal = payment2 - interest + extra;
@@ -83,7 +80,7 @@ function App() {
     if (target) {
       const months = target * 12;
       let tempBalance = P;
-      let rate = r1 || r2;
+      const rate = r1 || r2;
       const payment = rate
         ? (tempBalance * rate) / (1 - Math.pow(1 + rate, -months))
         : tempBalance / months;
@@ -129,13 +126,16 @@ function App() {
     <div className="container">
       <div className="header">
         <h1>Mortgage Calculator</h1>
-        <button className="share-btn" onClick={() => setShowInfo(!showInfo)}>
+        <button
+          className="share-btn"
+          onClick={() => setShowInfo(!showInfo)}
+        >
           {showInfo ? '×' : 'i'}
         </button>
       </div>
 
       {showInfo ? (
-        <InfoPage />
+        <InfoPage onBack={() => setShowInfo(false)} />
       ) : (
         <>
           <div className="input-row">
