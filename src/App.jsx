@@ -48,7 +48,6 @@ function App() {
     let totalPaid = 0;
     let totalInterest = 0;
     let balance = P;
-
     let monthsUsed = 0;
 
     for (let i = 0; i < (fixedN || n); i++) {
@@ -67,7 +66,6 @@ function App() {
     if (balance > 0 && r2 && !target) {
       const remainingMonths = n - fixedN;
       payment2 = (balance * r2) / (1 - Math.pow(1 + r2, -remainingMonths));
-
       for (let i = 0; i < remainingMonths; i++) {
         const interest = balance * r2;
         const principal = payment2 - interest + extra;
@@ -134,7 +132,11 @@ function App() {
     <div className="container">
       <div className="header">
         <h1>Mortgage Calculator</h1>
-        <button className="share-btn" onClick={() => setShowInfo(!showInfo)}>
+        <button
+          className="share-btn"
+          onClick={() => setShowInfo(!showInfo)}
+          title="Info / Disclaimer"
+        >
           {showInfo ? '×' : 'i'}
         </button>
       </div>
@@ -148,11 +150,11 @@ function App() {
             <input
               type="text"
               value={loanAmount}
-              onChange={(e) =>
-                setLoanAmount(
-                  e.target.value.replace(/[^\d.,]/g, '').replace(/,/g, '')
-                )
-              }
+              onChange={(e) => {
+                const raw = e.target.value.replace(/[^\d.]/g, '');
+                const formatted = new Intl.NumberFormat('en-GB').format(raw);
+                setLoanAmount(formatted);
+              }}
               inputMode="decimal"
             />
             <button className="clear-btn" onClick={() => setLoanAmount('')}>Clear</button>
