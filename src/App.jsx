@@ -47,59 +47,62 @@ function App() {
     }
 
     let totalInterest = 0;
-    let totalPrincipal = 0;
     let balance = P;
     let monthsElapsed = 0;
-    let monthly = 0;
-    let phaseTwoMonthly = null;
+    let baseMonthly1 = 0;
+    let fullMonthly1 = 0;
+    let baseMonthly2 = 0;
+    let fullMonthly2 = 0;
+    let secondaryStartBalance = 0;
 
     if (fixedN > 0 && r2 > 0) {
-      const baseMonthly1 = PMT(r1, fixedN, P);
-      const fullMonthly1 = baseMonthly1 + extra;
-      monthly = fullMonthly1;
+      baseMonthly1 = PMT(r1, fixedN, P);
+      fullMonthly1 = baseMonthly1 + extra;
 
       for (let i = 0; i < fixedN && balance > 0; i++) {
         const interest = balance * r1;
         const principal = fullMonthly1 - interest;
         totalInterest += interest;
-        totalPrincipal += principal;
         balance -= principal;
         monthsElapsed++;
       }
 
+      secondaryStartBalance = balance;
+
       if (balance > 0) {
         const remainingMonths = n - fixedN;
-        const baseMonthly2 = PMT(r2, remainingMonths, balance);
-        const fullMonthly2 = baseMonthly2 + extra;
-        phaseTwoMonthly = baseMonthly2;
+        baseMonthly2 = PMT(r2, remainingMonths, balance);
+        fullMonthly2 = baseMonthly2 + extra;
 
         for (let i = 0; i < remainingMonths && balance > 0; i++) {
           const interest = balance * r2;
           const principal = fullMonthly2 - interest;
           totalInterest += interest;
-          totalPrincipal += principal;
           balance -= principal;
           monthsElapsed++;
         }
       }
-    } else {
-      const fullTerm = target ? target * 12 : n;
-      const baseMonthly = PMT(r1, fullTerm, P);
-      const fullMonthly = baseMonthly + extra;
-      monthly = fullMonthly;
 
-      for (let i = 0; i < fullTerm && balance > 0; i++) {
-        const interest = balance * r1;
+      setMonthlyPayment(fullMonthly1.toFixed(2));
+      setSecondaryPayment(baseMonthly2 ? baseMonthly2.toFixed(2) : null);
+    } else {
+      const months = target ? target * 12 : n;
+      const rate = r1;
+      const baseMonthly = PMT(rate, months, P);
+      const fullMonthly = baseMonthly + extra;
+
+      for (let i = 0; i < months && balance > 0; i++) {
+        const interest = balance * rate;
         const principal = fullMonthly - interest;
         totalInterest += interest;
-        totalPrincipal += principal;
         balance -= principal;
         monthsElapsed++;
       }
+
+      setMonthlyPayment(fullMonthly.toFixed(2));
+      setSecondaryPayment(null);
     }
 
-    setMonthlyPayment(monthly.toFixed(2));
-    setSecondaryPayment(phaseTwoMonthly ? phaseTwoMonthly.toFixed(2) : null);
     setRemainingBalance(balance > 0 ? balance.toFixed(2) : '0.00');
     setTimeToComplete((monthsElapsed / 12).toFixed(2));
     setInterestPaid(totalInterest.toFixed(2));
@@ -124,6 +127,15 @@ function App() {
     setPrincipalPaid(0);
   };
 
+  const handleFormattedInput = (value, setter) => {
+    const raw = value.replace(/[^\d.]/g, '');
+    const num = parseFloat(raw || '0').toLocaleString('en-GB', {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    });
+    setter(num);
+  };
+
   return (
     <div className="container">
       <div className="header">
@@ -142,11 +154,7 @@ function App() {
             <input
               type="text"
               value={loanAmount}
-              onChange={(e) =>
-                setLoanAmount(
-                  e.target.value.replace(/[^\d.,]/g, '').replace(/,/g, '')
-                )
-              }
+              onChange={(e) => handleFormattedInput(e.target.value, setLoanAmount)}
               inputMode="decimal"
             />
             <button className="clear-btn" onClick={() => setLoanAmount('')}>Clear</button>
@@ -201,11 +209,7 @@ function App() {
             <input
               type="text"
               value={overpayment}
-              onChange={(e) =>
-                setOverpayment(
-                  e.target.value.replace(/[^\d.,]/g, '').replace(/,/g, '')
-                )
-              }
+              onChange={(e) => handleFormattedInput(e.target.value, setOverpayment)}
               inputMode="decimal"
             />
             <button className="clear-btn" onClick={() => setOverpayment('')}>Clear</button>
