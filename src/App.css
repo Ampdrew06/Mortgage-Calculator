@@ -1,11 +1,40 @@
-/* Final CSS - Mortgage Calculator */
-body {
-  font-family: Arial, sans-serif;
-  background-color: #f4f4f4;
-  margin: 0;
-  padding: 0;
+/* Core layout updates */
+.input-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+  flex-wrap: nowrap;
 }
 
+.input-row label {
+  flex: 0 0 120px;
+}
+
+.input-row input {
+  flex: 1 1 auto;
+  padding: 0.5rem;
+  font-size: 1rem;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+}
+
+.clear-btn {
+  flex: 0 0 60px;
+  padding: 0.5rem;
+  background-color: #e0e0e0;
+  color: #333;
+  border: none;
+  border-radius: 4px;
+  font-size: 0.9rem;
+  cursor: pointer;
+}
+
+.clear-btn:hover {
+  background-color: #d5d5d5;
+}
+
+/* Other styles unchanged */
 .container {
   max-width: 600px;
   margin: 2rem auto;
@@ -45,41 +74,6 @@ body {
 .header .share-btn[title="Back to Calculator"] {
   font-size: 1.1rem;
   padding: 0.25rem 0.5rem;
-}
-
-.input-row {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 0.5rem;
-  margin-bottom: 1rem;
-}
-
-.input-row label {
-  flex: 1 0 130px;
-}
-
-.input-row input {
-  flex: 2 1 160px;
-  padding: 0.5rem;
-  font-size: 1rem;
-  border: 1px solid #ccc;
-  border-radius: 4px;
-}
-
-.clear-btn {
-  flex: 0 0 70px;
-  padding: 0.5rem;
-  background-color: #e0e0e0;
-  color: #333;
-  border: none;
-  border-radius: 4px;
-  font-size: 0.9rem;
-  cursor: pointer;
-}
-
-.clear-btn:hover {
-  background-color: #d5d5d5;
 }
 
 .action-row {
@@ -142,29 +136,7 @@ body {
   justify-content: space-between;
 }
 
-@media screen and (max-width: 480px) {
-  .input-row {
-    flex-direction: column;
-    align-items: stretch;
-  }
-
-  .input-row input,
-  .clear-btn {
-    width: 100%;
-  }
-
-  .action-row {
-    flex-direction: column;
-    gap: 0.5rem;
-  }
-
-  .submit-btn,
-  .reset-btn {
-    margin-right: 0;
-  }
-}
-
-/* Pie Chart Styling */
+/* Pie Chart */
 .pie-wrapper {
   max-width: 180px;
   height: 180px;
@@ -185,4 +157,29 @@ body {
 .pie-labels span {
   display: inline-block;
   margin: 0 0.5rem;
+}
+
+/* Mobile responsive */
+@media screen and (max-width: 480px) {
+  .input-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .input-row label,
+  .input-row input,
+  .clear-btn {
+    width: 100%;
+    flex: none;
+  }
+
+  .action-row {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .submit-btn,
+  .reset-btn {
+    margin-right: 0;
+  }
 }
