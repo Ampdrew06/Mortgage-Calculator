@@ -42,6 +42,11 @@ body {
   padding: 0;
 }
 
+.header .share-btn[title="Back to Calculator"] {
+  font-size: 1.1rem;
+  padding: 0.25rem 0.5rem;
+}
+
 .input-row {
   display: flex;
   flex-wrap: wrap;
@@ -51,11 +56,11 @@ body {
 }
 
 .input-row label {
-  flex: 2 1 100px;
+  flex: 1 0 130px;
 }
 
 .input-row input {
-  flex: 2 1 120px;
+  flex: 2 1 160px;
   padding: 0.5rem;
   font-size: 1rem;
   border: 1px solid #ccc;
@@ -63,7 +68,7 @@ body {
 }
 
 .clear-btn {
-  flex: 1 1 60px;
+  flex: 0 0 70px;
   padding: 0.5rem;
   background-color: #e0e0e0;
   color: #333;
@@ -115,10 +120,18 @@ body {
 }
 
 .results {
+  display: none;
   background-color: #e9fce9;
   padding: 1rem;
   border-radius: 6px;
   margin-top: 1rem;
+  transition: opacity 0.4s ease;
+  opacity: 0;
+}
+
+.results.visible {
+  display: block;
+  opacity: 1;
 }
 
 .results p {
@@ -157,6 +170,10 @@ body {
   height: 180px;
   margin: 1.5rem auto;
   text-align: center;
+}
+
+.pie-wrapper canvas {
+  min-height: 180px;
 }
 
 .pie-labels {
