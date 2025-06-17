@@ -6,13 +6,7 @@ function InfoPage({ onBack }) {
     <div className="container">
       <div className="header">
         <h1>Info & Disclaimer</h1>
-        <button
-          className="share-btn"
-          onClick={onBack}
-          title="Back to Calculator"
-        >
-          ← Back
-        </button>
+        <button className="share-btn" onClick={onBack} title="Back to Calculator">← Back</button>
       </div>
 
       <div className="info-section">
@@ -20,26 +14,27 @@ function InfoPage({ onBack }) {
         <ul>
           <li><strong>Loan Amount (£):</strong> The total mortgage you’re borrowing.</li>
           <li><strong>Loan Term (Years):</strong> Total length of your mortgage.</li>
-          <li><strong>Initial Rate (%):</strong> The interest rate during the initial fixed period.</li>
-          <li><strong>Fixed Term (Years):</strong> How long the initial rate applies.</li>
-          <li><strong>Secondary Rate (%):</strong> The rate that applies after the fixed term ends.</li>
-          <li><strong>Overpayment (£):</strong> Optional – monthly extra payment to shorten your term.</li>
-          <li><strong>Target Years:</strong> Optional – enter a goal if you want to repay early.</li>
+          <li><strong>Initial Rate (%):</strong> Introductory interest rate.</li>
+          <li><strong>Fixed Term (Years):</strong> How long the fixed rate lasts (if any).</li>
+          <li><strong>Secondary Rate (%):</strong> What your rate changes to after the fixed period.</li>
+          <li><strong>Overpayment (£):</strong> Optional – monthly extra payment.<br />
+          • If a fixed term and secondary rate are entered, overpayments only apply during the fixed period.<br />
+          • If using just a basic loan setup (e.g. Loan Amount, Term, Interest Rate), overpayments apply throughout.</li>
+          <li><strong>Target Years:</strong> Optional – enter a goal if you want to repay early. Overrides other term logic.</li>
         </ul>
 
         <h2>Results Explained</h2>
         <ul>
-          <li><strong>Initial Monthly Payment:</strong> What you pay during the fixed-rate period.</li>
-          <li><strong>Secondary Monthly Payment:</strong> What you’ll pay after the fixed term (if balance remains).</li>
-          <li><strong>Years Remaining:</strong> Estimated time to repay the mortgage based on overpayments or target.</li>
-          <li><strong>Remaining Balance After Fixed Term:</strong> If the mortgage isn’t repaid during the fixed period, this is what’s left.</li>
-          <li><strong>Pie Chart:</strong> Shows how much of your total repayment goes to interest (red) vs. principal (green).</li>
+          <li><strong>Monthly Payment:</strong> Your monthly cost during the fixed rate period, including overpayments.</li>
+          <li><strong>Secondary Monthly Payment:</strong> What you’ll pay after the fixed term ends (if applicable).</li>
+          <li><strong>Time to Complete Mortgage:</strong> Total time to repay the loan with current values.</li>
+          <li><strong>Remaining Balance After Fixed Term:</strong> What’s left to repay after the fixed period (if applicable).</li>
         </ul>
 
         <h2>Disclaimer</h2>
         <p>
-          This calculator is a <strong>forecasting tool</strong> for illustration purposes only. It’s not financial advice.
-          Always consult a qualified mortgage advisor or broker before making decisions.
+          This calculator is a <strong>forecasting tool</strong> for illustration purposes only. It is not financial advice.
+          Always consult a qualified mortgage advisor before making financial decisions.
         </p>
       </div>
     </div>
