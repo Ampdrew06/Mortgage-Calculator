@@ -20,25 +20,26 @@ function InfoPage({ onBack }) {
         <ul>
           <li><strong>Loan Amount (£):</strong> The total mortgage you’re borrowing.</li>
           <li><strong>Loan Term (Years):</strong> Total length of your mortgage.</li>
-          <li><strong>Initial Rate (%):</strong> Introductory interest rate.</li>
-          <li><strong>Fixed Term (Years):</strong> How long the fixed rate lasts.</li>
-          <li><strong>Secondary Rate (%):</strong> What your rate changes to after the fixed period.</li>
+          <li><strong>Initial Rate (%):</strong> The interest rate during the initial fixed period.</li>
+          <li><strong>Fixed Term (Years):</strong> How long the initial rate applies.</li>
+          <li><strong>Secondary Rate (%):</strong> The rate that applies after the fixed term ends.</li>
           <li><strong>Overpayment (£):</strong> Optional – monthly extra payment to shorten your term.</li>
           <li><strong>Target Years:</strong> Optional – enter a goal if you want to repay early.</li>
         </ul>
 
         <h2>Results Explained</h2>
         <ul>
-          <li><strong>Initial Monthly Payment:</strong> What you pay during the fixed rate period.</li>
-          <li><strong>Secondary Monthly Payment:</strong> What you’ll pay after the fixed term ends.</li>
-          <li><strong>Years Remaining:</strong> If you overpay, this estimates how many years it could save.</li>
-          <li><strong>Remaining Balance After Fixed Term:</strong> If your rate changes, this is what will be left.</li>
+          <li><strong>Initial Monthly Payment:</strong> What you pay during the fixed-rate period.</li>
+          <li><strong>Secondary Monthly Payment:</strong> What you’ll pay after the fixed term (if balance remains).</li>
+          <li><strong>Years Remaining:</strong> Estimated time to repay the mortgage based on overpayments or target.</li>
+          <li><strong>Remaining Balance After Fixed Term:</strong> If the mortgage isn’t repaid during the fixed period, this is what’s left.</li>
+          <li><strong>Pie Chart:</strong> Shows how much of your total repayment goes to interest (red) vs. principal (green).</li>
         </ul>
 
         <h2>Disclaimer</h2>
         <p>
           This calculator is a <strong>forecasting tool</strong> for illustration purposes only. It’s not financial advice.
-          Please consult a qualified financial advisor or mortgage broker before making any major decisions.
+          Always consult a qualified mortgage advisor or broker before making decisions.
         </p>
       </div>
     </div>
