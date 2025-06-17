@@ -165,7 +165,7 @@ function App() {
           </div>
 
           <div className="input-row">
-            <label>Fixed Term Length (Years)</label>
+            <label>Fixed Term (Years)</label>
             <input type="number" inputMode="numeric" value={fixedTermYears} onChange={(e) => setFixedTermYears(e.target.value)} />
             <button className="clear-btn" onClick={() => setFixedTermYears('')}>Clear</button>
           </div>
