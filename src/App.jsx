@@ -20,8 +20,8 @@ function App() {
   const [principalPaid, setPrincipalPaid] = useState(0);
   const [showInfo, setShowInfo] = useState(false);
 
-  const parseNumber = (value) =>
-    parseFloat(value.replace(/,/g, '').replace(/[^\d.]/g, '')) || 0;
+  const parseNumber = (val) =>
+    parseFloat(val.replace(/,/g, '').replace(/[^\d.]/g, '')) || 0;
 
   const formatNumber = (value) =>
     Number(value).toLocaleString('en-GB', {
@@ -43,17 +43,19 @@ function App() {
       return;
     }
 
-    let payment, totalPaid = 0, totalInterest = 0, balance = P, monthsCompleted = 0;
+    let payment, balance = P, totalPaid = 0, totalInterest = 0, monthsCompleted = 0;
 
-    // Monthly payment based on target or full term
+    // Target term takes priority
     if (target) {
-      const targetN = target * 12;
-      payment = (balance * r1) / (1 - Math.pow(1 + r1, -targetN)) + extra;
+      const totalMonths = target * 12;
+      const paymentWithTarget = (P * r1) / (1 - Math.pow(1 + r1, -totalMonths)) + extra;
+      payment = paymentWithTarget;
     } else {
-      payment = (balance * r1) / (1 - Math.pow(1 + r1, -n)) + extra;
+      const paymentStandard = (P * r1) / (1 - Math.pow(1 + r1, -n)) + extra;
+      payment = paymentStandard;
     }
 
-    // If no fixed/secondary, treat as single rate full term
+    // Simple: no fixed or secondary
     if (!fixedTerm || !secondaryRate) {
       for (let i = 0; i < n; i++) {
         const interest = balance * r1;
@@ -67,13 +69,14 @@ function App() {
           break;
         }
       }
+
       setMonthlyPayment((payment - extra).toFixed(2));
       setSecondaryPayment(null);
       setYearsRemaining((monthsCompleted / 12).toFixed(2));
       setRemainingBalance(balance.toFixed(2));
     } else {
-      // Fixed term calculation
-      const fixedPayment = ((P * r1) / (1 - Math.pow(1 + r1, -n))) + extra;
+      // Fixed rate period
+      const fixedPayment = (P * r1) / (1 - Math.pow(1 + r1, -n)) + extra;
       for (let i = 0; i < fixedN; i++) {
         const interest = balance * r1;
         const principal = fixedPayment - interest;
@@ -87,10 +90,11 @@ function App() {
         }
       }
 
-      // Secondary term calculation
+      // Secondary rate period
       if (balance > 0) {
         const remainingN = n - fixedN;
-        let secondaryPmt = (balance * r2) / (1 - Math.pow(1 + r2, -remainingN));
+        let secondaryPmt = (balance * r2) / (1 - Math.pow(1 + r2, -remainingN)) + extra;
+
         for (let i = 0; i < remainingN; i++) {
           const interest = balance * r2;
           const principal = secondaryPmt - interest;
@@ -103,7 +107,8 @@ function App() {
             break;
           }
         }
-        setSecondaryPayment(secondaryPmt.toFixed(2));
+
+        setSecondaryPayment((secondaryPmt - extra).toFixed(2));
       } else {
         setSecondaryPayment(null);
       }
@@ -135,6 +140,16 @@ function App() {
     setPrincipalPaid(0);
   };
 
+  const handleCurrencyChange = (value, setter) => {
+    let clean = value.replace(/[^\d]/g, '');
+    if (!clean) return setter('');
+    const numeric = parseFloat(clean) / 100;
+    setter(numeric.toLocaleString('en-GB', {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    }));
+  };
+
   return (
     <div className="container">
       <div className="header">
@@ -148,39 +163,32 @@ function App() {
         <InfoPage onBack={() => setShowInfo(false)} />
       ) : (
         <>
+          <div className="input-row">
+            <label>Loan Amount (£)</label>
+            <input
+              type="text"
+              value={loanAmount}
+              onChange={(e) => handleCurrencyChange(e.target.value, setLoanAmount)}
+              inputMode="numeric"
+            />
+            <button className="clear-btn" onClick={() => setLoanAmount('')}>Clear</button>
+          </div>
+
           {[
-            ['Loan Amount (£)', loanAmount, setLoanAmount, true],
             ['Loan Term (Years)', loanTerm, setLoanTerm],
             ['Initial Rate (%)', initialRate, setInitialRate],
             ['Fixed Term (Years)', fixedTerm, setFixedTerm],
             ['Secondary Rate (%)', secondaryRate, setSecondaryRate],
-            ['Overpayment (£) (Optional)', overpayment, setOverpayment, true],
+            ['Overpayment (£) (Optional)', overpayment, setOverpayment],
             ['Target (Years) (Optional)', targetYears, setTargetYears]
-          ].map(([label, value, setter, isCurrency], idx) => (
-            <div className="input-row" key={idx}>
+          ].map(([label, value, setter], i) => (
+            <div className="input-row" key={i}>
               <label>{label}</label>
               <input
                 type="text"
                 value={value}
+                onChange={(e) => setter(e.target.value)}
                 inputMode="decimal"
-                onChange={(e) => {
-                  let val = e.target.value;
-                  if (isCurrency) {
-                    val = val.replace(/[^\d.,]/g, '');
-                    val = val.replace(/,/g, '');
-                    if (val) {
-                      const formatted = parseFloat(val).toLocaleString('en-GB', {
-                        minimumFractionDigits: 2,
-                        maximumFractionDigits: 2,
-                      });
-                      setter(formatted);
-                    } else {
-                      setter('');
-                    }
-                  } else {
-                    setter(val);
-                  }
-                }}
               />
               <button className="clear-btn" onClick={() => setter('')}>Clear</button>
             </div>
