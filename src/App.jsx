@@ -176,7 +176,7 @@ function App() {
           </div>
 
           <div className="input-row">
-            <label>Fixed Term (%)</label>
+            <label>Fixed Term (Years)</label>
             <input
               type="number"
               value={fixedTerm}
