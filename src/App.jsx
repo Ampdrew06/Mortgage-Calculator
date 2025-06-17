@@ -13,6 +13,7 @@ function App() {
   const [targetYears, setTargetYears] = useState('');
   const [submitted, setSubmitted] = useState(false);
   const [monthlyPayment, setMonthlyPayment] = useState(null);
+  const [secondaryPayment, setSecondaryPayment] = useState(null);
   const [yearsRemaining, setYearsRemaining] = useState(null);
   const [remainingBalance, setRemainingBalance] = useState(null);
   const [interestPaid, setInterestPaid] = useState(0);
@@ -30,50 +31,93 @@ function App() {
 
   const handleSubmit = () => {
     const P = parseNumber(loanAmount);
-    const r = parseFloat(initialRate) / 100 / 12;
+    const r1 = parseFloat(initialRate) / 100 / 12;
+    const r2 = parseFloat(secondaryRate) / 100 / 12;
     const n = parseFloat(loanTerm) * 12;
+    const fixedN = parseFloat(fixedTerm) * 12 || 0;
     const extra = parseNumber(overpayment);
     const target = parseFloat(targetYears) || null;
 
-    if (!P || !loanTerm || isNaN(r)) {
+    if (!P || !loanTerm || isNaN(r1)) {
       alert('Please fill in Loan Amount, Loan Term and Initial Rate.');
       return;
     }
 
-    let payment;
-
-    if (target) {
-      const targetMonths = target * 12;
-      payment = r
-        ? (P * r) / (1 - Math.pow(1 + r, -targetMonths))
-        : P / targetMonths;
-    } else {
-      payment = r
-        ? (P * r) / (1 - Math.pow(1 + r, -n))
-        : P / n;
-    }
-
+    let payment1, payment2 = 0;
     let balance = P;
     let totalInterest = 0;
     let totalPaid = 0;
     let monthsUsed = 0;
 
-    for (let i = 0; i < (target ? target * 12 : n); i++) {
-      const interest = balance * r;
-      const principal = payment - interest + extra;
-      balance -= principal;
-      totalInterest += interest;
-      totalPaid += payment + extra;
-      monthsUsed++;
-      if (balance <= 0) {
-        balance = 0;
-        break;
+    // If using target, override full calculation path
+    if (target) {
+      const targetMonths = target * 12;
+      const payment = r1
+        ? (balance * r1) / (1 - Math.pow(1 + r1, -targetMonths))
+        : balance / targetMonths;
+
+      for (let i = 0; i < targetMonths; i++) {
+        const interest = balance * r1;
+        const principal = payment - interest + extra;
+        balance -= principal;
+        totalInterest += interest;
+        totalPaid += payment + extra;
+        monthsUsed++;
+        if (balance <= 0) {
+          balance = 0;
+          break;
+        }
       }
+
+      setMonthlyPayment(payment.toFixed(2));
+      setSecondaryPayment(null);
+    } else {
+      // Phase 1: Initial Rate
+      payment1 = r1
+        ? (balance * r1) / (1 - Math.pow(1 + r1, -n))
+        : balance / n;
+
+      for (let i = 0; i < fixedN; i++) {
+        const interest = balance * r1;
+        const principal = payment1 - interest + extra;
+        balance -= principal;
+        totalInterest += interest;
+        totalPaid += payment1 + extra;
+        monthsUsed++;
+        if (balance <= 0) {
+          balance = 0;
+          break;
+        }
+      }
+
+      // Phase 2: Secondary Rate
+      if (balance > 0 && r2) {
+        const remainingMonths = n - fixedN;
+        payment2 = (balance * r2) / (1 - Math.pow(1 + r2, -remainingMonths));
+
+        for (let i = 0; i < remainingMonths; i++) {
+          const interest = balance * r2;
+          const principal = payment2 - interest + extra;
+          balance -= principal;
+          totalInterest += interest;
+          totalPaid += payment2 + extra;
+          monthsUsed++;
+          if (balance <= 0) {
+            balance = 0;
+            break;
+          }
+        }
+
+        setSecondaryPayment(payment2.toFixed(2));
+      } else {
+        setSecondaryPayment(null);
+      }
+
+      setMonthlyPayment(payment1.toFixed(2));
     }
 
     const yearsLeft = monthsUsed / 12;
 
-    setMonthlyPayment(payment.toFixed(2));
     setYearsRemaining(Math.max(0, yearsLeft.toFixed(1)));
     setRemainingBalance(balance.toFixed(2));
     setInterestPaid(totalInterest.toFixed(2));
@@ -91,6 +135,7 @@ function App() {
     setTargetYears('');
     setSubmitted(false);
     setMonthlyPayment(null);
+    setSecondaryPayment(null);
     setYearsRemaining(null);
     setRemainingBalance(null);
     setInterestPaid(0);
@@ -212,19 +257,22 @@ function App() {
             <div className="results visible">
               {monthlyPayment && (
                 <p>
-                  <strong>Monthly Payment:</strong> £
-                  {formatNumber(monthlyPayment)}
+                  <strong>Initial Monthly Payment:</strong> £{formatNumber(monthlyPayment)}
+                </p>
+              )}
+              {secondaryPayment && (
+                <p>
+                  <strong>Secondary Monthly Payment:</strong> £{formatNumber(secondaryPayment)}
                 </p>
               )}
               {yearsRemaining && (
                 <p>
-                  <strong>Years Remaining:</strong> {yearsRemaining}
+                  <strong>Time to Complete Mortgage:</strong> {yearsRemaining} years
                 </p>
               )}
               {remainingBalance && (
                 <p>
-                  <strong>Remaining Balance:</strong> £
-                  {formatNumber(remainingBalance)}
+                  <strong>Remaining Balance:</strong> £{formatNumber(remainingBalance)}
                 </p>
               )}
               {(interestPaid > 0 || principalPaid > 0) && (
@@ -239,6 +287,10 @@ function App() {
       )}
     </div>
   );
+}
+
+export default App;
+
 }
 
 export default App;
