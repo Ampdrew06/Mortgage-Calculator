@@ -53,7 +53,6 @@ function App() {
     let fullMonthly1 = 0;
     let baseMonthly2 = 0;
     let fullMonthly2 = 0;
-    let secondaryStartBalance = 0;
 
     if (fixedN > 0 && r2 > 0) {
       baseMonthly1 = PMT(r1, fixedN, P);
@@ -66,8 +65,6 @@ function App() {
         balance -= principal;
         monthsElapsed++;
       }
-
-      secondaryStartBalance = balance;
 
       if (balance > 0) {
         const remainingMonths = n - fixedN;
@@ -127,13 +124,9 @@ function App() {
     setPrincipalPaid(0);
   };
 
-  const handleFormattedInput = (value, setter) => {
-    const raw = value.replace(/[^\d.]/g, '');
-    const num = parseFloat(raw || '0').toLocaleString('en-GB', {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
-    });
-    setter(num);
+  const handleBlurFormat = (value, setter) => {
+    const parsed = parseNumber(value);
+    setter(formatNumber(parsed));
   };
 
   return (
@@ -154,7 +147,8 @@ function App() {
             <input
               type="text"
               value={loanAmount}
-              onChange={(e) => handleFormattedInput(e.target.value, setLoanAmount)}
+              onChange={(e) => setLoanAmount(e.target.value)}
+              onBlur={() => handleBlurFormat(loanAmount, setLoanAmount)}
               inputMode="decimal"
             />
             <button className="clear-btn" onClick={() => setLoanAmount('')}>Clear</button>
@@ -209,7 +203,8 @@ function App() {
             <input
               type="text"
               value={overpayment}
-              onChange={(e) => handleFormattedInput(e.target.value, setOverpayment)}
+              onChange={(e) => setOverpayment(e.target.value)}
+              onBlur={() => handleBlurFormat(overpayment, setOverpayment)}
               inputMode="decimal"
             />
             <button className="clear-btn" onClick={() => setOverpayment('')}>Clear</button>
