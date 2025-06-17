@@ -54,7 +54,6 @@ function App() {
     let phaseTwoMonthly = null;
 
     if (fixedN > 0 && r2 > 0) {
-      // Phase 1: Initial fixed term
       const baseMonthly1 = PMT(r1, fixedN, P);
       const fullMonthly1 = baseMonthly1 + extra;
       monthly = fullMonthly1;
@@ -68,7 +67,6 @@ function App() {
         monthsElapsed++;
       }
 
-      // Phase 2: After fixed term
       if (balance > 0) {
         const remainingMonths = n - fixedN;
         const baseMonthly2 = PMT(r2, remainingMonths, balance);
@@ -85,7 +83,6 @@ function App() {
         }
       }
     } else {
-      // Simple mortgage or target-term
       const fullTerm = target ? target * 12 : n;
       const baseMonthly = PMT(r1, fullTerm, P);
       const fullMonthly = baseMonthly + extra;
@@ -140,10 +137,91 @@ function App() {
         <InfoPage onBack={() => setShowInfo(false)} />
       ) : (
         <>
-          {/* Input Rows */}
-          {/* (These remain unchanged — let me know if you want this part included too) */}
+          <div className="input-row">
+            <label>Loan Amount (£)</label>
+            <input
+              type="text"
+              value={loanAmount}
+              onChange={(e) =>
+                setLoanAmount(
+                  e.target.value.replace(/[^\d.,]/g, '').replace(/,/g, '')
+                )
+              }
+              inputMode="decimal"
+            />
+            <button className="clear-btn" onClick={() => setLoanAmount('')}>Clear</button>
+          </div>
 
-          {/* Action Buttons */}
+          <div className="input-row">
+            <label>Loan Term (Years)</label>
+            <input
+              type="number"
+              value={loanTerm}
+              onChange={(e) => setLoanTerm(e.target.value)}
+              inputMode="decimal"
+            />
+            <button className="clear-btn" onClick={() => setLoanTerm('')}>Clear</button>
+          </div>
+
+          <div className="input-row">
+            <label>Initial Rate (%)</label>
+            <input
+              type="number"
+              value={initialRate}
+              onChange={(e) => setInitialRate(e.target.value)}
+              inputMode="decimal"
+            />
+            <button className="clear-btn" onClick={() => setInitialRate('')}>Clear</button>
+          </div>
+
+          <div className="input-row">
+            <label>Fixed Term (Years)</label>
+            <input
+              type="number"
+              value={fixedTerm}
+              onChange={(e) => setFixedTerm(e.target.value)}
+              inputMode="decimal"
+            />
+            <button className="clear-btn" onClick={() => setFixedTerm('')}>Clear</button>
+          </div>
+
+          <div className="input-row">
+            <label>Secondary Rate (%)</label>
+            <input
+              type="number"
+              value={secondaryRate}
+              onChange={(e) => setSecondaryRate(e.target.value)}
+              inputMode="decimal"
+            />
+            <button className="clear-btn" onClick={() => setSecondaryRate('')}>Clear</button>
+          </div>
+
+          <div className="input-row">
+            <label>Overpayment (£) (Optional)</label>
+            <input
+              type="text"
+              value={overpayment}
+              onChange={(e) =>
+                setOverpayment(
+                  e.target.value.replace(/[^\d.,]/g, '').replace(/,/g, '')
+                )
+              }
+              inputMode="decimal"
+            />
+            <button className="clear-btn" onClick={() => setOverpayment('')}>Clear</button>
+          </div>
+
+          <div className="input-row">
+            <label>Target (Years) (Optional)</label>
+            <input
+              type="number"
+              value={targetYears}
+              onChange={(e) => setTargetYears(e.target.value)}
+              inputMode="decimal"
+            />
+            <button className="clear-btn" onClick={() => setTargetYears('')}>Clear</button>
+          </div>
+
           <div className="action-row">
             <button className="submit-btn" onClick={handleSubmit}>Submit</button>
             <button className="reset-btn" onClick={handleReset}>Reset All</button>
