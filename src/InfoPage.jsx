@@ -1,4 +1,3 @@
-// src/InfoPage.jsx
 import React from 'react';
 import './App.css';
 
@@ -7,7 +6,13 @@ function InfoPage({ onBack }) {
     <div className="container">
       <div className="header">
         <h1>Info & Disclaimer</h1>
-        <button className="share-btn" onClick={onBack} title="Back to Calculator">← Back</button>
+        <button
+          className="share-btn"
+          onClick={onBack}
+          title="Back to Calculator"
+        >
+          ← Back
+        </button>
       </div>
 
       <div className="info-section">
@@ -15,8 +20,8 @@ function InfoPage({ onBack }) {
         <ul>
           <li><strong>Loan Amount (£):</strong> The total mortgage you’re borrowing.</li>
           <li><strong>Loan Term (Years):</strong> Total length of your mortgage.</li>
-          <li><strong>Initial Fixed Rate (%):</strong> Introductory interest rate.</li>
-          <li><strong>Fixed Term Length:</strong> How long that rate lasts.</li>
+          <li><strong>Initial Rate (%):</strong> Introductory interest rate.</li>
+          <li><strong>Fixed Term (Years):</strong> How long the fixed rate lasts.</li>
           <li><strong>Secondary Rate (%):</strong> What your rate changes to after the fixed period.</li>
           <li><strong>Overpayment (£):</strong> Optional – monthly extra payment to shorten your term.</li>
           <li><strong>Target Years:</strong> Optional – enter a goal if you want to repay early.</li>
@@ -32,7 +37,7 @@ function InfoPage({ onBack }) {
 
         <h2>Disclaimer</h2>
         <p>
-          This calculator is a **forecasting tool** for illustration purposes only. It’s not financial advice.
+          This calculator is a <strong>forecasting tool</strong> for illustration purposes only. It’s not financial advice.
           Please consult a qualified financial advisor or mortgage broker before making any major decisions.
         </p>
       </div>
