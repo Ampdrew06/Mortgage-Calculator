@@ -1,4 +1,5 @@
-/* Final Mobile-Friendly CSS - Mortgage Calculator */
+/* Final CSS - Mortgage Calculator */
+
 body {
   font-family: Arial, sans-serif;
   background-color: #f4f4f4;
@@ -132,7 +133,8 @@ body {
 }
 
 .pie-wrapper {
-  max-width: 260px;
+  max-width: 180px;
+  height: 180px;
   margin: 2rem auto;
   text-align: center;
 }
@@ -148,7 +150,33 @@ body {
   margin: 0 0.5rem;
 }
 
-/* Responsive Fixes for Smaller Screens */
+/* Info section styling */
+.info-section {
+  margin-top: 1rem;
+}
+
+.info-section h2 {
+  margin-top: 1rem;
+  color: #4caf50;
+}
+
+.info-section ul {
+  padding-left: 1.25rem;
+  margin-bottom: 1rem;
+}
+
+.info-section li {
+  margin-bottom: 0.5rem;
+}
+
+.info-section p {
+  background-color: #fff8e1;
+  padding: 1rem;
+  border-left: 5px solid #fbc02d;
+  border-radius: 4px;
+}
+
+/* Responsive Fixes for Small Screens */
 @media screen and (max-width: 480px) {
   .input-row {
     flex-wrap: wrap;
@@ -175,3 +203,4 @@ body {
     margin-right: 0;
   }
 }
+
