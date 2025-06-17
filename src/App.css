@@ -1,40 +1,10 @@
-/* Core layout updates */
-.input-row {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  margin-bottom: 1rem;
-  flex-wrap: nowrap;
+body {
+  font-family: Arial, sans-serif;
+  background-color: #f4f4f4;
+  margin: 0;
+  padding: 0;
 }
 
-.input-row label {
-  flex: 0 0 120px;
-}
-
-.input-row input {
-  flex: 1 1 auto;
-  padding: 0.5rem;
-  font-size: 1rem;
-  border: 1px solid #ccc;
-  border-radius: 4px;
-}
-
-.clear-btn {
-  flex: 0 0 60px;
-  padding: 0.5rem;
-  background-color: #e0e0e0;
-  color: #333;
-  border: none;
-  border-radius: 4px;
-  font-size: 0.9rem;
-  cursor: pointer;
-}
-
-.clear-btn:hover {
-  background-color: #d5d5d5;
-}
-
-/* Other styles unchanged */
 .container {
   max-width: 600px;
   margin: 2rem auto;
@@ -63,17 +33,64 @@
 }
 
 .share-btn {
-  background: none;
+  background-color: #1976d2;
+  color: white;
   border: none;
-  color: #fff;
-  font-size: 1.5rem;
+  border-radius: 50%;
+  width: 32px;
+  height: 32px;
+  font-size: 1.2rem;
+  font-weight: bold;
   cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   padding: 0;
 }
 
 .header .share-btn[title="Back to Calculator"] {
   font-size: 1.1rem;
+  border-radius: 6px;
+  width: auto;
   padding: 0.25rem 0.5rem;
+  background-color: transparent;
+  color: white;
+}
+
+.input-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+  flex-wrap: nowrap;
+}
+
+.input-row label {
+  flex: 0 0 140px;
+  white-space: nowrap;
+}
+
+.input-row input {
+  flex: 1 1 auto;
+  padding: 0.5rem;
+  font-size: 1rem;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+}
+
+.clear-btn {
+  flex: 0 0 60px;
+  padding: 0.5rem;
+  background-color: #e0e0e0;
+  color: #333;
+  border: none;
+  border-radius: 4px;
+  font-size: 0.9rem;
+  cursor: pointer;
+}
+
+.clear-btn:hover {
+  background-color: #d5d5d5;
 }
 
 .action-row {
@@ -159,7 +176,7 @@
   margin: 0 0.5rem;
 }
 
-/* Mobile responsive */
+/* Mobile */
 @media screen and (max-width: 480px) {
   .input-row {
     flex-direction: column;
@@ -181,5 +198,11 @@
   .submit-btn,
   .reset-btn {
     margin-right: 0;
+  }
+
+  .share-btn {
+    width: 28px;
+    height: 28px;
+    font-size: 1rem;
   }
 }
