@@ -1,7 +1,5 @@
 import React, { useState } from 'react';
 import PieChart from './PieChart';
-import InfoPage from './InfoPage';
-import './App.css';
 
 function App() {
   const [loanAmount, setLoanAmount] = useState('');
@@ -11,98 +9,115 @@ function App() {
   const [secondaryRate, setSecondaryRate] = useState('');
   const [overpayment, setOverpayment] = useState('');
   const [targetYears, setTargetYears] = useState('');
-  const [showInfo, setShowInfo] = useState(false);
   const [results, setResults] = useState(null);
 
-  const formatNumber = (value) =>
-    value.toLocaleString('en-GB', {
+  const formatCurrency = (value) => {
+    return Number(value).toLocaleString('en-UK', {
       style: 'currency',
       currency: 'GBP',
       minimumFractionDigits: 2,
     });
+  };
 
-  const parseAmount = (val) =>
-    parseFloat(val.toString().replace(/,/g, '') || 0);
+  const parseNumber = (value) => parseFloat(value.toString().replace(/,/g, '') || 0);
 
-  const calculateResults = () => {
-    const loan = parseAmount(loanAmount);
-    const termYears = parseFloat(loanTerm);
-    const rate1 = parseFloat(initialRate) / 100;
-    const fixedYears = parseFloat(fixedTerm) || 0;
-    const rate2 = parseFloat(secondaryRate) / 100 || 0;
-    const over = parseFloat(overpayment) || 0;
-    const target = parseFloat(targetYears);
+  const handleSubmit = () => {
+    const P = parseNumber(loanAmount);
+    const n = parseNumber(loanTerm) * 12;
+    const r = parseNumber(initialRate) / 100 / 12;
+    const fixedMonths = parseNumber(fixedTerm) * 12;
+    const r2 = parseNumber(secondaryRate) / 100 / 12;
+    const op = parseNumber(overpayment);
+    const target = parseNumber(targetYears);
 
-    if (!loan || !termYears || !rate1) return;
-
-    let monthlyPayment = 0;
-    let secondaryPayment = 0;
-    let remainingBalance = 0;
-    let totalTerm = termYears;
-
-    // Target overrides Overpayment
-    const monthlyRate1 = rate1 / 12;
-    const monthlyRate2 = rate2 / 12;
-
-    if (target) {
-      const newPayment = -PMT(monthlyRate1, target * 12, loan);
-      monthlyPayment = newPayment;
-      remainingBalance = 0;
-      secondaryPayment = 0;
-      totalTerm = target;
-    } else {
-      const pmt = -PMT(monthlyRate1, termYears * 12, loan);
-      monthlyPayment = pmt + over;
-
-      if (fixedYears > 0 && rate2 > 0) {
-        const fv = FV(monthlyRate1, fixedYears * 12, monthlyPayment, loan);
-        remainingBalance = fv;
-
-        const remainingMonths = (termYears - fixedYears) * 12;
-        secondaryPayment = -PMT(monthlyRate2, remainingMonths, fv);
-
-        // Recalculate time to complete mortgage
-        let months1 = fixedYears * 12;
-        let balance = FV(monthlyRate1, months1, monthlyPayment, loan);
-        let months2 = NPER(monthlyRate2, monthlyPayment, -balance);
-        totalTerm = (months1 + months2) / 12;
-      } else {
-        totalTerm = NPER(monthlyRate1, monthlyPayment, -loan) / 12;
-        secondaryPayment = 0;
-        remainingBalance = 0;
-      }
+    if (!P || !loanTerm || !initialRate) {
+      setResults(null);
+      return;
     }
 
-    const totalInterest =
-      (monthlyPayment * (fixedYears > 0 ? fixedYears * 12 : totalTerm * 12)) +
-      (secondaryPayment * ((termYears - fixedYears) * 12 || 0)) -
-      loan;
+    let monthlyPayment = 0;
+    let secondaryMonthly = 0;
+    let totalMonths = n;
+    let remainingBalance = 0;
+    let useOverpayment = !target;
 
-    const principalPaid = loan;
+    // If only simple inputs are provided
+    if (!fixedTerm || !secondaryRate) {
+      monthlyPayment = PMT(r, target ? target * 12 : n, -P);
+      if (useOverpayment) monthlyPayment += op;
+
+      const actualMonths = useOverpayment
+        ? NPER(r, -monthlyPayment, P)
+        : target
+        ? target * 12
+        : n;
+
+      const interestPaid = monthlyPayment * actualMonths - P;
+
+      setResults({
+        monthlyPayment,
+        timeToComplete: actualMonths / 12,
+        remainingBalance: null,
+        secondaryMonthly: null,
+        interestPaid,
+        principalPaid: P,
+      });
+      return;
+    }
+
+    // Fixed + Secondary Logic
+    monthlyPayment = PMT(r, target ? target * 12 : n, -P);
+    if (useOverpayment) monthlyPayment += op;
+
+    // Balance after fixed term
+    let totalPaidDuringFixed = monthlyPayment * fixedMonths;
+    let balanceAtFixedEnd = P * Math.pow(1 + r, fixedMonths) - monthlyPayment * ((Math.pow(1 + r, fixedMonths) - 1) / r);
+
+    if (balanceAtFixedEnd < 0) balanceAtFixedEnd = 0;
+
+    remainingBalance = balanceAtFixedEnd;
+
+    // Secondary monthly payment
+    secondaryMonthly = PMT(r2, n - fixedMonths, -remainingBalance);
+    if (useOverpayment) secondaryMonthly += op;
+
+    // Total time to pay off
+    let timeAfterFixed = useOverpayment
+      ? NPER(r2, -secondaryMonthly, balanceAtFixedEnd)
+      : n - fixedMonths;
+
+    if (target) {
+      const fullMonthly = PMTWithTarget(P, r, r2, fixedMonths, (target * 12));
+      monthlyPayment = fullMonthly;
+      const totalInterest = monthlyPayment * (target * 12) - P;
+      setResults({
+        monthlyPayment,
+        timeToComplete: target,
+        remainingBalance: null,
+        secondaryMonthly: null,
+        interestPaid: totalInterest,
+        principalPaid: P,
+      });
+      return;
+    }
+
+    const totalMonthsWithOP = fixedMonths + timeAfterFixed;
+    const totalInterest =
+      monthlyPayment * fixedMonths +
+      secondaryMonthly * timeAfterFixed -
+      P;
 
     setResults({
-      monthlyPayment: formatNumber(monthlyPayment),
-      secondaryPayment:
-        fixedYears > 0 && rate2 > 0 ? formatNumber(secondaryPayment) : null,
-      timeToComplete: totalTerm.toFixed(2) + ' years',
-      remainingBalance:
-        fixedYears > 0 && rate2 > 0 ? formatNumber(remainingBalance) : null,
-      interest: totalInterest,
-      principal: principalPaid,
+      monthlyPayment,
+      secondaryMonthly,
+      timeToComplete: totalMonthsWithOP / 12,
+      remainingBalance: balanceAtFixedEnd,
+      interestPaid: totalInterest,
+      principalPaid: P,
     });
   };
 
-  // --- Financial Formulas ---
-  const PMT = (rate, nper, pv) =>
-    rate === 0 ? -(pv / nper) : -(pv * rate) / (1 - Math.pow(1 + rate, -nper));
-
-  const FV = (rate, nper, pmt, pv) =>
-    pv * Math.pow(1 + rate, nper) + (pmt * (Math.pow(1 + rate, nper) - 1)) / rate;
-
-  const NPER = (rate, pmt, pv) =>
-    rate === 0 ? -(pv / pmt) : Math.log((pmt / rate + pv) / (pmt / rate)) / Math.log(1 + rate);
-
-  const resetAll = () => {
+  const handleReset = () => {
     setLoanAmount('');
     setLoanTerm('');
     setInitialRate('');
@@ -113,121 +128,84 @@ function App() {
     setResults(null);
   };
 
-  const formatLoanInput = (val) => {
-    const numeric = val.replace(/[^\d.]/g, '');
-    const parts = numeric.split('.');
-    parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',');
-    return parts.join('.');
+  // Helper functions
+  const PMT = (rate, nper, pv) => {
+    return (rate * pv) / (1 - Math.pow(1 + rate, -nper));
   };
 
-  return showInfo ? (
-    <InfoPage onBack={() => setShowInfo(false)} />
-  ) : (
+  const NPER = (rate, payment, presentValue) => {
+    if (rate === 0) return presentValue / payment;
+    return Math.log(payment / (payment - rate * presentValue)) / Math.log(1 + rate);
+  };
+
+  const PMTWithTarget = (P, r1, r2, fixedMonths, totalTargetMonths) => {
+    // Solve iteratively
+    let guess = PMT(r1, totalTargetMonths, -P);
+    let low = 0;
+    let high = guess * 2;
+    let epsilon = 0.01;
+    let iteration = 0;
+
+    while (iteration < 100) {
+      const mid = (low + high) / 2;
+      const balanceAfterFixed = P * Math.pow(1 + r1, fixedMonths) - mid * ((Math.pow(1 + r1, fixedMonths) - 1) / r1);
+      const remainingMonths = totalTargetMonths - fixedMonths;
+      const finalBalance = balanceAfterFixed * Math.pow(1 + r2, remainingMonths) - mid * ((Math.pow(1 + r2, remainingMonths) - 1) / r2);
+
+      if (Math.abs(finalBalance) < epsilon) return mid;
+      if (finalBalance > 0) low = mid;
+      else high = mid;
+      iteration++;
+    }
+
+    return (low + high) / 2;
+  };
+
+  return (
     <div className="container">
       <div className="header">
         <h1>The Mortgage Calculator</h1>
-        <button className="share-btn" onClick={() => setShowInfo(true)} title="Info">
-          i
-        </button>
+        <button className="share-btn" onClick={() => window.location.href = '/info'} title="Info">i</button>
       </div>
 
       {[
-        {
-          label: 'Loan Amount (£)',
-          value: loanAmount,
-          setter: (e) => {
-            const formatted = formatLoanInput(e.target.value);
-            setLoanAmount(formatted);
-          },
-        },
-        {
-          label: 'Loan Term (Years)',
-          value: loanTerm,
-          setter: (e) => setLoanTerm(e.target.value),
-        },
-        {
-          label: 'Initial Rate (%)',
-          value: initialRate,
-          setter: (e) => setInitialRate(e.target.value),
-        },
-        {
-          label: 'Fixed Term (Years)',
-          value: fixedTerm,
-          setter: (e) => setFixedTerm(e.target.value),
-        },
-        {
-          label: 'Secondary Rate (%)',
-          value: secondaryRate,
-          setter: (e) => setSecondaryRate(e.target.value),
-        },
-        {
-          label: 'Overpayment (£)',
-          value: overpayment,
-          setter: (e) => setOverpayment(e.target.value),
-        },
-        {
-          label: 'Target (Years)',
-          value: targetYears,
-          setter: (e) => setTargetYears(e.target.value),
-        },
-      ].map((field, idx) => (
-        <div className="input-row" key={idx}>
+        { label: 'Loan Amount (£)', value: loanAmount, setter: setLoanAmount, placeholder: 'e.g. 250,000 (Required)' },
+        { label: 'Loan Term (Years)', value: loanTerm, setter: setLoanTerm, placeholder: 'e.g. 25 (Required)' },
+        { label: 'Initial Rate (%)', value: initialRate, setter: setInitialRate, placeholder: 'e.g. 4.5 (Required)' },
+        { label: 'Fixed Term (Years)', value: fixedTerm, setter: setFixedTerm, placeholder: 'e.g. 3 (Where appropriate)' },
+        { label: 'Secondary Rate (%)', value: secondaryRate, setter: setSecondaryRate, placeholder: 'e.g. 6.5 (Where appropriate)' },
+        { label: 'Overpayment (£)', value: overpayment, setter: setOverpayment, placeholder: 'e.g. 100 (Optional)' },
+        { label: 'Target (Years)', value: targetYears, setter: setTargetYears, placeholder: 'e.g. 15 (Optional)' },
+      ].map((field, index) => (
+        <div className="input-row" key={index}>
           <label>{field.label}</label>
           <input
             type="text"
             inputMode="decimal"
             value={field.value}
-            onChange={field.setter}
-            placeholder={
-              field.label.includes('Loan Amount')
-                ? 'e.g. 250,000 (Required)'
-                : field.label.includes('Loan Term')
-                ? 'e.g. 25 (Required)'
-                : field.label.includes('Initial Rate')
-                ? 'e.g. 4.5 (Required)'
-                : field.label.includes('Fixed Term')
-                ? 'e.g. 3 (Where appropriate)'
-                : field.label.includes('Secondary Rate')
-                ? 'e.g. 6.5 (Where appropriate)'
-                : field.label.includes('Overpayment')
-                ? 'e.g. 100 (Optional)'
-                : 'e.g. 15 (Optional)'
-            }
+            onChange={(e) => field.setter(e.target.value)}
+            placeholder={field.placeholder}
           />
-          <button className="clear-btn" onClick={() => field.setter({ target: { value: '' } })}>
-            Clear
-          </button>
+          <button className="clear-btn" onClick={() => field.setter('')}>Clear</button>
         </div>
       ))}
 
       <div className="action-row">
-        <button className="submit-btn" onClick={calculateResults}>
-          Submit
-        </button>
-        <button className="reset-btn" onClick={resetAll}>
-          Reset All
-        </button>
+        <button className="submit-btn" onClick={handleSubmit}>Submit</button>
+        <button className="reset-btn" onClick={handleReset}>Reset All</button>
       </div>
 
       {results && (
         <div className="results">
-          <p>
-            Monthly Payment: <span>{results.monthlyPayment}</span>
-          </p>
-          {results.secondaryPayment && (
-            <p>
-              Secondary Monthly Payment: <span>{results.secondaryPayment}</span>
-            </p>
+          <p><span>Monthly Payment:</span> <span>{formatCurrency(results.monthlyPayment)}</span></p>
+          {results.secondaryMonthly !== null && (
+            <p><span>Secondary Monthly Payment:</span> <span>{formatCurrency(results.secondaryMonthly)}</span></p>
           )}
-          <p>
-            Time to Complete Mortgage: <span>{results.timeToComplete}</span>
-          </p>
-          {results.remainingBalance && (
-            <p>
-              Remaining Balance After Fixed Term: <span>{results.remainingBalance}</span>
-            </p>
+          <p><span>Time to Complete Mortgage:</span> <span>{results.timeToComplete.toFixed(2)} years</span></p>
+          {results.remainingBalance !== null && (
+            <p><span>Remaining Balance After Fixed Term:</span> <span>{formatCurrency(results.remainingBalance)}</span></p>
           )}
-          <PieChart interest={results.interest} principal={results.principal} />
+          <PieChart interest={results.interestPaid} principal={results.principalPaid} />
         </div>
       )}
     </div>
