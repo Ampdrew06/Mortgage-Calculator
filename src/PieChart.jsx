@@ -18,10 +18,6 @@ const PieChart = ({ interest, principal }) => {
 
   const options = {
     maintainAspectRatio: false,
-    responsive: true,
-    layout: {
-      padding: 10,
-    },
     plugins: {
       legend: {
         display: false,
@@ -30,14 +26,10 @@ const PieChart = ({ interest, principal }) => {
   };
 
   return (
-    <div
-      className="pie-wrapper"
-      role="img"
-      aria-label="Pie chart showing interest versus principal paid"
-    >
+    <div className="pie-wrapper" role="img" aria-label="Pie chart showing interest versus principal paid">
       <Pie data={data} options={options} />
-      <div className="pie-labels">
-        <span style={{ color: '#f44336' }}>Red: Interest</span> |{' '}
+      <div className="pie-labels" style={{ display: 'flex', justifyContent: 'center', gap: '1rem' }}>
+        <span style={{ color: '#f44336' }}>Red: Interest</span>
         <span style={{ color: '#4caf50' }}>Green: Principal</span>
       </div>
     </div>
