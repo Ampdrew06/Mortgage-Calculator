@@ -6,31 +6,23 @@ ChartJS.register(ArcElement, Tooltip, Legend);
 
 const PieChart = ({ interest, principal }) => {
   const data = {
-    labels: ['Interest Paid', 'Principal Paid'],
+    labels: ['Interest', 'Principal'],
     datasets: [
       {
         data: [interest, principal],
-        backgroundColor: ['#f44336', '#4caf50'],
+        backgroundColor: ['#ff6384', '#36a2eb'],
         borderWidth: 1,
       },
     ],
   };
 
-  const options = {
-    maintainAspectRatio: false,
-    plugins: {
-      legend: {
-        display: false,
-      },
-    },
-  };
-
   return (
-    <div className="pie-wrapper" role="img" aria-label="Pie chart showing interest versus principal paid">
-      <Pie data={data} options={options} />
-      <div className="pie-labels" style={{ display: 'flex', justifyContent: 'center', gap: '1rem' }}>
-        <span style={{ color: '#f44336' }}>Red: Interest Paid</span>
-        <span style={{ color: '#4caf50' }}>Green: Principal Paid</span>
+    <div className="pie-chart-container">
+      <Pie data={data} />
+      <div className="pie-chart-legend">
+        <span className="dot red" /> Interest Paid
+        <span className="spacer" />
+        <span className="dot green" /> Principal Paid
       </div>
     </div>
   );
