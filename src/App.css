@@ -1,4 +1,3 @@
-/* Base Reset & Body */
 body {
   font-family: Arial, sans-serif;
   background-color: #f4f4f4;
@@ -6,7 +5,6 @@ body {
   padding: 0;
 }
 
-/* Container */
 .container {
   max-width: 600px;
   margin: 2rem auto;
@@ -16,7 +14,6 @@ body {
   box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
 }
 
-/* Header Bar */
 .header {
   background-color: #4caf50;
   color: white;
@@ -35,48 +32,23 @@ body {
   text-align: left;
 }
 
-/* Buttons in Header */
 .share-btn {
   background-color: #1976d2;
   color: white;
   border: none;
-  border-radius: 50%;
-  width: 32px;
-  height: 32px;
-  font-size: 1.2rem;
-  font-weight: bold;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0;
-}
-
-.header-buttons {
-  display: flex;
-  gap: 0.5rem;
-}
-
-.share-btn.blue-btn {
-  background-color: #2196f3;
   border-radius: 4px;
   padding: 0.3rem 0.75rem;
   font-size: 0.85rem;
   font-weight: bold;
-  color: white;
   cursor: pointer;
 }
 
-.share-btn.back-btn {
+.header .share-btn[title="Back to Calculator"] {
   background-color: transparent;
   border: 1px solid white;
   color: white;
-  font-size: 0.85rem;
-  border-radius: 4px;
-  padding: 0.3rem 0.75rem;
 }
 
-/* Input Rows */
 .input-row {
   display: flex;
   align-items: center;
@@ -99,7 +71,6 @@ body {
   min-width: 0;
 }
 
-/* Clear Button */
 .clear-btn {
   flex: 0 0 60px;
   padding: 0.5rem;
@@ -115,7 +86,6 @@ body {
   background-color: #d5d5d5;
 }
 
-/* Submit/Reset Row */
 .action-row {
   display: flex;
   justify-content: space-between;
@@ -153,7 +123,6 @@ body {
   background-color: #7e7e7e;
 }
 
-/* Results Block */
 .results {
   display: none;
   background-color: #e9fce9;
@@ -199,7 +168,6 @@ body {
   flex-wrap: wrap;
   font-weight: bold;
   font-size: 0.95rem;
-  text-align: center;
 }
 
 .dot {
@@ -218,50 +186,7 @@ body {
   background-color: #4caf50;
 }
 
-/* Info Page */
-.info-page {
-  padding: 1rem;
-  font-size: 0.95rem;
-  line-height: 1.5;
-}
-
-.info-page h2 {
-  text-align: center;
-  margin: 1.5rem 0 1rem;
-  font-size: 1.1rem;
-  color: #333;
-}
-
-.info-page ul {
-  list-style: none;
-  padding-left: 1rem;
-  margin-bottom: 1rem;
-}
-
-.info-page li {
-  display: flex;
-  align-items: flex-start;
-  margin-bottom: 0.5rem;
-  line-height: 1.4;
-  word-break: break-word;
-}
-
-.info-page li::before {
-  content: '•';
-  color: #4caf50;
-  font-weight: bold;
-  margin-right: 0.5rem;
-  line-height: 1.1;
-}
-
-.sub-points {
-  padding-left: 1.5rem;
-  font-size: 0.9rem;
-  line-height: 1.3;
-  margin-top: 0.25rem;
-}
-
-/* Mobile Styling */
+/* Mobile */
 @media screen and (max-width: 480px) {
   .input-row {
     flex-direction: column;
@@ -286,15 +211,67 @@ body {
   }
 
   .share-btn {
-    width: 28px;
-    height: 28px;
-    font-size: 1rem;
+    width: auto;
+    font-size: 0.9rem;
   }
 
   .pie-chart-legend {
     flex-direction: row;
     gap: 12px;
     justify-content: center;
-    text-align: center;
   }
+}
+
+/* Info Page Styling */
+.info-page {
+  padding: 1rem;
+  font-size: 0.95rem;
+  line-height: 1.6;
+}
+
+.info-page h2 {
+  text-align: center;
+  margin: 1.5rem 0 1rem;
+  font-size: 1.1rem;
+  color: #333;
+}
+
+.info-page ul {
+  list-style: none;
+  padding-left: 1rem;
+  margin-bottom: 1rem;
+}
+
+.info-page li {
+  margin-bottom: 0.6rem;
+  line-height: 1.5;
+  word-break: break-word;
+}
+
+.info-page li span {
+  font-weight: bold;
+  color: #333;
+  display: inline-block;
+  margin-bottom: 0.2rem;
+}
+
+.sub-points {
+  padding-left: 1.5rem;
+  font-size: 0.9rem;
+  line-height: 1.4;
+  margin-top: 0.25rem;
+  color: #333;
+}
+
+.continue-box {
+  margin-left: 1.5rem;
+  font-size: 0.9rem;
+  margin-top: 0.3rem;
+}
+
+.continue-box label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-weight: normal;
 }
