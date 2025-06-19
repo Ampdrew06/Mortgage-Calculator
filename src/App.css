@@ -262,3 +262,69 @@ body {
   display: flex;
   gap: 0.5rem;
 }
+/* Info Page Tweaks */
+.info-page {
+  padding: 1rem;
+  font-size: 0.95rem;
+  line-height: 1.5;
+}
+
+.info-page h2 {
+  text-align: center;
+  margin: 1.5rem 0 1rem;
+  font-size: 1.1rem;
+  color: #333;
+}
+
+.info-page ul {
+  list-style: none;
+  padding-left: 1rem;
+  margin-bottom: 1rem;
+}
+
+.info-page li {
+  display: flex;
+  align-items: flex-start;
+  margin-bottom: 0.5rem;
+  line-height: 1.4;
+  word-break: break-word;
+}
+
+.info-page li::before {
+  content: '•';
+  color: #4caf50;
+  font-weight: bold;
+  margin-right: 0.5rem;
+  line-height: 1.1;
+}
+
+.sub-points {
+  padding-left: 1.5rem;
+  font-size: 0.9rem;
+  line-height: 1.3;
+  margin-top: 0.25rem;
+}
+
+.header-buttons {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.share-btn.blue-btn {
+  background-color: #2196f3;
+  border-radius: 4px;
+  padding: 0.3rem 0.75rem;
+  font-size: 0.85rem;
+  font-weight: bold;
+  color: white;
+  cursor: pointer;
+}
+
+.share-btn.back-btn {
+  background-color: transparent;
+  border: 1px solid white;
+  color: white;
+  font-size: 0.85rem;
+  border-radius: 4px;
+  padding: 0.3rem 0.75rem;
+}
