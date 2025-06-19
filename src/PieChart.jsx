@@ -1,52 +1,49 @@
-import React from 'react';
-import { Pie } from 'react-chartjs-2';
-import {
-  Chart as ChartJS,
-  ArcElement,
-  Tooltip,
-  Legend
-} from 'chart.js';
+import React, { useRef, useEffect } from 'react';
+import Chart from 'chart.js/auto';
 
-ChartJS.register(ArcElement, Tooltip, Legend);
+const PieChart = ({ interest, principal }) => {
+  const chartRef = useRef(null);
+  const chartInstanceRef = useRef(null);
 
-function PieChart({ interest, principal }) {
-  const data = {
-    labels: ['Interest Paid', 'Principal Paid'],
-    datasets: [
-      {
-        label: 'Repayment Breakdown',
-        data: [interest, principal],
-        backgroundColor: ['#ff4d4f', '#4caf50'],
-        borderWidth: 1
-      }
-    ]
-  };
-
-  const options = {
-    responsive: true,
-    plugins: {
-      legend: {
-        display: true,
-        position: 'bottom',
-        labels: {
-          usePointStyle: true,
-          boxWidth: 10,
-          padding: 20,
-          color: '#333',
-          font: {
-            size: 14,
-            weight: 'bold'
-          }
-        }
-      }
+  useEffect(() => {
+    if (chartInstanceRef.current) {
+      chartInstanceRef.current.destroy();
     }
-  };
+
+    const ctx = chartRef.current.getContext('2d');
+    chartInstanceRef.current = new Chart(ctx, {
+      type: 'pie',
+      data: {
+        labels: ['Interest', 'Principal'],
+        datasets: [
+          {
+            data: [interest, principal],
+            backgroundColor: ['#ff4d4f', '#4caf50'], // red / green
+            borderWidth: 1,
+          },
+        ],
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: {
+            display: false, // disable built-in legend
+          },
+        },
+      },
+    });
+  }, [interest, principal]);
 
   return (
     <div className="pie-chart-container">
-      <Pie data={data} options={options} />
+      <canvas ref={chartRef} width={180} height={180} />
+      <div className="pie-chart-legend">
+        <span><span className="dot red" />Interest Paid</span>
+        <span><span className="dot green" />Principal Paid</span>
+      </div>
     </div>
   );
-}
+};
 
 export default PieChart;
