@@ -3,7 +3,7 @@ import './App.css';
 
 function InfoPage({ onBack }) {
   return (
-    <div className="container info-page">
+    <div className="container">
       <div className="header">
         <h1>Info & Disclaimer</h1>
         <div className="header-buttons">
@@ -12,48 +12,72 @@ function InfoPage({ onBack }) {
         </div>
       </div>
 
-      <div>
+      <div className="info-page">
         <h2>How to Use This Calculator</h2>
         <ul>
-          <li><span style={{ whiteSpace: 'nowrap' }}><strong>Loan Amount (£):</strong></span> The total mortgage you’re borrowing.</li>
-          <li><span style={{ whiteSpace: 'nowrap' }}><strong>Loan Term (Years):</strong></span> Total length of your mortgage.</li>
-          <li><span style={{ whiteSpace: 'nowrap' }}><strong>Initial Rate (%):</strong></span> Introductory interest rate.</li>
-          <li><span style={{ whiteSpace: 'nowrap' }}><strong>Fixed Term (Years):</strong></span> Time the fixed rate lasts (if any).</li>
-          <li><span style={{ whiteSpace: 'nowrap' }}><strong>Secondary Rate (%):</strong></span> The rate after the fixed term ends.</li>
           <li>
-            <span style={{ whiteSpace: 'nowrap' }}><strong>Overpayment (£):</strong></span> Optional monthly extra payment.
-            <ul className="sub-points">
-              <li>With fixed term & secondary rate: applies only during fixed period.</li>
-              <li>Basic setup: applies throughout the term.</li>
-            </ul>
+            <span>Loan Amount (£):</span><br />
+            The total mortgage you’re borrowing.
           </li>
-          <li><span style={{ whiteSpace: 'nowrap' }}><strong>Target (Years):</strong></span> Enter a goal if you want to repay early.</li>
+          <li>
+            <span>Loan Term (Years):</span><br />
+            Total length of your mortgage.
+          </li>
+          <li>
+            <span>Initial Rate (%):</span><br />
+            Introductory interest rate.
+          </li>
+          <li>
+            <span>Fixed Term (Years):</span><br />
+            Time the fixed rate lasts (if any).
+          </li>
+          <li>
+            <span>Secondary Rate (%):</span><br />
+            The rate after the fixed term ends.
+          </li>
+          <li>
+            <span>Overpayment (£):</span><br />
+            Optional monthly extra payment to decrease loan term.
+            <div className="sub-points">
+              • With fixed term & secondary rate: applies only during the fixed period.<br />
+              • Basic setup: applies throughout the term.
+            </div>
+            <div className="continue-box">
+              <label>
+                ☐ Tick this box if you wish to continue the payment into the secondary term (if applicable).
+              </label>
+            </div>
+          </li>
+          <li>
+            <span>Target (Years):</span><br />
+            Enter a goal if you want to repay early.
+          </li>
         </ul>
 
         <h2>Results Explained</h2>
         <ul>
           <li>
-            <strong>Monthly Payment:</strong><br />
+            <span>Monthly Payment:</span><br />
             Your monthly cost during the fixed term, including overpayments.
           </li>
           <li>
-            <strong>Secondary Monthly Payment:</strong><br />
+            <span>Secondary Monthly Payment:</span><br />
             What you’ll pay after the fixed term ends, if applicable.
           </li>
           <li>
-            <strong>Time to Complete Mortgage:</strong><br />
+            <span>Time to Complete Mortgage:</span><br />
             Total duration required to repay the loan.
           </li>
           <li>
-            <strong>Remaining Balance After Fixed Term:</strong><br />
+            <span>Remaining Balance After Fixed Term:</span><br />
             Balance still owed after the fixed term.
           </li>
         </ul>
 
         <h2>Disclaimer</h2>
         <p>
-          This calculator is a <strong>forecasting tool</strong> for illustrative purposes only. It is not financial advice.
-          Always consult a qualified mortgage advisor before making decisions.
+          This calculator is a <strong>forecasting tool</strong> for illustrative purposes only.
+          It is not financial advice. Always consult a qualified mortgage advisor before making decisions.
         </p>
       </div>
     </div>
