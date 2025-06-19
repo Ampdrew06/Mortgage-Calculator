@@ -1,8 +1,8 @@
 import React from 'react';
 import { Pie } from 'react-chartjs-2';
-import { Chart as ChartJS, ArcElement, Tooltip, Legend } from 'chart.js';
+import { Chart as ChartJS, ArcElement } from 'chart.js';
 
-ChartJS.register(ArcElement, Tooltip, Legend);
+ChartJS.register(ArcElement);
 
 const PieChart = ({ interest, principal }) => {
   const data = {
@@ -10,7 +10,7 @@ const PieChart = ({ interest, principal }) => {
     datasets: [
       {
         data: [interest, principal],
-        backgroundColor: ['#ff4d4f', '#4caf50'], // Red = Interest, Green = Principal
+        backgroundColor: ['#ff4d4f', '#4caf50'], // Red and Green
         borderWidth: 1,
       },
     ],
@@ -20,7 +20,12 @@ const PieChart = ({ interest, principal }) => {
     responsive: true,
     maintainAspectRatio: false,
     plugins: {
-      legend: { display: false },
+      legend: {
+        display: false, // fully disable Chart.js legend
+      },
+      tooltip: {
+        enabled: false, // optional: disables tooltip popups
+      },
     },
   };
 
