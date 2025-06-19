@@ -16,21 +16,15 @@ const PieChart = ({ interest, principal }) => {
     ],
   };
 
-  const options = {
-    responsive: true,
-    maintainAspectRatio: false,
-    plugins: {
-      legend: {
-        display: false, // DISABLE built-in legend
-        labels: {
-          generateLabels: () => [], // failsafe to suppress
-        },
-      },
-      tooltip: {
-        enabled: false, // optional
-      },
+const options = {
+  responsive: true,
+  plugins: {
+    legend: {
+      display: false, // ✅ Hide Chart.js’s own legend
     },
-  };
+  },
+};
+
 
   return (
     <div className="pie-chart-container">
