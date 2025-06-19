@@ -6,23 +6,32 @@ ChartJS.register(ArcElement, Tooltip, Legend);
 
 const PieChart = ({ interest, principal }) => {
   const data = {
-    labels: ['Interest', 'Principal'],
+    labels: ['Interest Paid', 'Principal Paid'],
     datasets: [
       {
         data: [interest, principal],
-        backgroundColor: ['#ff6384', '#36a2eb'],
+        backgroundColor: ['#ff4d4f', '#4caf50'], // Red = Interest, Green = Principal
         borderWidth: 1,
       },
     ],
   };
 
+  const options = {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: { display: false },
+    },
+  };
+
   return (
     <div className="pie-chart-container">
-      <Pie data={data} />
+      <div style={{ position: 'relative', width: '100%', height: '180px' }}>
+        <Pie data={data} options={options} />
+      </div>
       <div className="pie-chart-legend">
-        <span className="dot red" /> Interest Paid
-        <span className="spacer" />
-        <span className="dot green" /> Principal Paid
+        <span><span className="dot red" />Interest Paid</span>
+        <span><span className="dot green" />Principal Paid</span>
       </div>
     </div>
   );
