@@ -162,6 +162,14 @@ body {
   text-align: center;
 }
 
+/* Pie Chart - Cleaned and Green Themed */
+.pie-chart-container {
+  width: 100%;
+  max-width: 300px;
+  margin: 1.5rem auto 0 auto;
+  text-align: center;
+}
+
 .pie-chart-legend {
   display: flex;
   justify-content: center;
@@ -182,9 +190,9 @@ body {
 }
 
 .dot.red {
-  background-color: #ff6384;
+  background-color: #ff4d4f; /* Brighter red */
 }
 
 .dot.green {
-  background-color: #36a2eb;
+  background-color: #4caf50; /* Consistent green theme */
 }
