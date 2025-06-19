@@ -232,3 +232,33 @@ body {
     text-align: center;
   }
 }
+/* InfoPage adjustments */
+.info-page {
+  padding: 1rem;
+  font-size: 0.95rem;
+  line-height: 1.4;
+}
+
+.info-page ul {
+  list-style: none;
+  padding-left: 1rem;
+}
+
+.info-page li {
+  display: flex;
+  align-items: flex-start;
+  margin-bottom: 0.6rem;
+}
+
+.info-page li::before {
+  content: '•';
+  color: #4caf50;
+  font-weight: bold;
+  margin-right: 0.6rem;
+  line-height: 1.1;
+}
+
+.header-buttons {
+  display: flex;
+  gap: 0.5rem;
+}
