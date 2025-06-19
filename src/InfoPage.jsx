@@ -19,11 +19,11 @@ function InfoPage({ onBack }) {
         <ul>
           <li>
             <span className="info-label">Loan Amount (£):</span>
-            <span className="info-desc">The total mortgage you’re borrowing.</span>
+            <span className="info-desc"> The total mortgage you’re borrowing.</span>
           </li>
           <li>
             <span className="info-label">Loan Term (Years):</span>
-            <span className="info-desc">Total length of your mortgage.</span>
+            <span className="info-desc"> Total length of your mortgage.</span>
           </li>
           <li>
             <span className="info-label">Initial Rate (%):</span>
@@ -31,11 +31,11 @@ function InfoPage({ onBack }) {
           </li>
           <li>
             <span className="info-label">Fixed Term (Years):</span>
-            <span className="info-desc">How long the fixed rate lasts (if any).</span>
+            <span className="info-desc"> Time the fixed rate lasts (if any).</span>
           </li>
           <li>
             <span className="info-label">Secondary Rate (%):</span>
-            <span className="info-desc">Your rate after the fixed term ends.</span>
+            <span className="info-desc"> The rate after the fixed term ends.</span>
           </li>
           <li className="multi-line">
             <span className="info-label">Overpayment (£):</span>
