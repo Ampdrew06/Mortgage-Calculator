@@ -84,7 +84,6 @@ function App() {
       return;
     }
 
-    // Full version with fixed and secondary rate
     if (fixedN && r2) {
       const basePayment = r1
         ? (P * r1) / (1 - Math.pow(1 + r1, -n))
@@ -134,7 +133,6 @@ function App() {
       return;
     }
 
-    // Simple mortgage
     const months = n;
     const basePaymentSimple = r1
       ? (P * r1) / (1 - Math.pow(1 + r1, -months))
@@ -200,45 +198,38 @@ function App() {
         <>
           <div className="input-row">
             <label>Loan Amount (£)</label>
-            <input type="text" inputMode="decimal" placeholder="e.g. 250,000 (Required)" value={loanAmount} onChange={handleLoanAmountChange} />
+            <input
+              type="text"
+              inputMode="numeric"
+              pattern="[0-9,]*"
+              placeholder="e.g. 250,000 (Required)"
+              value={loanAmount}
+              onChange={handleLoanAmountChange}
+            />
             <button className="clear-btn" onClick={() => setLoanAmount('')}>Clear</button>
           </div>
 
-          <div className="input-row">
-            <label>Loan Term (Years)</label>
-            <input type="text" inputMode="decimal" placeholder="e.g. 25 (Required)" value={loanTerm} onChange={(e) => setLoanTerm(e.target.value)} />
-            <button className="clear-btn" onClick={() => setLoanTerm('')}>Clear</button>
-          </div>
-
-          <div className="input-row">
-            <label>Initial Rate (%)</label>
-            <input type="text" inputMode="decimal" placeholder="e.g. 4.5 (Required)" value={initialRate} onChange={(e) => setInitialRate(e.target.value)} />
-            <button className="clear-btn" onClick={() => setInitialRate('')}>Clear</button>
-          </div>
-
-          <div className="input-row">
-            <label>Fixed Term (Years)</label>
-            <input type="text" inputMode="decimal" placeholder="e.g. 3 (Where appropriate)" value={fixedTerm} onChange={(e) => setFixedTerm(e.target.value)} />
-            <button className="clear-btn" onClick={() => setFixedTerm('')}>Clear</button>
-          </div>
-
-          <div className="input-row">
-            <label>Secondary Rate (%)</label>
-            <input type="text" inputMode="decimal" placeholder="e.g. 6.5 (Where appropriate)" value={secondaryRate} onChange={(e) => setSecondaryRate(e.target.value)} />
-            <button className="clear-btn" onClick={() => setSecondaryRate('')}>Clear</button>
-          </div>
-
-          <div className="input-row">
-            <label>Overpayment (£)</label>
-            <input type="text" inputMode="decimal" placeholder="e.g. 100 (Optional)" value={overpayment} onChange={(e) => setOverpayment(e.target.value)} />
-            <button className="clear-btn" onClick={() => setOverpayment('')}>Clear</button>
-          </div>
-
-          <div className="input-row">
-            <label>Target (Years)</label>
-            <input type="text" inputMode="decimal" placeholder="e.g. 15 (Optional)" value={targetYears} onChange={(e) => setTargetYears(e.target.value)} />
-            <button className="clear-btn" onClick={() => setTargetYears('')}>Clear</button>
-          </div>
+          {[
+            ['Loan Term (Years)', loanTerm, setLoanTerm],
+            ['Initial Rate (%)', initialRate, setInitialRate],
+            ['Fixed Term (Years)', fixedTerm, setFixedTerm],
+            ['Secondary Rate (%)', secondaryRate, setSecondaryRate],
+            ['Overpayment (£)', overpayment, setOverpayment],
+            ['Target (Years)', targetYears, setTargetYears]
+          ].map(([label, value, setter], i) => (
+            <div className="input-row" key={i}>
+              <label>{label}</label>
+              <input
+                type="number"
+                inputMode="decimal"
+                pattern="[0-9]*"
+                placeholder={`e.g. ${label.includes('Overpayment') ? '100' : '25'}${label.includes('Optional') ? ' (Optional)' : ''}`}
+                value={value}
+                onChange={(e) => setter(e.target.value)}
+              />
+              <button className="clear-btn" onClick={() => setter('')}>Clear</button>
+            </div>
+          ))}
 
           <div className="action-row">
             <button className="submit-btn" onClick={handleSubmit}>Submit</button>
@@ -252,9 +243,7 @@ function App() {
               {yearsRemaining && <p><strong>Time to Complete Mortgage:</strong> {yearsRemaining} years</p>}
               {remainingBalance && <p><strong>Remaining Balance After Fixed Term:</strong> £{formatNumber(remainingBalance)}</p>}
               {(interestPaid > 0 || principalPaid > 0) && (
-                <div className="pie-chart-container">
-                  <PieChart interest={parseFloat(interestPaid)} principal={parseFloat(principalPaid)} />
-                </div>
+                <PieChart interest={parseFloat(interestPaid)} principal={parseFloat(principalPaid)} />
               )}
             </div>
           )}
@@ -265,4 +254,3 @@ function App() {
 }
 
 export default App;
-
