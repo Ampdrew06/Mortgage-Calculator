@@ -166,6 +166,7 @@ body {
   max-height: 180px;
 }
 
+/* Legend dots under pie chart */
 .pie-chart-legend {
   display: flex;
   justify-content: center;
@@ -175,6 +176,7 @@ body {
   flex-wrap: wrap;
   font-weight: bold;
   font-size: 0.95rem;
+  text-align: center;
 }
 
 .dot {
@@ -222,8 +224,11 @@ body {
     height: 28px;
     font-size: 1rem;
   }
-}
 
-.dot.green {
-  background-color: #4caf50; /* Consistent green theme */
+  .pie-chart-legend {
+    flex-direction: row;
+    gap: 12px;
+    justify-content: center;
+    text-align: center;
+  }
 }
