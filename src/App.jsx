@@ -246,12 +246,20 @@ function App() {
           </div>
 
           {submitted && (
-           <div className="results visible"> 
-  {monthlyPayment && <p><strong>Monthly Payment:</strong> £{formatNumber(monthlyPayment)}</p>}
-  {secondaryPayment && <p><strong>Secondary Monthly Payment:</strong> £{formatNumber(secondaryPayment)}</p>}
-  {yearsRemaining && <p><strong>Time to Complete Mortgage:</strong> {yearsRemaining} years</p>}
-  {remainingBalance && <p><strong>Remaining Balance After Fixed Term:</strong> £{formatNumber(remainingBalance)}</p>}
-  {(interestPaid > 0 || principalPaid > 0) && (
-    <PieChart interest={parseFloat(interestPaid)} principal={parseFloat(principalPaid)} />
-  )}
-</div>
+  <div className="results visible"> 
+    {monthlyPayment && <p><strong>Monthly Payment:</strong> £{formatNumber(monthlyPayment)}</p>}
+    {secondaryPayment && <p><strong>Secondary Monthly Payment:</strong> £{formatNumber(secondaryPayment)}</p>}
+    {yearsRemaining && <p><strong>Time to Complete Mortgage:</strong> {yearsRemaining} years</p>}
+    {remainingBalance && <p><strong>Remaining Balance After Fixed Term:</strong> £{formatNumber(remainingBalance)}</p>}
+    {(interestPaid > 0 || principalPaid > 0) && (
+      <PieChart interest={parseFloat(interestPaid)} principal={parseFloat(principalPaid)} />
+    )}
+  </div>
+)}
+        </>
+      )}
+    </div>
+  );
+}
+
+export default App;
