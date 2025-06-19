@@ -6,35 +6,43 @@ function InfoPage({ onBack }) {
     <div className="container">
       <div className="header">
         <h1>Info & Disclaimer</h1>
-        <button className="share-btn" onClick={onBack} title="Back to Calculator">← Back</button>
+        <div className="header-buttons">
+          <button className="share-btn" onClick={onBack} title="Back to Calculator">← Back</button>
+          <button className="share-btn" onClick={() => navigator.share?.({
+            title: 'Mortgage Calculator',
+            text: 'Check out this free mortgage calculator!',
+            url: window.location.href,
+          })}>⤴</button>
+        </div>
       </div>
 
-      <div className="info-section">
+      <div className="info-page">
         <h2>How to Use This Calculator</h2>
         <ul>
           <li><strong>Loan Amount (£):</strong> The total mortgage you’re borrowing.</li>
-          <li><strong>Loan Term (Years):</strong> Total length of your mortgage.</li>
-          <li><strong>Initial Rate (%):</strong> Introductory interest rate.</li>
-          <li><strong>Fixed Term (Years):</strong> How long the fixed rate lasts (if any).</li>
-          <li><strong>Secondary Rate (%):</strong> What your rate changes to after the fixed period.</li>
-          <li><strong>Overpayment (£):</strong> Optional – monthly extra payment.<br />
-          • If a fixed term and secondary rate are entered, overpayments only apply during the fixed period.<br />
-          • If using just a basic loan setup (e.g. Loan Amount, Term, Interest Rate), overpayments apply throughout.</li>
-          <li><strong>Target Years:</strong> Optional – enter a goal if you want to repay early. Overrides other term logic.</li>
+          <li><strong>Loan Term (Years):</strong> The overall duration of the mortgage.</li>
+          <li><strong>Initial Rate (%):</strong> Your introductory interest rate.</li>
+          <li><strong>Fixed Term (Years):</strong> (Optional) Duration of the initial fixed rate period.</li>
+          <li><strong>Secondary Rate (%):</strong> (Optional) Your new rate after the fixed period ends.</li>
+          <li><strong>Overpayment (£):</strong> (Optional) A monthly extra amount you'd like to pay.<br />
+            • In full mortgage mode (fixed + secondary rate), overpayments apply during the fixed term only.<br />
+            • In simple mode (Loan + Term + Rate), overpayments apply for the entire loan duration.
+          </li>
+          <li><strong>Target Years:</strong> (Optional) Overrides the above. Enter a goal if you want to repay faster. The calculator will increase your monthly payments to meet your goal.</li>
         </ul>
 
         <h2>Results Explained</h2>
         <ul>
-          <li><strong>Monthly Payment:</strong> Your monthly cost during the fixed rate period, including overpayments.</li>
-          <li><strong>Secondary Monthly Payment:</strong> What you’ll pay after the fixed term ends (if applicable).</li>
-          <li><strong>Time to Complete Mortgage:</strong> Total time to repay the loan with current values.</li>
-          <li><strong>Remaining Balance After Fixed Term:</strong> What’s left to repay after the fixed period (if applicable).</li>
+          <li><strong>Monthly Payment:</strong> What you'll pay during the fixed term (or overall if no fixed term).</li>
+          <li><strong>Secondary Monthly Payment:</strong> If a fixed term is used, this is the new payment afterward.</li>
+          <li><strong>Time to Complete Mortgage:</strong> The total time to repay your mortgage based on the current inputs.</li>
+          <li><strong>Remaining Balance After Fixed Term:</strong> If a fixed term is used, this shows the balance left to repay at that point.</li>
         </ul>
 
         <h2>Disclaimer</h2>
         <p>
-          This calculator is a <strong>forecasting tool</strong> for illustration purposes only. It is not financial advice.
-          Always consult a qualified mortgage advisor before making financial decisions.
+          This calculator is for <strong>illustration purposes only</strong>. It does not offer financial advice.
+          Always consult a qualified advisor before making mortgage decisions.
         </p>
       </div>
     </div>
@@ -42,3 +50,4 @@ function InfoPage({ onBack }) {
 }
 
 export default InfoPage;
+
