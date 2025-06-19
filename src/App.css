@@ -155,55 +155,36 @@ body {
 }
 
 /* Pie Chart */
-.pie-wrapper {
-  max-width: 180px;
-  height: 180px;
-  margin: 1.5rem auto;
+.pie-chart-container {
+  width: 100%;
+  max-width: 400px;
+  margin: 1.5rem auto 0 auto;
   text-align: center;
 }
 
-.pie-wrapper canvas {
-  min-height: 180px;
-}
-
-.pie-labels {
-  margin-top: 1rem;
-  font-size: 0.95rem;
+.pie-chart-legend {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-top: 12px;
+  gap: 20px;
+  flex-wrap: wrap;
   font-weight: bold;
+  font-size: 0.95rem;
 }
 
-.pie-labels span {
+.dot {
+  height: 12px;
+  width: 12px;
+  border-radius: 50%;
   display: inline-block;
-  margin: 0 0.5rem;
+  margin-right: 6px;
 }
 
-/* Mobile */
-@media screen and (max-width: 480px) {
-  .input-row {
-    flex-direction: column;
-    align-items: stretch;
-  }
+.dot.red {
+  background-color: #ff6384;
+}
 
-  .input-row label,
-  .input-row input,
-  .clear-btn {
-    width: 100%;
-    flex: none;
-  }
-
-  .action-row {
-    flex-direction: column;
-    gap: 0.5rem;
-  }
-
-  .submit-btn,
-  .reset-btn {
-    margin-right: 0;
-  }
-
-  .share-btn {
-    width: 28px;
-    height: 28px;
-    font-size: 1rem;
-  }
+.dot.green {
+  background-color: #36a2eb;
 }
