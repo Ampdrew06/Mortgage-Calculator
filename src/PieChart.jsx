@@ -1,4 +1,4 @@
-import React, { useRef, useEffect } from 'react';
+import React from 'react';
 import { Pie } from 'react-chartjs-2';
 import {
   Chart as ChartJS,
@@ -10,10 +10,8 @@ import {
 ChartJS.register(ArcElement, Tooltip, Legend);
 
 function PieChart({ interest, principal }) {
-  const chartRef = useRef();
-
   const data = {
-    labels: ['Interest', 'Principal'],
+    labels: ['Interest Paid', 'Principal Paid'],
     datasets: [
       {
         label: 'Repayment Breakdown',
@@ -28,28 +26,25 @@ function PieChart({ interest, principal }) {
     responsive: true,
     plugins: {
       legend: {
-        display: false, // Disable Chart.js legend
-        position: 'bottom'
+        display: true,
+        position: 'bottom',
+        labels: {
+          usePointStyle: true,
+          boxWidth: 10,
+          padding: 20,
+          color: '#333',
+          font: {
+            size: 14,
+            weight: 'bold'
+          }
+        }
       }
     }
   };
 
-  // 🧼 Extra cleanup: forcibly hide any Chart.js canvas-based legends
-  useEffect(() => {
-    const chart = chartRef.current;
-    if (chart && chart.canvas) {
-      const legends = chart.canvas.parentNode?.querySelectorAll('ul');
-      legends?.forEach((el) => el.remove());
-    }
-  }, []);
-
   return (
     <div className="pie-chart-container">
-      <Pie ref={chartRef} data={data} options={options} />
-      <div className="pie-chart-legend">
-        <span><span className="dot red"></span>Interest Paid</span>
-        <span><span className="dot green"></span>Principal Paid</span>
-      </div>
+      <Pie data={data} options={options} />
     </div>
   );
 }
