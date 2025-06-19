@@ -48,13 +48,28 @@ body {
   padding: 0;
 }
 
-.header .share-btn[title="Back to Calculator"] {
-  font-size: 1.1rem;
-  border-radius: 6px;
-  width: auto;
-  padding: 0.25rem 0.5rem;
-  background-color: transparent;
+.header-buttons {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.share-btn.blue-btn {
+  background-color: #2196f3;
+  border-radius: 4px;
+  padding: 0.3rem 0.75rem;
+  font-size: 0.85rem;
+  font-weight: bold;
   color: white;
+  cursor: pointer;
+}
+
+.share-btn.back-btn {
+  background-color: transparent;
+  border: 1px solid white;
+  color: white;
+  font-size: 0.85rem;
+  border-radius: 4px;
+  padding: 0.3rem 0.75rem;
 }
 
 .input-row {
@@ -166,7 +181,6 @@ body {
   max-height: 180px;
 }
 
-/* Legend dots under pie chart */
 .pie-chart-legend {
   display: flex;
   justify-content: center;
@@ -195,74 +209,7 @@ body {
   background-color: #4caf50;
 }
 
-/* Mobile */
-@media screen and (max-width: 480px) {
-  .input-row {
-    flex-direction: column;
-    align-items: stretch;
-  }
-
-  .input-row label,
-  .input-row input,
-  .clear-btn {
-    width: 100%;
-    flex: none;
-  }
-
-  .action-row {
-    flex-direction: column;
-    gap: 0.5rem;
-  }
-
-  .submit-btn,
-  .reset-btn {
-    margin-right: 0;
-  }
-
-  .share-btn {
-    width: 28px;
-    height: 28px;
-    font-size: 1rem;
-  }
-
-  .pie-chart-legend {
-    flex-direction: row;
-    gap: 12px;
-    justify-content: center;
-    text-align: center;
-  }
-}
 /* InfoPage adjustments */
-.info-page {
-  padding: 1rem;
-  font-size: 0.95rem;
-  line-height: 1.4;
-}
-
-.info-page ul {
-  list-style: none;
-  padding-left: 1rem;
-}
-
-.info-page li {
-  display: flex;
-  align-items: flex-start;
-  margin-bottom: 0.6rem;
-}
-
-.info-page li::before {
-  content: '•';
-  color: #4caf50;
-  font-weight: bold;
-  margin-right: 0.6rem;
-  line-height: 1.1;
-}
-
-.header-buttons {
-  display: flex;
-  gap: 0.5rem;
-}
-/* Info Page Tweaks */
 .info-page {
   padding: 1rem;
   font-size: 0.95rem;
@@ -305,26 +252,40 @@ body {
   margin-top: 0.25rem;
 }
 
-.header-buttons {
-  display: flex;
-  gap: 0.5rem;
-}
+/* Mobile tweaks */
+@media screen and (max-width: 480px) {
+  .input-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
 
-.share-btn.blue-btn {
-  background-color: #2196f3;
-  border-radius: 4px;
-  padding: 0.3rem 0.75rem;
-  font-size: 0.85rem;
-  font-weight: bold;
-  color: white;
-  cursor: pointer;
-}
+  .input-row label,
+  .input-row input,
+  .clear-btn {
+    width: 100%;
+    flex: none;
+  }
 
-.share-btn.back-btn {
-  background-color: transparent;
-  border: 1px solid white;
-  color: white;
-  font-size: 0.85rem;
-  border-radius: 4px;
-  padding: 0.3rem 0.75rem;
+  .action-row {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .submit-btn,
+  .reset-btn {
+    margin-right: 0;
+  }
+
+  .share-btn {
+    width: 28px;
+    height: 28px;
+    font-size: 1rem;
+  }
+
+  .pie-chart-legend {
+    flex-direction: row;
+    gap: 12px;
+    justify-content: center;
+    text-align: center;
+  }
 }
