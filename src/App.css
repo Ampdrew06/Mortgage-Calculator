@@ -1,3 +1,4 @@
+/* Base Reset & Body */
 body {
   font-family: Arial, sans-serif;
   background-color: #f4f4f4;
@@ -5,6 +6,7 @@ body {
   padding: 0;
 }
 
+/* Container */
 .container {
   max-width: 600px;
   margin: 2rem auto;
@@ -14,6 +16,7 @@ body {
   box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
 }
 
+/* Header Bar */
 .header {
   background-color: #4caf50;
   color: white;
@@ -32,6 +35,7 @@ body {
   text-align: left;
 }
 
+/* Buttons in Header */
 .share-btn {
   background-color: #1976d2;
   color: white;
@@ -72,6 +76,7 @@ body {
   padding: 0.3rem 0.75rem;
 }
 
+/* Input Rows */
 .input-row {
   display: flex;
   align-items: center;
@@ -94,6 +99,7 @@ body {
   min-width: 0;
 }
 
+/* Clear Button */
 .clear-btn {
   flex: 0 0 60px;
   padding: 0.5rem;
@@ -109,6 +115,7 @@ body {
   background-color: #d5d5d5;
 }
 
+/* Submit/Reset Row */
 .action-row {
   display: flex;
   justify-content: space-between;
@@ -146,6 +153,7 @@ body {
   background-color: #7e7e7e;
 }
 
+/* Results Block */
 .results {
   display: none;
   background-color: #e9fce9;
@@ -181,6 +189,7 @@ body {
   max-height: 180px;
 }
 
+/* Pie Chart Legend */
 .pie-chart-legend {
   display: flex;
   justify-content: center;
@@ -209,7 +218,7 @@ body {
   background-color: #4caf50;
 }
 
-/* InfoPage adjustments */
+/* Info Page */
 .info-page {
   padding: 1rem;
   font-size: 0.95rem;
@@ -252,7 +261,7 @@ body {
   margin-top: 0.25rem;
 }
 
-/* Mobile tweaks */
+/* Mobile Styling */
 @media screen and (max-width: 480px) {
   .input-row {
     flex-direction: column;
