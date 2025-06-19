@@ -54,7 +54,9 @@ function App() {
     if (target) {
       const months = target * 12;
       const rate = r1;
-      payment = rate ? (P * rate) / (1 - Math.pow(1 + rate, -months)) : P / months;
+      payment = rate
+        ? (P * rate) / (1 - Math.pow(1 + rate, -months))
+        : P / months;
       let tempBalance = P;
       let totalInterestLocal = 0;
       let totalPrincipalLocal = 0;
@@ -84,7 +86,9 @@ function App() {
 
     // Full version with fixed and secondary rate
     if (fixedN && r2) {
-      const basePayment = r1 ? (P * r1) / (1 - Math.pow(1 + r1, -n)) : P / n;
+      const basePayment = r1
+        ? (P * r1) / (1 - Math.pow(1 + r1, -n))
+        : P / n;
       monthly1 = basePayment + extra;
 
       for (let i = 0; i < fixedN; i++) {
@@ -103,8 +107,8 @@ function App() {
       const balanceAtFixedTerm = balance;
 
       const baseSecondary = r2
-        ? (balance * r2) / (1 - Math.pow(1 + r2, -(n - fixedN)))
-        : balance / (n - fixedN);
+        ? (balanceAtFixedTerm * r2) / (1 - Math.pow(1 + r2, -(n - fixedN)))
+        : balanceAtFixedTerm / (n - fixedN);
       monthly2 = baseSecondary + extra;
 
       for (let i = 0; i < n - fixedN; i++) {
@@ -132,7 +136,9 @@ function App() {
 
     // Simple mortgage
     const months = n;
-    const basePaymentSimple = r1 ? (P * r1) / (1 - Math.pow(1 + r1, -months)) : P / months;
+    const basePaymentSimple = r1
+      ? (P * r1) / (1 - Math.pow(1 + r1, -months))
+      : P / months;
     const monthlySimple = basePaymentSimple + extra;
     let tempBalance = P;
 
@@ -246,7 +252,10 @@ function App() {
               {yearsRemaining && <p><strong>Time to Complete Mortgage:</strong> {yearsRemaining} years</p>}
               {remainingBalance && <p><strong>Remaining Balance After Fixed Term:</strong> £{formatNumber(remainingBalance)}</p>}
               {(interestPaid > 0 || principalPaid > 0) && (
-                <PieChart interest={parseFloat(interestPaid)} principal={parseFloat(principalPaid)} />
+                <>
+                  <PieChart interest={parseFloat(interestPaid)} principal={parseFloat(principalPaid)} />
+                  <p className="legend"><span style={{ color: 'red' }}>● Interest</span> &nbsp;&nbsp; <span style={{ color: 'green' }}>● Principal</span></p>
+                </>
               )}
             </div>
           )}
