@@ -7,78 +7,53 @@ function InfoPage({ onBack }) {
       <div className="header">
         <h1>Info & Disclaimer</h1>
         <div className="header-buttons">
-          <button className="share-btn blue-btn" title="Share App">Share</button>
-          <button className="share-btn back-btn" onClick={onBack} title="Back to Calculator">
-            ← Back
-          </button>
+          <button className="share-btn blue-btn">Share</button>
+          <button className="share-btn back-btn" onClick={onBack} title="Back to Calculator">← Back</button>
         </div>
       </div>
 
-      <div className="info-content">
+      <div>
         <h2>How to Use This Calculator</h2>
         <ul>
+          <li><span style={{ whiteSpace: 'nowrap' }}><strong>Loan Amount (£):</strong></span> The total mortgage you’re borrowing.</li>
+          <li><span style={{ whiteSpace: 'nowrap' }}><strong>Loan Term (Years):</strong></span> Total length of your mortgage.</li>
+          <li><span style={{ whiteSpace: 'nowrap' }}><strong>Initial Rate (%):</strong></span> Introductory interest rate.</li>
+          <li><span style={{ whiteSpace: 'nowrap' }}><strong>Fixed Term (Years):</strong></span> Time the fixed rate lasts (if any).</li>
+          <li><span style={{ whiteSpace: 'nowrap' }}><strong>Secondary Rate (%):</strong></span> The rate after the fixed term ends.</li>
           <li>
-            <span className="info-label">Loan Amount (£):</span>
-            <span className="info-desc"> The total mortgage you’re borrowing.</span>
+            <span style={{ whiteSpace: 'nowrap' }}><strong>Overpayment (£):</strong></span> Optional monthly extra payment.
+            <ul className="sub-points">
+              <li>With fixed term & secondary rate: applies only during fixed period.</li>
+              <li>Basic setup: applies throughout the term.</li>
+            </ul>
           </li>
-          <li>
-            <span className="info-label">Loan Term (Years):</span>
-            <span className="info-desc"> Total length of your mortgage.</span>
-          </li>
-          <li>
-            <span className="info-label">Initial Rate (%):</span>
-            <span className="info-desc">Introductory interest rate.</span>
-          </li>
-          <li>
-            <span className="info-label">Fixed Term (Years):</span>
-            <span className="info-desc"> Time the fixed rate lasts (if any).</span>
-          </li>
-          <li>
-            <span className="info-label">Secondary Rate (%):</span>
-            <span className="info-desc"> The rate after the fixed term ends.</span>
-          </li>
-          <li className="multi-line">
-            <span className="info-label">Overpayment (£):</span>
-            <span className="info-desc">
-              Optional monthly extra payment.
-              <ul className="sub-points">
-                <li>With fixed term & secondary rate: applies only during the fixed period.</li>
-                <li>Basic setup: applies throughout the term.</li>
-              </ul>
-            </span>
-          </li>
-          <li>
-            <span className="info-label">Target (Years):</span>
-            <span className="info-desc">
-              Enter a goal if you want to repay early. Overrides other inputs.
-            </span>
-          </li>
+          <li><span style={{ whiteSpace: 'nowrap' }}><strong>Target (Years):</strong></span> Enter a goal if you want to repay early.</li>
         </ul>
 
         <h2>Results Explained</h2>
         <ul>
           <li>
-            <span className="info-label">Monthly Payment:</span>
-            <span className="info-desc">Your monthly cost during the fixed term, including any overpayments.</span>
+            <strong>Monthly Payment:</strong><br />
+            Your monthly cost during the fixed term, including overpayments.
           </li>
           <li>
-            <span className="info-label">Secondary Monthly Payment:</span>
-            <span className="info-desc">Payment after the fixed term ends, if applicable.</span>
+            <strong>Secondary Monthly Payment:</strong><br />
+            What you’ll pay after the fixed term ends, if applicable.
           </li>
           <li>
-            <span className="info-label">Time to Complete Mortgage:</span>
-            <span className="info-desc">Total duration required to repay the loan.</span>
+            <strong>Time to Complete Mortgage:</strong><br />
+            Total duration required to repay the loan.
           </li>
           <li>
-            <span className="info-label">Remaining Balance After Fixed Term:</span>
-            <span className="info-desc">Balance still owed after the fixed term.</span>
+            <strong>Remaining Balance After Fixed Term:</strong><br />
+            Balance still owed after the fixed term.
           </li>
         </ul>
 
         <h2>Disclaimer</h2>
         <p>
-          This calculator is a <strong>forecasting tool</strong> for illustrative purposes only.
-          It is not financial advice. Always consult a qualified mortgage advisor before making decisions.
+          This calculator is a <strong>forecasting tool</strong> for illustrative purposes only. It is not financial advice.
+          Always consult a qualified mortgage advisor before making decisions.
         </p>
       </div>
     </div>
