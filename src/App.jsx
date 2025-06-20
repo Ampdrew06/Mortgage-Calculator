@@ -221,13 +221,13 @@ function App() {
 
           <div className="input-row">
             <label>Fixed Term (Years)</label>
-            <input type="text" inputMode="numeric" pattern="[0-9]*" placeholder="e.g. 3 (Where appropriate)" value={fixedTerm} onChange={(e) => setFixedTerm(e.target.value)} />
+            <input type="text" inputMode="numeric" pattern="[0-9]*" placeholder="e.g. 3 (If any)" value={fixedTerm} onChange={(e) => setFixedTerm(e.target.value)} />
             <button className="clear-btn" onClick={() => setFixedTerm('')}>Clear</button>
           </div>
 
           <div className="input-row">
             <label>Secondary Rate (%)</label>
-            <input type="text" inputMode="numeric" pattern="[0-9]*" placeholder="e.g. 6.5 (Where appropriate)" value={secondaryRate} onChange={(e) => setSecondaryRate(e.target.value)} />
+            <input type="text" inputMode="numeric" pattern="[0-9]*" placeholder="e.g. 6.5 (If any)" value={secondaryRate} onChange={(e) => setSecondaryRate(e.target.value)} />
             <button className="clear-btn" onClick={() => setSecondaryRate('')}>Clear</button>
           </div>
 
