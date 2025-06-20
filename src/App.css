@@ -58,7 +58,7 @@ body {
 }
 
 .input-row label {
-  flex: 0 0 160px;
+  flex: 0 0 140px;
   white-space: nowrap;
 }
 
@@ -189,15 +189,21 @@ body {
 /* Mobile */
 @media screen and (max-width: 480px) {
   .input-row {
-    flex-direction: column;
-    align-items: stretch;
+    flex-wrap: wrap;
+    gap: 0.25rem;
   }
 
-  .input-row label,
-  .input-row input,
+  .input-row label {
+    flex: 1 1 100%;
+  }
+
+  .input-row input {
+    flex: 1 1 60%;
+  }
+
   .clear-btn {
-    width: 100%;
-    flex: none;
+    flex: 1 1 35%;
+    margin-left: auto;
   }
 
   .action-row {
