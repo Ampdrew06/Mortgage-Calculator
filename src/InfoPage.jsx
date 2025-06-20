@@ -15,43 +15,13 @@ function InfoPage({ onBack }) {
       <div className="info-page">
         <h2>How to Use This Calculator</h2>
         <ul>
-          <li>
-            <span>Loan Amount (£):</span><br />
-            The total mortgage you’re borrowing.
-          </li>
-          <li>
-            <span>Loan Term (Years):</span><br />
-            Total length of your mortgage.
-          </li>
-          <li>
-            <span>Initial Rate (%):</span><br />
-            Introductory interest rate.
-          </li>
-          <li>
-            <span>Fixed Term (Years):</span><br />
-            Time the fixed rate lasts (if any).
-          </li>
-          <li>
-            <span>Secondary Rate (%):</span><br />
-            The rate after the fixed term ends.
-          </li>
-          <li>
-            <span>Overpayment (£):</span><br />
-            Optional monthly extra payment to decrease loan term.
-            <div className="sub-points">
-              • With fixed term & secondary rate: applies only during the fixed period.<br />
-              • Basic setup: applies throughout the term.
-            </div>
-            <div className="continue-box">
-              <label>
-                ☐ Tick this box if you wish to continue the payment into the secondary term (if applicable).
-              </label>
-            </div>
-          </li>
-          <li>
-            <span>Target (Years):</span><br />
-            Enter a goal if you want to repay early.
-          </li>
+          <li><span>Loan Amount (£):</span> The total mortgage you’re borrowing.</li>
+          <li><span>Loan Term (Years):</span> Total length of your mortgage.</li>
+          <li><span>Initial Rate (%):</span> Introductory interest rate.</li>
+          <li><span>Fixed Term (Years):</span> Time the fixed rate lasts (if any).</li>
+          <li><span>Secondary Rate (%):</span> The rate after the fixed term ends.</li>
+          <li><span>Overpayment (£):</span> Optional extra payment to decrease loan term.</li>
+          <li><span>Target (Years):</span> Enter a goal if you want to repay early.</li>
         </ul>
 
         <h2>Results Explained</h2>
