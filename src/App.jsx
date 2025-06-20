@@ -51,38 +51,41 @@ function App() {
     let monthly2 = 0;
     let payment = 0;
 
-    if (target) {
-      const months = target * 12;
-      const rate = r1;
-      payment = rate
-        ? (P * rate) / (1 - Math.pow(1 + rate, -months))
-        : P / months;
-      let tempBalance = P;
-      let totalInterestLocal = 0;
-      let totalPrincipalLocal = 0;
+  if (target) {
+  const months = target * 12;
+  const rate = r1;
+  payment = rate
+    ? (P * rate) / (1 - Math.pow(1 + rate, -months))
+    : P / months;
+  let tempBalance = P;
+  let totalInterestLocal = 0;
+  let totalPrincipalLocal = 0;
 
-      for (let i = 0; i < months; i++) {
-        const interest = tempBalance * rate;
-        const principal = payment - interest;
-        tempBalance -= principal;
-        totalInterestLocal += interest;
-        totalPrincipalLocal += principal;
-        if (tempBalance <= 0) {
-          timeMonths = i + 1;
-          tempBalance = 0;
-          break;
-        }
-      }
-
-      setMonthlyPayment(payment.toFixed(2));
-      setSecondaryPayment(null);
-      setYearsRemaining((timeMonths / 12).toFixed(2));
-      setRemainingBalance('0.00');
-      setInterestPaid(totalInterestLocal.toFixed(2));
-      setPrincipalPaid((P - tempBalance).toFixed(2));
-      setSubmitted(true);
-      return;
+  for (let i = 0; i < months; i++) {
+    const interest = tempBalance * rate;
+    const principal = payment - interest;
+    tempBalance -= principal;
+    totalInterestLocal += interest;
+    totalPrincipalLocal += principal;
+    if (tempBalance <= 0) {
+      timeMonths = i + 1;
+      tempBalance = 0;
+      break;
     }
+  }
+
+  setMonthlyPayment(payment.toFixed(2));
+  setSecondaryPayment(null);
+  setYearsRemaining((timeMonths / 12).toFixed(2));
+  setRemainingBalance('0.00');
+  setInterestPaid(totalInterestLocal.toFixed(2));
+  setPrincipalPaid((P - tempBalance).toFixed(2));
+
+  setOverpayment(''); // 🔥 This is the new line you're adding
+  setSubmitted(true);
+  return;
+}
+
 
     // Full version with fixed and secondary rate
     if (fixedN && r2) {
