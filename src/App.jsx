@@ -1,4 +1,3 @@
-// Test local edit - added comment
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, useLocation, useNavigate } from 'react-router-dom';
 import MC from './MC';
@@ -13,15 +12,14 @@ const HeaderNav = () => {
 
   const isCCC = location.pathname.startsWith('/ccc');
 
-  // Theme colors
   const themes = {
     mc: {
-      primary: '#4caf50',      // green
-      secondary: '#1976d2',    // blue
+      primary: '#4caf50', // green
+      secondary: '#1976d2', // blue
     },
     ccc: {
-      primary: '#4aa4e3',      // blue
-      secondary: '#4caf50',    // green
+      primary: '#4aa4e3', // blue
+      secondary: '#4caf50', // green
     }
   };
 
@@ -36,9 +34,9 @@ const HeaderNav = () => {
   };
 
   return (
-    <header 
-      style={{ 
-        backgroundColor: activeTheme.primary, 
+    <header
+      style={{
+        backgroundColor: activeTheme.primary,
         color: 'white',
         display: 'flex',
         alignItems: 'center',
@@ -48,16 +46,18 @@ const HeaderNav = () => {
         justifyContent: 'space-between',
       }}
     >
-      <h1 style={{ 
-        fontSize: '1.8rem', 
-        margin: 0, 
-        flexGrow: 1, 
-        fontWeight: 'bold' 
-      }}>
+      <h1
+        style={{
+          fontSize: '1.8rem',
+          margin: 0,
+          flexGrow: 1,
+          fontWeight: 'bold',
+        }}
+      >
         {mainTitle}
       </h1>
 
-      <button 
+      <button
         onClick={goToPartner}
         style={{
           backgroundColor: inactiveTheme.primary,
@@ -76,20 +76,6 @@ const HeaderNav = () => {
         {partnerTitle}
       </button>
     </header>
-  );
-};
-
-
-  return (
-    <div className={headerClass}>
-      <h1>{pageTitle}</h1>
-      <div className="nav-buttons">
-        <button className="share-btn" onClick={goToCalculator}>
-          {isCCC ? 'Mortgage Calculator' : 'Credit Card Calculator'}
-        </button>
-        <button className="share-btn" onClick={goToInfo}>ℹ️</button>
-      </div>
-    </div>
   );
 };
 
