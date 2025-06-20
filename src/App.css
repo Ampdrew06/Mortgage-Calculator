@@ -1,3 +1,4 @@
+/* Existing styles preserved */
 body {
   font-family: Arial, sans-serif;
   background-color: #f4f4f4;
@@ -280,4 +281,14 @@ body {
   align-items: center;
   gap: 0.5rem;
   font-weight: normal;
+}
+
+/* NEW — CCC Blue Theme */
+.header-box.blue-theme {
+  background-color: #4aa4e3; /* Medium-light blue (matches pie chart tone) */
+  color: white;
+  padding: 1rem;
+  border-radius: 1rem;
+  margin-bottom: 1rem;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
 }
