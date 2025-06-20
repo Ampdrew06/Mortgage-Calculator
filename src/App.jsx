@@ -1,6 +1,6 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, useLocation, useNavigate } from 'react-router-dom';
-import MortgageCalculator from './MortgageCalculator';
+import MC from './MC';
 import CCC from './CCC';
 import InfoPage from './InfoPage';
 import CCCInfoPage from './CCCInfoPage';
