@@ -41,7 +41,7 @@ const App = () => {
     <Router>
       <HeaderNav />
       <Routes>
-        <Route path="/" element={<MortgageCalculator />} />
+        <Route path="/" element={<MC />} />
         <Route path="/ccc" element={<CCC />} />
         <Route path="/info" element={<InfoPage />} />
         <Route path="/ccc-info" element={<CCCInfoPage />} />
