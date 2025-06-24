@@ -131,7 +131,8 @@ const CreditCardCalculator = () => {
       </div>
 
       <div className="button-row">
-        <button className="submit-btn" onClick={calculate}>Submit</button>
+        <button className="submit-btn ccc" onClick={handleSubmit}>Submit</button>
+
         <button className="reset-btn" onClick={resetAll}>Reset All</button>
       </div>
 
