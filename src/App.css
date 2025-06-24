@@ -169,3 +169,15 @@ body {
   gap: 0.5rem;
   margin-bottom: 1rem;
 }
+/* Mobile-specific styles */
+@media screen and (max-width: 480px) {
+  .header > div {
+    margin-right: 1rem; /* keep buttons away from right edge */
+  }
+
+  .header h1 {
+    flex-grow: 1;
+    margin-right: 0;
+    padding-left: 0;
+  }
+}
