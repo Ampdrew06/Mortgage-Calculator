@@ -33,6 +33,10 @@ const HeaderNav = () => {
     navigate(isCCC ? '/' : '/ccc');
   };
 
+  const goToInfo = () => {
+    navigate(isCCC ? '/ccc-info' : '/info');
+  };
+
   return (
     <header
       style={{
@@ -57,24 +61,45 @@ const HeaderNav = () => {
         {mainTitle}
       </h1>
 
-      <button
-        onClick={goToPartner}
-        style={{
-          backgroundColor: inactiveTheme.primary,
-          color: 'white',
-          border: 'none',
-          borderRadius: '5px',
-          padding: '0.4rem 1rem',
-          fontSize: '1rem',
-          cursor: 'pointer',
-          flexShrink: 0,
-          boxShadow: '0 2px 5px rgba(0,0,0,0.2)',
-          fontWeight: 'bold',
-        }}
-        aria-label={`Switch to ${partnerTitle}`}
-      >
-        {partnerTitle}
-      </button>
+      <div style={{ display: 'flex', gap: '0.5rem' }}>
+        <button
+          onClick={goToPartner}
+          style={{
+            backgroundColor: inactiveTheme.primary,
+            color: 'white',
+            border: 'none',
+            borderRadius: '5px',
+            padding: '0.4rem 1rem',
+            fontSize: '1rem',
+            cursor: 'pointer',
+            flexShrink: 0,
+            boxShadow: '0 2px 5px rgba(0,0,0,0.2)',
+            fontWeight: 'bold',
+          }}
+          aria-label={`Switch to ${partnerTitle}`}
+        >
+          {partnerTitle}
+        </button>
+
+        <button
+          onClick={goToInfo}
+          style={{
+            backgroundColor: 'transparent',
+            border: '1px solid white',
+            color: 'white',
+            borderRadius: '5px',
+            padding: '0.3rem 0.75rem',
+            fontSize: '1.1rem',
+            cursor: 'pointer',
+            fontWeight: 'bold',
+            lineHeight: 1,
+          }}
+          aria-label="Info"
+          title="Info"
+        >
+          ℹ️
+        </button>
+      </div>
     </header>
   );
 };
@@ -94,3 +119,4 @@ const App = () => {
 };
 
 export default App;
+
