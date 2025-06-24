@@ -37,6 +37,13 @@ body {
   text-align: left;
 }
 
+/* Adjusted styles for partner toggle and info button container */
+.header > div {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
 .share-btn {
   background-color: #1976d2;
   color: white;
@@ -46,6 +53,32 @@ body {
   font-size: 0.85rem;
   font-weight: bold;
   cursor: pointer;
+}
+
+/* Smaller partner toggle button */
+.header button.partner-toggle {
+  background-color: #1976d2;
+  padding: 0.3rem 0.75rem;
+  font-size: 0.85rem;
+  font-weight: bold;
+  border-radius: 5px;
+  border: none;
+  cursor: pointer;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+  color: white;
+}
+
+/* Info button styles */
+.header button.info-btn {
+  background-color: transparent;
+  border: 1px solid white;
+  color: white;
+  border-radius: 5px;
+  padding: 0.3rem 0.75rem;
+  font-size: 1.1rem;
+  cursor: pointer;
+  font-weight: bold;
+  line-height: 1;
 }
 
 .header .share-btn[title="Back to Calculator"] {
@@ -115,184 +148,3 @@ body {
 }
 
 .submit-btn:hover {
-  background-color: #388e3c;
-}
-
-.reset-btn {
-  background-color: #9e9e9e;
-  color: white;
-  margin-right: 0;
-}
-
-.reset-btn:hover {
-  background-color: #7e7e7e;
-}
-
-.results {
-  display: none;
-  background-color: #e9fce9;
-  padding: 1rem;
-  border-radius: 6px;
-  margin-top: 1rem;
-  transition: opacity 0.4s ease;
-  opacity: 0;
-}
-
-.results.visible {
-  display: block;
-  opacity: 1;
-}
-
-.results p {
-  margin: 0.5rem 0;
-  font-size: 1rem;
-  font-weight: bold;
-  display: flex;
-  justify-content: space-between;
-}
-
-/* Pie Chart */
-.pie-chart-container {
-  width: 100%;
-  max-width: 300px;
-  margin: 1.5rem auto 0 auto;
-  text-align: center;
-}
-
-.pie-chart-container canvas {
-  max-height: 180px;
-}
-
-/* Pie Chart Legend */
-.pie-chart-legend {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  margin-top: 12px;
-  gap: 20px;
-  flex-wrap: wrap;
-  font-weight: bold;
-  font-size: 0.95rem;
-}
-
-.dot {
-  height: 12px;
-  width: 12px;
-  border-radius: 50%;
-  display: inline-block;
-  margin-right: 6px;
-}
-
-.dot.red {
-  background-color: #ff4d4f;
-}
-
-.dot.green {
-  background-color: #4caf50;
-}
-
-/* Mobile */
-@media screen and (max-width: 480px) {
-  .input-row {
-    flex-direction: row;
-    flex-wrap: wrap;
-    align-items: center;
-  }
-
-  .input-row label {
-    flex: 0 0 100px;
-  }
-
-  .input-row input {
-    flex: 1 1 140px;
-  }
-
-  .clear-btn {
-    flex: 0 0 60px;
-  }
-
-  .action-row {
-    flex-direction: column;
-    gap: 0.5rem;
-  }
-
-  .submit-btn,
-  .reset-btn {
-    margin-right: 0;
-  }
-
-  .share-btn {
-    width: auto;
-    font-size: 0.9rem;
-  }
-
-  .pie-chart-legend {
-    flex-direction: row;
-    gap: 12px;
-    justify-content: center;
-  }
-}
-
-/* Info Page Styling */
-.info-page {
-  padding: 1rem;
-  font-size: 0.95rem;
-  line-height: 1.6;
-}
-
-.info-page h2 {
-  text-align: center;
-  margin: 1.5rem 0 1rem;
-  font-size: 1.1rem;
-  color: #333;
-}
-
-.info-page ul {
-  list-style: none;
-  padding-left: 1rem;
-  margin-bottom: 1rem;
-}
-
-.info-page li {
-  margin-bottom: 0.6rem;
-  line-height: 1.5;
-  word-break: break-word;
-}
-
-.info-page li span {
-  font-weight: bold;
-  color: #333;
-  display: inline-block;
-  margin-bottom: 0.2rem;
-}
-
-.sub-points {
-  padding-left: 1.5rem;
-  font-size: 0.9rem;
-  line-height: 1.4;
-  margin-top: 0.25rem;
-  color: #333;
-}
-
-.continue-box {
-  margin-left: 1.5rem;
-  font-size: 0.9rem;
-  margin-top: 0.3rem;
-}
-
-.continue-box label {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  font-weight: normal;
-}
-
-/* NEW — CCC Blue Theme */
-.header-box.blue-theme {
-  background-color: #4aa4e3; /* Medium-light blue (matches pie chart tone) */
-  color: white;
-  padding: 1rem;
-  border-radius: 1rem;
-  margin-bottom: 1rem;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
-}
