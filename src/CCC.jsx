@@ -23,7 +23,7 @@ const CreditCardCalculator = () => {
     setResultsVisible(false);
   };
 
-  const calculate = () => {
+  const handleSubmit = () => {
     const principal = parseFloat(balance.replace(/,/g, ''));
     const annualRate = parseFloat(apr) / 100;
     const monthlyRate = annualRate / 12;
@@ -153,4 +153,3 @@ const CreditCardCalculator = () => {
 };
 
 export default CreditCardCalculator;
-
