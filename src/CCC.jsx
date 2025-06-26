@@ -123,7 +123,7 @@ const CreditCardCalculator = () => {
         <label>Target (Months)</label>
         <input
           type="text"
-          inputMode="numeric"
+          inputMode="decimal"
           value={targetMonths}
           onChange={(e) => setTargetMonths(e.target.value)}
         />

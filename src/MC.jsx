@@ -213,7 +213,7 @@ function MC() {
             <label>Loan Term (Years)</label>
             <input
               type="text"
-              inputMode="numeric"
+              inputMode="decimal"
               pattern="[0-9]*"
               placeholder="e.g. 25 (Required)"
               value={loanTerm}
@@ -228,7 +228,7 @@ function MC() {
             <label>Initial Rate (%)</label>
             <input
               type="text"
-              inputMode="numeric"
+              inputMode="decimal"
               pattern="[0-9]*"
               placeholder="e.g. 4.5 (Required)"
               value={initialRate}
@@ -243,7 +243,7 @@ function MC() {
             <label>Fixed Term (Years)</label>
             <input
               type="text"
-              inputMode="numeric"
+              inputMode="decimal"
               pattern="[0-9]*"
               placeholder="e.g. 3 (If any)"
               value={fixedTerm}
@@ -258,7 +258,7 @@ function MC() {
             <label>Secondary Rate (%)</label>
             <input
               type="text"
-              inputMode="numeric"
+              inputMode="decimal"
               pattern="[0-9]*"
               placeholder="e.g. 6.5 (If any)"
               value={secondaryRate}
@@ -276,7 +276,7 @@ function MC() {
             <label>Overpayment (£)</label>
             <input
               type="text"
-              inputMode="numeric"
+              inputMode="decimal"
               pattern="[0-9]*"
               placeholder="e.g. 100 (Optional)"
               value={overpayment}
@@ -291,7 +291,7 @@ function MC() {
             <label>Target (Years)</label>
             <input
               type="text"
-              inputMode="numeric"
+              inputMode="decimal"
               pattern="[0-9]*"
               placeholder="e.g. 15 (Optional)"
               value={targetYears}
