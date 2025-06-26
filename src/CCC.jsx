@@ -24,7 +24,7 @@ const CreditCardCalculator = () => {
   };
 
   const handleSubmit = (e) => {
-    e.preventDefault(); // prevent form default submit behavior
+    e.preventDefault();
 
     const principal = parseFloat(balance.replace(/,/g, ''));
     const annualRate = parseFloat(apr) / 100;
@@ -81,105 +81,110 @@ const CreditCardCalculator = () => {
   };
 
   return (
-    <div className="calculator-container">
+    <>
       <div className="header-box">
         <h2>Credit Card Calculator</h2>
       </div>
 
-      <form autoComplete="off" onSubmit={handleSubmit}>
-        <div className="input-row">
-          <label htmlFor="balance-input">Balance (£)</label>
-          <input
-            id="balance-input"
-            name="balance"
-            type="text"
-            inputMode="decimal"
-            autoComplete="off"
-            autoCorrect="off"
-            spellCheck="false"
-            aria-autocomplete="none"
-            aria-haspopup="false"
-            value={balance}
-            onChange={(e) => setBalance(e.target.value)}
-          />
-          <button type="button" className="clear-btn" onClick={() => setBalance('')}>Clear</button>
-        </div>
+      <div className="container">
+        <form autoComplete="off" onSubmit={handleSubmit}>
+          <div className="input-row">
+            <label htmlFor="balance-input">Balance (£)</label>
+            <input
+              id="balance-input"
+              name="balance"
+              type="text"
+              inputMode="decimal"
+              autoComplete="off"
+              autoCorrect="off"
+              spellCheck="false"
+              aria-autocomplete="none"
+              aria-haspopup="false"
+              value={balance}
+              onChange={(e) => setBalance(e.target.value)}
+            />
+            <button type="button" className="clear-btn" onClick={() => setBalance('')}>Clear</button>
+          </div>
 
-        <div className="input-row">
-          <label htmlFor="apr-input">APR (%)</label>
-          <input
-            id="apr-input"
-            name="apr"
-            type="text"
-            inputMode="decimal"
-            autoComplete="off"
-            autoCorrect="off"
-            spellCheck="false"
-            aria-autocomplete="none"
-            aria-haspopup="false"
-            value={apr}
-            onChange={(e) => setApr(e.target.value)}
-          />
-          <button type="button" className="clear-btn" onClick={() => setApr('')}>Clear</button>
-        </div>
+          <div className="input-row">
+            <label htmlFor="apr-input">APR (%)</label>
+            <input
+              id="apr-input"
+              name="apr"
+              type="text"
+              inputMode="decimal"
+              autoComplete="off"
+              autoCorrect="off"
+              spellCheck="false"
+              aria-autocomplete="none"
+              aria-haspopup="false"
+              value={apr}
+              onChange={(e) => setApr(e.target.value)}
+            />
+            <button type="button" className="clear-btn" onClick={() => setApr('')}>Clear</button>
+          </div>
 
-        <div className="input-row">
-          <label htmlFor="monthly-payment-input">Monthly Payment (£)</label>
-          <input
-            id="monthly-payment-input"
-            name="monthlyPayment"
-            type="text"
-            inputMode="decimal"
-            autoComplete="off"
-            autoCorrect="off"
-            spellCheck="false"
-            aria-autocomplete="none"
-            aria-haspopup="false"
-            value={monthlyPayment}
-            onChange={(e) => setMonthlyPayment(e.target.value)}
-          />
-          <button type="button" className="clear-btn" onClick={() => setMonthlyPayment('')}>Clear</button>
-        </div>
+          <div className="input-row">
+            <label htmlFor="monthly-payment-input">Monthly Payment (£)</label>
+            <input
+              id="monthly-payment-input"
+              name="monthlyPayment"
+              type="text"
+              inputMode="decimal"
+              autoComplete="off"
+              autoCorrect="off"
+              spellCheck="false"
+              aria-autocomplete="none"
+              aria-haspopup="false"
+              value={monthlyPayment}
+              onChange={(e) => setMonthlyPayment(e.target.value)}
+            />
+            <button type="button" className="clear-btn" onClick={() => setMonthlyPayment('')}>Clear</button>
+          </div>
 
-        <div className="input-row">
-          <label htmlFor="target-months-input">Target (Months)</label>
-          <input
-            id="target-months-input"
-            name="targetMonths"
-            type="text"
-            inputMode="decimal"
-            autoComplete="off"
-            autoCorrect="off"
-            spellCheck="false"
-            aria-autocomplete="none"
-            aria-haspopup="false"
-            value={targetMonths}
-            onChange={(e) => setTargetMonths(e.target.value)}
-          />
-          <button type="button" className="clear-btn" onClick={() => setTargetMonths('')}>Clear</button>
-        </div>
+          <div className="input-row">
+            <label htmlFor="target-months-input">Target (Months)</label>
+            <input
+              id="target-months-input"
+              name="targetMonths"
+              type="text"
+              inputMode="decimal"
+              autoComplete="off"
+              autoCorrect="off"
+              spellCheck="false"
+              aria-autocomplete="none"
+              aria-haspopup="false"
+              value={targetMonths}
+              onChange={(e) => setTargetMonths(e.target.value)}
+            />
+            <button type="button" className="clear-btn" onClick={() => setTargetMonths('')}>Clear</button>
+          </div>
 
-        <div className="button-row">
-          <button className="submit-btn ccc" type="submit">Submit</button>
-          <button type="button" className="reset-btn" onClick={resetAll}>Reset All</button>
-        </div>
-      </form>
+          <div className="button-row">
+            <button className="submit-btn ccc" type="submit">Submit</button>
+            <button type="button" className="reset-btn" onClick={resetAll}>Reset All</button>
+          </div>
+        </form>
 
-      {resultsVisible && (
-        <div className="results-box">
-          <p><strong>Months to Pay Off:</strong> {resultData.monthsToPayoff}</p>
-          <p><strong>Total Interest Paid:</strong> £{parseFloat(resultData.totalInterest).toLocaleString(undefined, { minimumFractionDigits: 2 })}</p>
-          <p><strong>Total Paid:</strong> £{parseFloat(resultData.totalPaid).toLocaleString(undefined, { minimumFractionDigits: 2 })}</p>
-          <Pie data={pieChartData} />
-          <p className="chart-labels">
-            <span style={{ color: '#e74c3c' }}>■ Interest</span> &nbsp;&nbsp;
-            <span style={{ color: '#2ecc71' }}>■ Principal</span>
-          </p>
-        </div>
-      )}
-    </div>
+        {resultsVisible && (
+          <div className="results-box">
+            <p><strong>Months to Pay Off:</strong> {resultData.monthsToPayoff}</p>
+            <p><strong>Total Interest Paid:</strong> £{parseFloat(resultData.totalInterest).toLocaleString(undefined, { minimumFractionDigits: 2 })}</p>
+            <p><strong>Total Paid:</strong> £{parseFloat(resultData.totalPaid).toLocaleString(undefined, { minimumFractionDigits: 2 })}</p>
+
+            <div className="pie-chart-container">
+              <Pie data={pieChartData} />
+            </div>
+
+            <p className="chart-labels">
+              <span style={{ color: '#e74c3c' }}>■ Interest</span> &nbsp;&nbsp;
+              <span style={{ color: '#2ecc71' }}>■ Principal</span>
+            </p>
+          </div>
+        )}
+      </div>
+    </>
   );
 };
 
 export default CreditCardCalculator;
-
