@@ -91,6 +91,9 @@ const CreditCardCalculator = () => {
         <input
           type="text"
           inputMode="decimal"
+          autoComplete="off"
+          autoCorrect="off"
+          spellCheck="false"
           value={balance}
           onChange={(e) => setBalance(e.target.value)}
         />
@@ -102,6 +105,9 @@ const CreditCardCalculator = () => {
         <input
           type="text"
           inputMode="decimal"
+          autoComplete="off"
+          autoCorrect="off"
+          spellCheck="false"
           value={apr}
           onChange={(e) => setApr(e.target.value)}
         />
@@ -113,6 +119,9 @@ const CreditCardCalculator = () => {
         <input
           type="text"
           inputMode="decimal"
+          autoComplete="off"
+          autoCorrect="off"
+          spellCheck="false"
           value={monthlyPayment}
           onChange={(e) => setMonthlyPayment(e.target.value)}
         />
@@ -124,6 +133,9 @@ const CreditCardCalculator = () => {
         <input
           type="text"
           inputMode="decimal"
+          autoComplete="off"
+          autoCorrect="off"
+          spellCheck="false"
           value={targetMonths}
           onChange={(e) => setTargetMonths(e.target.value)}
         />
@@ -132,7 +144,6 @@ const CreditCardCalculator = () => {
 
       <div className="button-row">
         <button className="submit-btn ccc" onClick={handleSubmit}>Submit</button>
-
         <button className="reset-btn" onClick={resetAll}>Reset All</button>
       </div>
 
