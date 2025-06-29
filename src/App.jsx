@@ -12,94 +12,90 @@ const HeaderNav = () => {
 
   const isCCC = location.pathname.startsWith('/ccc');
 
-  const themes = {
-    mc: {
-      primary: '#4caf50', // green
-      secondary: '#1976d2', // blue
-    },
-    ccc: {
-      primary: '#4aa4e3', // blue
-      secondary: '#4caf50', // green
-    }
-  };
-
-  const activeTheme = isCCC ? themes.ccc : themes.mc;
-  const inactiveTheme = isCCC ? themes.mc : themes.ccc;
-
-  const mainTitle = isCCC ? 'Credit Card Calculator' : 'Mortgage Calculator';
-  const partnerTitle = isCCC ? 'Mortgage Calculator' : 'Credit Card Calculator';
-
-  const goToPartner = () => {
-    navigate(isCCC ? '/' : '/ccc');
-  };
-
-  const goToInfo = () => {
-    navigate(isCCC ? '/ccc-info' : '/info');
-  };
+  // Theme colors
+  const green = '#4caf50';
+  const blue = '#4aa4e3';
+  const grey = '#ddd';
+  const darkText = '#333';
 
   return (
     <header
       style={{
-        backgroundColor: activeTheme.primary,
-        color: 'white',
+        padding: '0.75rem 1.5rem',
         display: 'flex',
         alignItems: 'center',
-        padding: '1rem 1.5rem',
-        borderRadius: '8px 8px 0 0',
-        boxSizing: 'border-box',
         justifyContent: 'space-between',
+        boxSizing: 'border-box',
+        backgroundColor: '#f5f5f5',
+        borderBottom: '2px solid #ccc',
+        borderRadius: '8px 8px 0 0',
       }}
     >
-      <h1
+      <nav style={{ display: 'flex', gap: '0.5rem' }}>
+        <button
+          onClick={() => navigate('/')}
+          style={{
+            backgroundColor: isCCC ? grey : green,
+            color: isCCC ? darkText : 'white',
+            fontWeight: isCCC ? 'normal' : 'bold',
+            borderRadius: '8px 8px 0 0',
+            padding: '0.5rem 1.25rem',
+            border: 'none',
+            cursor: 'pointer',
+            boxShadow: isCCC ? 'none' : `0 2px 6px ${green}88`,
+            transition: 'background-color 0.3s',
+          }}
+          aria-current={isCCC ? undefined : 'page'}
+        >
+          Mortgage Calculator
+        </button>
+        <button
+          onClick={() => navigate('/ccc')}
+          style={{
+            backgroundColor: isCCC ? blue : grey,
+            color: isCCC ? 'white' : darkText,
+            fontWeight: isCCC ? 'bold' : 'normal',
+            borderRadius: '8px 8px 0 0',
+            padding: '0.5rem 1.25rem',
+            border: 'none',
+            cursor: 'pointer',
+            boxShadow: isCCC ? `0 2px 6px ${blue}88` : 'none',
+            transition: 'background-color 0.3s',
+          }}
+          aria-current={isCCC ? 'page' : undefined}
+        >
+          Credit Card Calculator
+        </button>
+      </nav>
+
+      <button
+        onClick={() => navigate(isCCC ? '/ccc-info' : '/info')}
+        title="Info"
+        aria-label="Info"
         style={{
-          fontSize: '1.8rem',
-          margin: 0,
-          flexGrow: 1,
+          backgroundColor: 'transparent',
+          border: '1px solid #666',
+          color: '#666',
+          borderRadius: '5px',
+          padding: '0.3rem 0.75rem',
+          fontSize: '1.1rem',
+          cursor: 'pointer',
           fontWeight: 'bold',
+          lineHeight: 1,
+          userSelect: 'none',
+          transition: 'color 0.3s, border-color 0.3s',
+        }}
+        onMouseEnter={e => {
+          e.currentTarget.style.color = isCCC ? blue : green;
+          e.currentTarget.style.borderColor = isCCC ? blue : green;
+        }}
+        onMouseLeave={e => {
+          e.currentTarget.style.color = '#666';
+          e.currentTarget.style.borderColor = '#666';
         }}
       >
-        {mainTitle}
-      </h1>
-
-      <div style={{ display: 'flex', gap: '0.5rem' }}>
-        <button
-          onClick={goToPartner}
-          style={{
-            backgroundColor: inactiveTheme.primary,
-            color: 'white',
-            border: 'none',
-            borderRadius: '5px',
-            padding: '0.4rem 1rem',
-            fontSize: '1rem',
-            cursor: 'pointer',
-            flexShrink: 0,
-            boxShadow: '0 2px 5px rgba(0,0,0,0.2)',
-            fontWeight: 'bold',
-          }}
-          aria-label={`Switch to ${partnerTitle}`}
-        >
-          {partnerTitle}
-        </button>
-
-        <button
-          onClick={goToInfo}
-          style={{
-            backgroundColor: 'transparent',
-            border: '1px solid white',
-            color: 'white',
-            borderRadius: '5px',
-            padding: '0.3rem 0.75rem',
-            fontSize: '1.1rem',
-            cursor: 'pointer',
-            fontWeight: 'bold',
-            lineHeight: 1,
-          }}
-          aria-label="Info"
-          title="Info"
-        >
-          ℹ️
-        </button>
-      </div>
+        ℹ️
+      </button>
     </header>
   );
 };
@@ -119,4 +115,3 @@ const App = () => {
 };
 
 export default App;
-
