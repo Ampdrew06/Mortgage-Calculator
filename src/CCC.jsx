@@ -69,12 +69,13 @@ const CreditCardCalculator = () => {
     setResultsVisible(true);
   };
 
+  // Pie chart data with blue color instead of green for principal
   const pieChartData = {
     labels: ['Interest', 'Principal'],
     datasets: [
       {
         data: [parseFloat(resultData.totalInterest), parseFloat(balance.replace(/,/g, ''))],
-        backgroundColor: ['#e74c3c', '#2ecc71'],
+        backgroundColor: ['#e74c3c', '#4aa4e3'], // red and blue (CCC theme)
         borderWidth: 1,
       },
     ],
@@ -199,9 +200,10 @@ const CreditCardCalculator = () => {
               <Pie data={pieChartData} />
             </div>
 
-            <p className="chart-labels">
-              <span style={{ color: '#e74c3c' }}>■ Interest</span> &nbsp;&nbsp;
-              <span style={{ color: '#2ecc71' }}>■ Principal</span>
+            <p className="chart-labels" style={{ marginTop: '0.8rem' }}>
+              <span style={{ color: '#e74c3c' }}>■ Interest</span>
+              &nbsp;&nbsp;&nbsp;&nbsp;
+              <span style={{ color: '#4aa4e3' }}>■ Principal</span>
             </p>
           </div>
         )}
