@@ -338,23 +338,33 @@ function MC() {
                 </p>
               )}
               {(interestPaid > 0 || principalPaid > 0) && (
-                <PieChart
-                  interest={parseFloat(interestPaid)}
-                  principal={parseFloat(principalPaid)}
-                  options={{
-                    plugins: {
-                      legend: {
-                        display: false, // Hide built-in legend
-                      },
-                    },
-                  }}
-                />
+                <>
+                  <PieChart
+                    interest={parseFloat(interestPaid)}
+                    principal={parseFloat(principalPaid)}
+                  />
+                  <p
+                    className="chart-labels"
+                    style={{
+                      marginTop: '0.8rem',
+                      display: 'flex',
+                      justifyContent: 'center',
+                      gap: '2rem',
+                    }}
+                  >
+                    <span
+                      style={{ color: '#e74c3c', fontWeight: 'bold' }}
+                    >
+                      Interest Paid
+                    </span>
+                    <span
+                      style={{ color: '#4caf50', fontWeight: 'bold' }}
+                    >
+                      Principal Paid
+                    </span>
+                  </p>
+                </>
               )}
-              <p className="chart-labels" style={{ marginTop: '0.8rem' }}>
-                <span style={{ color: '#e74c3c' }}>Interest Paid</span>
-                &nbsp;&nbsp;&nbsp;&nbsp;
-                <span style={{ color: '#4caf50' }}>Principal Paid</span>
-              </p>
             </div>
           )}
         </>
