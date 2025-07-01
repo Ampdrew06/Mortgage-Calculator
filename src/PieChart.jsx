@@ -1,4 +1,4 @@
-import React, { useRef, useEffect } from 'react';
+import React, { useRef, useEffect } from 'react'; 
 import Chart from 'chart.js/auto';
 
 const PieChart = ({ interest, principal }) => {

@@ -86,6 +86,7 @@ function MC() {
       return;
     }
 
+    // Full version with fixed and secondary rate
     if (fixedN && r2) {
       const basePayment = r1
         ? (P * r1) / (1 - Math.pow(1 + r1, -n))
@@ -135,6 +136,7 @@ function MC() {
       return;
     }
 
+    // Simple mortgage
     const months = n;
     const basePaymentSimple = r1
       ? (P * r1) / (1 - Math.pow(1 + r1, -months))
@@ -336,28 +338,23 @@ function MC() {
                 </p>
               )}
               {(interestPaid > 0 || principalPaid > 0) && (
-                <>
-                  <PieChart
-                    interest={parseFloat(interestPaid)}
-                    principal={parseFloat(principalPaid)}
-                  />
-                  <p
-                    className="chart-labels"
-                    style={{
-                      marginTop: '0.8rem',
-                      fontWeight: 'bold',
-                      fontSize: '0.95rem',
-                      display: 'flex',
-                      justifyContent: 'center',
-                      gap: '2rem',
-                      userSelect: 'none',
-                    }}
-                  >
-                    <span style={{ color: '#ff4d4f' }}>Interest Paid</span>
-                    <span style={{ color: '#4caf50' }}>Principal Paid</span>
-                  </p>
-                </>
+                <PieChart
+                  interest={parseFloat(interestPaid)}
+                  principal={parseFloat(principalPaid)}
+                  options={{
+                    plugins: {
+                      legend: {
+                        display: false, // Hide built-in legend
+                      },
+                    },
+                  }}
+                />
               )}
+              <p className="chart-labels" style={{ marginTop: '0.8rem' }}>
+                <span style={{ color: '#e74c3c' }}>Interest Paid</span>
+                &nbsp;&nbsp;&nbsp;&nbsp;
+                <span style={{ color: '#4caf50' }}>Principal Paid</span>
+              </p>
             </div>
           )}
         </>
