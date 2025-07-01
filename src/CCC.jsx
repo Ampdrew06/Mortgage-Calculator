@@ -69,7 +69,6 @@ const CreditCardCalculator = () => {
     setResultsVisible(true);
   };
 
-  // Pie chart data with blue color instead of green for principal
   const pieChartData = {
     labels: ['Interest', 'Principal'],
     datasets: [
@@ -210,6 +209,6 @@ const CreditCardCalculator = () => {
       </div>
     </>
   );
-}; 
+};
 
 export default CreditCardCalculator;
