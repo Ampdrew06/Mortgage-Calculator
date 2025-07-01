@@ -38,9 +38,15 @@ const PieChart = ({ interest, principal }) => {
   return (
     <div className="pie-chart-container">
       <canvas ref={chartRef} width={180} height={180} />
-      <div className="pie-chart-legend">
-        <span><span className="dot red" />Interest Paid</span>
-        <span><span className="dot green" />Principal Paid</span>
+      <div className="pie-chart-legend" style={{ display: 'flex', justifyContent: 'center', gap: '2rem', marginTop: '0.8rem' }}>
+        <span style={{ display: 'flex', alignItems: 'center', color: '#ff4d4f', fontWeight: 'bold' }}>
+          <span className="dot red" style={{ width: '12px', height: '12px', borderRadius: '50%', backgroundColor: '#ff4d4f', display: 'inline-block', marginRight: '6px' }} />
+          Interest Paid
+        </span>
+        <span style={{ display: 'flex', alignItems: 'center', color: '#4caf50', fontWeight: 'bold' }}>
+          <span className="dot green" style={{ width: '12px', height: '12px', borderRadius: '50%', backgroundColor: '#4caf50', display: 'inline-block', marginRight: '6px' }} />
+          Principal Paid
+        </span>
       </div>
     </div>
   );
