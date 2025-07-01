@@ -210,6 +210,6 @@ const CreditCardCalculator = () => {
       </div>
     </>
   );
-};
+}; 
 
 export default CreditCardCalculator;

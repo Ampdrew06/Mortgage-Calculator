@@ -212,6 +212,15 @@ body {
   margin: 0 auto;         /* center horizontally */
 }
 
+/* Pie Chart Legend Fix for MC */
+.chart-labels {
+  margin-top: 0.5rem;
+  font-weight: bold;
+  display: flex;
+  justify-content: center;
+  gap: 1.5rem; /* space between legend items */
+}
+
 /* Mobile-specific styles */
 @media screen and (max-width: 480px) {
   .header > div {
