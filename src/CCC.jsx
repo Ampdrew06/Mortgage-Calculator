@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
-import { Pie } from 'react-chartjs-2';
-import { Chart as ChartJS, ArcElement, Tooltip, Legend } from 'chart.js';
-ChartJS.register(ArcElement, Tooltip, Legend);
+import PieChart from './PieChart'; // use your shared PieChart component
+import './App.css';
 
 const CreditCardCalculator = () => {
   const [balance, setBalance] = useState('');
@@ -67,17 +66,6 @@ const CreditCardCalculator = () => {
     });
 
     setResultsVisible(true);
-  };
-
-  const pieChartData = {
-    labels: ['Interest', 'Principal'],
-    datasets: [
-      {
-        data: [parseFloat(resultData.totalInterest), parseFloat(balance.replace(/,/g, ''))],
-        backgroundColor: ['#e74c3c', '#4aa4e3'], // red and blue (CCC theme)
-        borderWidth: 1,
-      },
-    ],
   };
 
   return (
@@ -192,16 +180,17 @@ const CreditCardCalculator = () => {
               {parseFloat(resultData.totalPaid).toLocaleString(undefined, { minimumFractionDigits: 2 })}
             </p>
 
-            <div
-              className="pie-chart-container"
-              style={{ maxWidth: '300px', margin: '1.5rem auto 0', textAlign: 'center', minWidth: '280px', minHeight: '180px' }}
-            >
-              <Pie data={pieChartData} />
-            </div>
+            <PieChart
+              interest={parseFloat(resultData.totalInterest)}
+              principal={parseFloat(balance.replace(/,/g, ''))}
+            />
 
-            <p className="chart-labels" style={{ marginTop: '0.8rem', display: 'flex', justifyContent: 'center', gap: '2rem' }}>
+            <p
+              className="chart-labels"
+              style={{ marginTop: '0.8rem', display: 'flex', justifyContent: 'center', gap: '2rem' }}
+            >
               <span style={{ color: '#e74c3c', fontWeight: 'bold' }}>Interest Paid</span>
-              <span style={{ color: '#4aa4e3', fontWeight: 'bold' }}>Principal Paid</span>
+              <span style={{ color: '#4caf50', fontWeight: 'bold' }}>Principal Paid</span>
             </p>
           </div>
         )}
