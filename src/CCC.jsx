@@ -199,10 +199,9 @@ const CreditCardCalculator = () => {
               <Pie data={pieChartData} />
             </div>
 
-            <p className="chart-labels" style={{ marginTop: '0.8rem' }}>
-              <span style={{ color: '#e74c3c' }}>■ Interest</span>
-              &nbsp;&nbsp;&nbsp;&nbsp;
-              <span style={{ color: '#4aa4e3' }}>■ Principal</span>
+            <p className="chart-labels" style={{ marginTop: '0.8rem', display: 'flex', justifyContent: 'center', gap: '2rem' }}>
+              <span style={{ color: '#e74c3c', fontWeight: 'bold' }}>Interest Paid</span>
+              <span style={{ color: '#4aa4e3', fontWeight: 'bold' }}>Principal Paid</span>
             </p>
           </div>
         )}
