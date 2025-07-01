@@ -168,11 +168,11 @@ const CreditCardCalculator = () => {
             </button>
           </div>
 
-          <div className="button-row">
-            <button className="submit-btn ccc" type="submit">
+          <div className="button-row" style={{ display: 'flex', gap: '0.5rem' }}>
+            <button className="submit-btn ccc" type="submit" style={{ flex: 1 }}>
               Submit
             </button>
-            <button type="button" className="reset-btn" onClick={resetAll}>
+            <button type="button" className="reset-btn" onClick={resetAll} style={{ flex: 1 }}>
               Reset All
             </button>
           </div>
@@ -192,7 +192,10 @@ const CreditCardCalculator = () => {
               {parseFloat(resultData.totalPaid).toLocaleString(undefined, { minimumFractionDigits: 2 })}
             </p>
 
-            <div className="pie-chart-container">
+            <div
+              className="pie-chart-container"
+              style={{ maxWidth: '300px', margin: '1.5rem auto 0', textAlign: 'center', minWidth: '280px', minHeight: '180px' }}
+            >
               <Pie data={pieChartData} />
             </div>
 
