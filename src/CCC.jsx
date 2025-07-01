@@ -1,213 +1,246 @@
-import React, { useState } from 'react';
-import { Pie } from 'react-chartjs-2';
-import { Chart as ChartJS, ArcElement, Tooltip, Legend } from 'chart.js';
-ChartJS.register(ArcElement, Tooltip, Legend);
+/* Existing styles preserved */
+body {
+  font-family: Arial, sans-serif;
+  background-color: #f4f4f4;
+  margin: 0;
+  padding: 0;
+}
 
-const CreditCardCalculator = () => {
-  const [balance, setBalance] = useState('');
-  const [apr, setApr] = useState('');
-  const [monthlyPayment, setMonthlyPayment] = useState('');
-  const [targetMonths, setTargetMonths] = useState('');
-  const [resultsVisible, setResultsVisible] = useState(false);
-  const [resultData, setResultData] = useState({
-    totalInterest: 0,
-    totalPaid: 0,
-    monthsToPayoff: 0,
-  });
+.container {
+  max-width: 600px;
+  margin: 2rem auto;
+  padding: 1.5rem;
+  background-color: #ffffff;
+  border-radius: 8px;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+}
 
-  const resetAll = () => {
-    setBalance('');
-    setApr('');
-    setMonthlyPayment('');
-    setTargetMonths('');
-    setResultsVisible(false);
-  };
+.header {
+  background-color: #4caf50;
+  color: white;
+  padding: 1rem 1.5rem;
+  padding-top: env(safe-area-inset-top, 1.5rem);
+  border-radius: 8px 8px 0 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin: 1.5rem -1.5rem 1rem -1.5rem;
+  box-sizing: border-box;
+}
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
+.header h1 {
+  font-size: 1.5rem;
+  margin: 0;
+  flex: 1;
+  text-align: left;
+}
 
-    const principal = parseFloat(balance.replace(/,/g, ''));
-    const annualRate = parseFloat(apr) / 100;
-    const monthlyRate = annualRate / 12;
-    let payment = parseFloat(monthlyPayment.replace(/,/g, ''));
-    const target = parseFloat(targetMonths);
-    let months = 0;
-    let totalInterest = 0;
-    let remaining = principal;
+/* Adjusted styles for partner toggle and info button container */
+.header > div {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+  margin-right: 1rem;
+}
 
-    if (!principal || !annualRate || !payment) return;
+.share-btn {
+  background-color: #1976d2;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 0.3rem 0.75rem;
+  font-size: 0.85rem;
+  font-weight: bold;
+  cursor: pointer;
+}
 
-    if (!isNaN(target)) {
-      const requiredPayment = (principal * monthlyRate) / (1 - Math.pow(1 + monthlyRate, -target));
-      payment = requiredPayment;
-      months = target;
-      for (let i = 0; i < months; i++) {
-        const interest = remaining * monthlyRate;
-        totalInterest += interest;
-        const principalPaid = payment - interest;
-        remaining -= principalPaid;
-      }
-    } else {
-      while (remaining > 0 && months < 1000) {
-        const interest = remaining * monthlyRate;
-        totalInterest += interest;
-        const principalPaid = payment - interest;
-        if (principalPaid <= 0) break;
-        remaining -= principalPaid;
-        months++;
-      }
-    }
+/* Smaller partner toggle button */
+.header button.partner-toggle {
+  background-color: #1976d2;
+  padding: 0.3rem 0.75rem;
+  font-size: 0.85rem;
+  font-weight: bold;
+  border-radius: 5px;
+  border: none;
+  cursor: pointer;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+  color: white;
+}
 
-    const totalPaid = principal + totalInterest;
+/* Info button styles */
+.header button.info-btn {
+  background-color: transparent;
+  border: 1px solid white;
+  color: white;
+  border-radius: 5px;
+  padding: 0.3rem 0.75rem;
+  font-size: 1.1rem;
+  cursor: pointer;
+  font-weight: bold;
+  line-height: 1;
+  margin-right: 1rem;
+}
 
-    setResultData({
-      totalInterest: totalInterest.toFixed(2),
-      totalPaid: totalPaid.toFixed(2),
-      monthsToPayoff: months,
-    });
+.header .share-btn[title="Back to Calculator"] {
+  background-color: transparent;
+  border: 1px solid white;
+  color: white;
+}
 
-    setResultsVisible(true);
-  };
+.input-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+  flex-wrap: wrap;
+}
 
-  const pieChartData = {
-    labels: ['Interest', 'Principal'],
-    datasets: [
-      {
-        data: [parseFloat(resultData.totalInterest), parseFloat(balance.replace(/,/g, ''))],
-        backgroundColor: ['#e74c3c', '#4aa4e3'], // red and blue (CCC theme)
-        borderWidth: 1,
-      },
-    ],
-  };
+.input-row label {
+  flex: 0 0 110px;
+  white-space: nowrap;
+}
 
-  return (
-    <>
-      <div className="header-box">
-        <h2>Credit Card Calculator</h2>
-      </div>
+.input-row input {
+  flex: 1 1 140px;
+  padding: 0.5rem;
+  font-size: 1rem;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  min-width: 0;
+}
 
-      <div className="container">
-        <form autoComplete="off" onSubmit={handleSubmit}>
-          <div className="input-row">
-            <label htmlFor="balance-input">Balance (£)</label>
-            <input
-              id="balance-input"
-              name="balance"
-              type="text"
-              inputMode="decimal"
-              autoComplete="off"
-              autoCorrect="off"
-              spellCheck="false"
-              aria-autocomplete="none"
-              aria-haspopup="false"
-              value={balance}
-              onChange={(e) => setBalance(e.target.value)}
-            />
-            <button type="button" className="clear-btn" onClick={() => setBalance('')}>
-              Clear
-            </button>
-          </div>
+.clear-btn {
+  flex: 0 0 60px;
+  padding: 0.5rem;
+  background-color: #e0e0e0;
+  color: #333;
+  border: none;
+  border-radius: 4px;
+  font-size: 0.85rem;
+  cursor: pointer;
+}
 
-          <div className="input-row">
-            <label htmlFor="apr-input">APR (%)</label>
-            <input
-              id="apr-input"
-              name="apr"
-              type="text"
-              inputMode="decimal"
-              autoComplete="off"
-              autoCorrect="off"
-              spellCheck="false"
-              aria-autocomplete="none"
-              aria-haspopup="false"
-              value={apr}
-              onChange={(e) => setApr(e.target.value)}
-            />
-            <button type="button" className="clear-btn" onClick={() => setApr('')}>
-              Clear
-            </button>
-          </div>
+.clear-btn:hover {
+  background-color: #d5d5d5;
+}
 
-          <div className="input-row">
-            <label htmlFor="monthly-payment-input">Monthly Payment (£)</label>
-            <input
-              id="monthly-payment-input"
-              name="monthlyPayment"
-              type="text"
-              inputMode="decimal"
-              autoComplete="off"
-              autoCorrect="off"
-              spellCheck="false"
-              aria-autocomplete="none"
-              aria-haspopup="false"
-              value={monthlyPayment}
-              onChange={(e) => setMonthlyPayment(e.target.value)}
-            />
-            <button type="button" className="clear-btn" onClick={() => setMonthlyPayment('')}>
-              Clear
-            </button>
-          </div>
+.action-row {
+  display: flex;
+  justify-content: space-between;
+  margin: 1.5rem 0;
+}
 
-          <div className="input-row">
-            <label htmlFor="target-months-input">Target (Months)</label>
-            <input
-              id="target-months-input"
-              name="targetMonths"
-              type="text"
-              inputMode="decimal"
-              autoComplete="off"
-              autoCorrect="off"
-              spellCheck="false"
-              aria-autocomplete="none"
-              aria-haspopup="false"
-              value={targetMonths}
-              onChange={(e) => setTargetMonths(e.target.value)}
-            />
-            <button type="button" className="clear-btn" onClick={() => setTargetMonths('')}>
-              Clear
-            </button>
-          </div>
+.submit-btn,
+.reset-btn {
+  flex: 1;
+  padding: 0.75rem;
+  border: none;
+  border-radius: 4px;
+  font-weight: bold;
+  cursor: pointer;
+  margin-right: 0.5rem;
+  font-size: 1rem;
+  min-width: 0;
+  box-sizing: border-box;
+}
 
-          <div className="button-row" style={{ display: 'flex', gap: '0.5rem' }}>
-            <button className="submit-btn ccc" type="submit" style={{ flex: 1 }}>
-              Submit
-            </button>
-            <button type="button" className="reset-btn" onClick={resetAll} style={{ flex: 1 }}>
-              Reset All
-            </button>
-          </div>
-        </form>
+.submit-btn {
+  background-color: #4caf50; /* Green for MC */
+  color: white;
+}
 
-        {resultsVisible && (
-          <div className="results-box">
-            <p>
-              <strong>Months to Pay Off:</strong> {resultData.monthsToPayoff}
-            </p>
-            <p>
-              <strong>Total Interest Paid:</strong> £
-              {parseFloat(resultData.totalInterest).toLocaleString(undefined, { minimumFractionDigits: 2 })}
-            </p>
-            <p>
-              <strong>Total Paid:</strong> £
-              {parseFloat(resultData.totalPaid).toLocaleString(undefined, { minimumFractionDigits: 2 })}
-            </p>
+.submit-btn:hover {
+  background-color: #388e3c;
+}
 
-            <div
-              className="pie-chart-container"
-              style={{ maxWidth: '300px', margin: '1.5rem auto 0', textAlign: 'center', minWidth: '280px', minHeight: '180px' }}
-            >
-              <Pie data={pieChartData} />
-            </div>
+/* New: CCC submit button blue styling */
+.submit-btn.ccc {
+  background-color: #4aa4e3; /* Blue matching CCC header */
+  color: white;
+}
 
-            <p className="chart-labels" style={{ marginTop: '0.8rem', display: 'flex', justifyContent: 'center', gap: '2rem' }}>
-              <span style={{ color: '#e74c3c', fontWeight: 'bold' }}>Interest Paid</span>
-              <span style={{ color: '#4aa4e3', fontWeight: 'bold' }}>Principal Paid</span>
-            </p>
-          </div>
-        )}
-      </div>
-    </>
-  );
-};
+.submit-btn.ccc:hover {
+  background-color: #3a8ad6; /* Slightly darker blue on hover */
+}
 
-export default CreditCardCalculator;
+/* Info Page Styles - make full-width with padding */
+.info-page {
+  font-size: 0.95rem;
+  line-height: 1.6;
+  color: #333;
+  background-color: transparent !important;
+  border-radius: 0 !important;
+  padding-left: 1.5rem;
+  padding-right: 1.5rem;
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+/* Header buttons container on Info Page */
+.header-buttons {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+/* Pie Chart Container */
+.pie-chart-container {
+  width: 100%;
+  max-width: 300px;       /* max width for container */
+  margin: 1.5rem auto 0;  /* centered with top margin */
+  text-align: center;
+  min-width: 280px;       /* minimum size to prevent shrinking */
+  min-height: 180px;
+}
+
+/* Pie Chart Canvas */
+.pie-chart-container canvas {
+  max-width: 300px;       /* limit canvas width */
+  max-height: 180px;      /* limit canvas height */
+  width: 100% !important; /* ensure canvas uses container width */
+  height: auto !important; /* keep aspect ratio */
+  display: block;         /* block-level for centering */
+  margin: 0 auto;         /* center horizontally */
+}
+
+/* Chart legend labels for spacing & color */
+.chart-labels {
+  margin-top: 0.8rem;
+  display: flex;
+  justify-content: center;
+  gap: 2rem;
+  font-weight: bold;
+}
+
+.chart-labels span:nth-child(1) {
+  color: #e74c3c; /* red */
+}
+
+.chart-labels span:nth-child(2) {
+  color: #4aa4e3; /* blue */
+}
+
+/* Mobile-specific styles */
+@media screen and (max-width: 480px) {
+  .header > div {
+    margin-right: 1rem; /* keep buttons away from right edge */
+  }
+
+  .header h1 {
+    flex-grow: 1;
+    margin-right: 0;
+    padding-left: 0;
+  }
+
+  /* Buttons full width stacked on small screens */
+  .button-row {
+    flex-direction: column !important;
+    gap: 0.5rem !important;
+  }
+
+  .submit-btn,
+  .reset-btn {
+    margin-right: 0 !important;
+    width: 100% !important;
+  }
+}
