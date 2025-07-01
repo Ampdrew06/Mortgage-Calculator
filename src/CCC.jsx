@@ -103,7 +103,9 @@ const CreditCardCalculator = () => {
               value={balance}
               onChange={(e) => setBalance(e.target.value)}
             />
-            <button type="button" className="clear-btn" onClick={() => setBalance('')}>Clear</button>
+            <button type="button" className="clear-btn" onClick={() => setBalance('')}>
+              Clear
+            </button>
           </div>
 
           <div className="input-row">
@@ -121,7 +123,9 @@ const CreditCardCalculator = () => {
               value={apr}
               onChange={(e) => setApr(e.target.value)}
             />
-            <button type="button" className="clear-btn" onClick={() => setApr('')}>Clear</button>
+            <button type="button" className="clear-btn" onClick={() => setApr('')}>
+              Clear
+            </button>
           </div>
 
           <div className="input-row">
@@ -139,7 +143,9 @@ const CreditCardCalculator = () => {
               value={monthlyPayment}
               onChange={(e) => setMonthlyPayment(e.target.value)}
             />
-            <button type="button" className="clear-btn" onClick={() => setMonthlyPayment('')}>Clear</button>
+            <button type="button" className="clear-btn" onClick={() => setMonthlyPayment('')}>
+              Clear
+            </button>
           </div>
 
           <div className="input-row">
@@ -157,20 +163,34 @@ const CreditCardCalculator = () => {
               value={targetMonths}
               onChange={(e) => setTargetMonths(e.target.value)}
             />
-            <button type="button" className="clear-btn" onClick={() => setTargetMonths('')}>Clear</button>
+            <button type="button" className="clear-btn" onClick={() => setTargetMonths('')}>
+              Clear
+            </button>
           </div>
 
           <div className="button-row">
-            <button className="submit-btn ccc" type="submit">Submit</button>
-            <button type="button" className="reset-btn" onClick={resetAll}>Reset All</button>
+            <button className="submit-btn ccc" type="submit">
+              Submit
+            </button>
+            <button type="button" className="reset-btn" onClick={resetAll}>
+              Reset All
+            </button>
           </div>
         </form>
 
         {resultsVisible && (
           <div className="results-box">
-            <p><strong>Months to Pay Off:</strong> {resultData.monthsToPayoff}</p>
-            <p><strong>Total Interest Paid:</strong> £{parseFloat(resultData.totalInterest).toLocaleString(undefined, { minimumFractionDigits: 2 })}</p>
-            <p><strong>Total Paid:</strong> £{parseFloat(resultData.totalPaid).toLocaleString(undefined, { minimumFractionDigits: 2 })}</p>
+            <p>
+              <strong>Months to Pay Off:</strong> {resultData.monthsToPayoff}
+            </p>
+            <p>
+              <strong>Total Interest Paid:</strong> £
+              {parseFloat(resultData.totalInterest).toLocaleString(undefined, { minimumFractionDigits: 2 })}
+            </p>
+            <p>
+              <strong>Total Paid:</strong> £
+              {parseFloat(resultData.totalPaid).toLocaleString(undefined, { minimumFractionDigits: 2 })}
+            </p>
 
             <div className="pie-chart-container">
               <Pie data={pieChartData} />
@@ -185,6 +205,6 @@ const CreditCardCalculator = () => {
       </div>
     </>
   );
-}; 
+};
 
 export default CreditCardCalculator;
