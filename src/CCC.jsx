@@ -7,12 +7,48 @@ const CreditCardCalculator = () => {
   const [apr, setApr] = useState('');
   const [monthlyPayment, setMonthlyPayment] = useState('');
   const [resultsVisible, setResultsVisible] = useState(false);
+  const [aprEstimated, setAprEstimated] = useState(false);
 
   const resetAll = () => {
     setBalance('');
     setApr('');
     setMonthlyPayment('');
     setResultsVisible(false);
+    setAprEstimated(false);
+  };
+
+  // Helper function: simulate payoff to check if payment can pay off principal at given monthly rate
+  const canPayOff = (principal, monthlyRate, payment) => {
+    let balance = principal;
+    let months = 0;
+    while (balance > 0 && months < 1000) {
+      const interest = balance * monthlyRate;
+      const principalPaid = payment - interest;
+      if (principalPaid <= 0) return false; // Payment too low
+      balance -= principalPaid;
+      months++;
+    }
+    return balance <= 0;
+  };
+
+  // Estimate APR by binary search on monthlyRate
+  const estimateAPR = (principal, payment) => {
+    const maxAPR = 100; // max APR % to try
+    let low = 0;
+    let high = maxAPR / 100 / 12;
+    let mid = 0;
+    let tries = 0;
+    while (tries < 50) {
+      mid = (low + high) / 2;
+      if (canPayOff(principal, mid, payment)) {
+        high = mid;
+      } else {
+        low = mid;
+      }
+      tries++;
+      if (Math.abs(high - low) < 1e-8) break;
+    }
+    return mid * 12 * 100; // APR in %
   };
 
   const handleSubmit = (e) => {
@@ -27,11 +63,13 @@ const CreditCardCalculator = () => {
       return;
     }
 
-    // Simplified APR estimate (monthly payment / principal * 12 * 100)
-    if (!enteredAPR || isNaN(enteredAPR) || enteredAPR <= 0) {
-      const monthlyRate = payment / principal;
-      enteredAPR = monthlyRate * 12 * 100;
-      setApr(enteredAPR.toFixed(2));
+    if (!enteredAPR || enteredAPR <= 0 || isNaN(enteredAPR)) {
+      // Estimate APR using binary search simulation
+      const estimatedAPR = estimateAPR(principal, payment);
+      setApr(estimatedAPR.toFixed(2));
+      setAprEstimated(true);
+    } else {
+      setAprEstimated(false);
     }
 
     setResultsVisible(true);
@@ -114,7 +152,11 @@ const CreditCardCalculator = () => {
             <p>
               <strong>Estimated APR (%):</strong> {apr}
             </p>
-            <p style={{ fontStyle: 'italic', color: 'red' }}>* APR estimated by simple formula</p>
+            {aprEstimated && (
+              <p style={{ fontStyle: 'italic', color: 'red' }}>
+                * APR estimated from Amount Outstanding & Minimum Payment
+              </p>
+            )}
           </div>
         )}
       </div>
