@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import PieChart from './PieChart'; // Make sure this uses blue principal color
+import PieChart from './PieChart'; // use shared PieChart component
 import './App.css';
 
 const CreditCardCalculator = () => {
@@ -13,7 +13,6 @@ const CreditCardCalculator = () => {
     totalPaid: 0,
     monthsToPayoff: 0,
   });
-  const [aprEstimated, setAprEstimated] = useState(false);
 
   const resetAll = () => {
     setBalance('');
@@ -21,14 +20,13 @@ const CreditCardCalculator = () => {
     setMonthlyPayment('');
     setTargetMonths('');
     setResultsVisible(false);
-    setAprEstimated(false);
   };
 
   const handleSubmit = (e) => {
     e.preventDefault();
 
     const principal = parseFloat(balance.replace(/,/g, ''));
-    let annualRate = parseFloat(apr) / 100;
+    const annualRate = parseFloat(apr) / 100;
     const monthlyRate = annualRate / 12;
     let payment = parseFloat(monthlyPayment.replace(/,/g, ''));
     const target = parseFloat(targetMonths);
@@ -36,61 +34,54 @@ const CreditCardCalculator = () => {
     let totalInterest = 0;
     let remaining = principal;
 
-    // Validation: require principal and either APR or payment
-    if (!principal || (!annualRate && !payment)) {
-      return;
-    }
+    if (!principal || !payment) return;  // apr can be empty now
 
-    // Estimate APR if missing and payment is provided
-    if (!annualRate && payment) {
-      setAprEstimated(true);
+    // If APR is empty, try to estimate it from payment & principal
+    if ((!apr || apr.trim() === '') && principal && payment) {
+      // Simple binary search for APR estimate between 0% and 300%
       let low = 0;
-      let high = 100;
-      let estAPR = 0;
+      let high = 3;  // 300% as decimal
+      let mid;
+      let estimatedAPR = 0;
+      for (let i = 0; i < 20; i++) {
+        mid = (low + high) / 2;
+        const monthlyRateTest = mid / 12;
+        let balanceTest = principal;
+        let totalInterestTest = 0;
+        let monthsTest = 0;
 
-      for (let i = 0; i < 50; i++) {
-        let mid = (low + high) / 2;
-        let midMonthly = mid / 12 / 100;
-        let rem = principal;
-        let mths = 0;
-
-        while (rem > 0 && mths < 1000) {
-          const interest = rem * midMonthly;
-          const principalPaid = payment - interest;
-          if (principalPaid <= 0) break;
-          rem -= principalPaid;
-          mths++;
+        while (balanceTest > 0 && monthsTest < 1000) {
+          const interestTest = balanceTest * monthlyRateTest;
+          totalInterestTest += interestTest;
+          const principalPaidTest = payment - interestTest;
+          if (principalPaidTest <= 0) break;
+          balanceTest -= principalPaidTest;
+          monthsTest++;
         }
 
-        if (mths >= 1000) {
-          low = mid;
-        } else {
+        if (balanceTest <= 0) {
+          estimatedAPR = mid * 100; // convert to percent
           high = mid;
-          estAPR = mid;
+        } else {
+          low = mid;
         }
       }
-      annualRate = estAPR / 100;
-      setApr(estAPR.toFixed(2));  // This will update the APR input field properly
-    } else {
-      setAprEstimated(false);
+      setApr(estimatedAPR.toFixed(2));
     }
 
-    // Use updated monthly rate after APR estimation
-    const updatedMonthlyRate = annualRate / 12;
-
     if (!isNaN(target)) {
-      const requiredPayment = (principal * updatedMonthlyRate) / (1 - Math.pow(1 + updatedMonthlyRate, -target));
+      const requiredPayment = (principal * monthlyRate) / (1 - Math.pow(1 + monthlyRate, -target));
       payment = requiredPayment;
       months = target;
       for (let i = 0; i < months; i++) {
-        const interest = remaining * updatedMonthlyRate;
+        const interest = remaining * monthlyRate;
         totalInterest += interest;
         const principalPaid = payment - interest;
         remaining -= principalPaid;
       }
     } else {
       while (remaining > 0 && months < 1000) {
-        const interest = remaining * updatedMonthlyRate;
+        const interest = remaining * monthlyRate;
         totalInterest += interest;
         const principalPaid = payment - interest;
         if (principalPaid <= 0) break;
@@ -132,7 +123,6 @@ const CreditCardCalculator = () => {
               aria-haspopup="false"
               value={balance}
               onChange={(e) => setBalance(e.target.value)}
-              placeholder="e.g. 1,000.00"
             />
             <button type="button" className="clear-btn" onClick={() => setBalance('')}>
               Clear
@@ -153,7 +143,7 @@ const CreditCardCalculator = () => {
               aria-haspopup="false"
               value={apr}
               onChange={(e) => setApr(e.target.value)}
-              placeholder="e.g. 18.99"
+              placeholder="Leave empty to estimate"
             />
             <button type="button" className="clear-btn" onClick={() => setApr('')}>
               Clear
@@ -174,7 +164,6 @@ const CreditCardCalculator = () => {
               aria-haspopup="false"
               value={monthlyPayment}
               onChange={(e) => setMonthlyPayment(e.target.value)}
-              placeholder="e.g. 50.00"
             />
             <button type="button" className="clear-btn" onClick={() => setMonthlyPayment('')}>
               Clear
@@ -182,7 +171,7 @@ const CreditCardCalculator = () => {
           </div>
 
           <div className="input-row">
-            <label htmlFor="target-months-input">Target Payoff (Months)</label>
+            <label htmlFor="target-months-input">Target (Months)</label>
             <input
               id="target-months-input"
               name="targetMonths"
@@ -195,7 +184,6 @@ const CreditCardCalculator = () => {
               aria-haspopup="false"
               value={targetMonths}
               onChange={(e) => setTargetMonths(e.target.value)}
-              placeholder="Optional"
             />
             <button type="button" className="clear-btn" onClick={() => setTargetMonths('')}>
               Clear
@@ -229,11 +217,20 @@ const CreditCardCalculator = () => {
             <PieChart
               interest={parseFloat(resultData.totalInterest)}
               principal={parseFloat(balance.replace(/,/g, ''))}
+              colors={['#e74c3c', '#4aa4e3']}  // red and blue
             />
 
-            {aprEstimated && (
-              <p style={{ color: 'red', fontWeight: 'bold', marginTop: '1rem' }}>
-                *APR estimated from minimum payment
+            <p
+              className="chart-labels"
+              style={{ marginTop: '0.8rem', display: 'flex', justifyContent: 'center', gap: '2rem' }}
+            >
+              <span style={{ color: '#e74c3c', fontWeight: 'bold' }}>Interest Paid</span>
+              <span style={{ color: '#4aa4e3', fontWeight: 'bold' }}>Principal Paid</span>
+            </p>
+
+            {apr && apr.trim() !== '' && (
+              <p style={{ fontSize: '0.9rem', color: '#b00020', marginTop: '0.5rem', textAlign: 'center' }}>
+                * APR estimated from minimum payment
               </p>
             )}
           </div>

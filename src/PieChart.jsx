@@ -1,11 +1,11 @@
-import React, { useRef, useEffect } from 'react'; 
+import React, { useRef, useEffect } from 'react';
 import Chart from 'chart.js/auto';
 
-const PieChart = ({ interest, principal }) => {
-  const chartRef = useRef(null);
-  const chartInstanceRef = useRef(null);
+const PieChart = ({ interest, principal, colors = ['#ff4d4f', '#4caf50'] }) => {
+  const chartRef = React.useRef(null);
+  const chartInstanceRef = React.useRef(null);
 
-  useEffect(() => {
+  React.useEffect(() => {
     if (chartInstanceRef.current) {
       chartInstanceRef.current.destroy();
     }
@@ -18,7 +18,7 @@ const PieChart = ({ interest, principal }) => {
         datasets: [
           {
             data: [interest, principal],
-            backgroundColor: ['#ff4d4f', '#4caf50'], // red / green
+            backgroundColor: colors,
             borderWidth: 1,
           },
         ],
@@ -28,12 +28,12 @@ const PieChart = ({ interest, principal }) => {
         maintainAspectRatio: false,
         plugins: {
           legend: {
-            display: false, // disable built-in legend
+            display: false,
           },
         },
       },
     });
-  }, [interest, principal]);
+  }, [interest, principal, colors]);
 
   return (
     <div className="pie-chart-container">
