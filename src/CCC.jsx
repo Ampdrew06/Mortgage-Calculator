@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import PieChart from './PieChart'; // assuming you use the same PieChart component as MC
+import PieChart from './PieChart';
 import './App.css';
 
 const CreditCardCalculator = () => {
@@ -7,53 +7,12 @@ const CreditCardCalculator = () => {
   const [apr, setApr] = useState('');
   const [monthlyPayment, setMonthlyPayment] = useState('');
   const [resultsVisible, setResultsVisible] = useState(false);
-  const [resultData, setResultData] = useState({
-    totalInterest: 0,
-    totalPaid: 0,
-    monthsToPayoff: 0,
-  });
 
   const resetAll = () => {
     setBalance('');
     setApr('');
     setMonthlyPayment('');
     setResultsVisible(false);
-  };
-
-  // Helper: Estimate APR from balance & min payment using formula:
-  // APR = 12 * (Monthly Rate) = 12 * (payment / principal - 1)
-  // We do a binary search to find monthly rate r where payment ≈ principal * r / (1 - (1+r)^-maxMonths)
-  // For simplicity here, we estimate monthly rate as payment / principal if payment > interest only
-  const estimateAPR = (principal, payment) => {
-    if (principal <= 0 || payment <= 0) return 0;
-
-    let low = 0;
-    let high = 1; // 100% monthly rate is max
-    let mid;
-    let estimatedPayment;
-
-    const maxMonths = 360; // 30 years max to pay off
-
-    const calcPayment = (r) => {
-      if (r === 0) return principal / maxMonths;
-      return principal * r / (1 - Math.pow(1 + r, -maxMonths));
-    };
-
-    // Binary search for monthly rate
-    for (let i = 0; i < 30; i++) {
-      mid = (low + high) / 2;
-      estimatedPayment = calcPayment(mid);
-
-      if (estimatedPayment > payment) {
-        high = mid;
-      } else {
-        low = mid;
-      }
-    }
-
-    // Annualize monthly rate to APR in percentage
-    const aprEstimated = mid * 12 * 100;
-    return aprEstimated;
   };
 
   const handleSubmit = (e) => {
@@ -68,18 +27,13 @@ const CreditCardCalculator = () => {
       return;
     }
 
-    // Estimate APR if user hasn't entered it or it's invalid
+    // Simplified APR estimate (monthly payment / principal * 12 * 100)
     if (!enteredAPR || isNaN(enteredAPR) || enteredAPR <= 0) {
-      enteredAPR = estimateAPR(principal, payment);
+      const monthlyRate = payment / principal;
+      enteredAPR = monthlyRate * 12 * 100;
       setApr(enteredAPR.toFixed(2));
     }
 
-    // For now, just display estimated APR — further payoff calculations coming later
-    setResultData({
-      totalInterest: 0,
-      totalPaid: 0,
-      monthsToPayoff: 0,
-    });
     setResultsVisible(true);
   };
 
@@ -160,7 +114,7 @@ const CreditCardCalculator = () => {
             <p>
               <strong>Estimated APR (%):</strong> {apr}
             </p>
-            <p style={{ fontStyle: 'italic', color: 'red' }}>* APR estimated assuming 30 year payoff</p>
+            <p style={{ fontStyle: 'italic', color: 'red' }}>* APR estimated by simple formula</p>
           </div>
         )}
       </div>
