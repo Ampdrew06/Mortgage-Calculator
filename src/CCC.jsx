@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import PieChart from './PieChart'; // using your existing pie chart component
+import PieChart from './PieChart'; 
 import './App.css';
 
 const CreditCardCalculator = () => {
@@ -10,30 +10,48 @@ const CreditCardCalculator = () => {
   const [aprEstimated, setAprEstimated] = useState(false);
   const [warning, setWarning] = useState('');
 
-  // Estimate APR based on balance and minimum payment using bisection search
-  const estimateAPR = (balanceNum, paymentNum) => {
-    if (paymentNum <= 0 || balanceNum <= 0) return 0;
+  // Simulates payoff with given monthlyRate and payment.
+  // Returns months to payoff or -1 if payment too low.
+  const simulatePayoff = (balance, monthlyRate, payment, maxMonths = 1000) => {
+    let remaining = balance;
+    let months = 0;
+
+    while (remaining > 0 && months < maxMonths) {
+      const interest = remaining * monthlyRate;
+      const principalPaid = payment - interest;
+      if (principalPaid <= 0) return -1; // payment too low, will never pay off
+      remaining -= principalPaid;
+      months++;
+    }
+    return months >= maxMonths ? -1 : months;
+  };
+
+  // Bisection search to find monthlyRate where loan is just paid off by payment
+  const estimateAPR = (balance, payment) => {
+    if (payment <= 0 || balance <= 0) return 0;
 
     let low = 0;
-    let high = 1; // max monthly rate = 100%
-    let mid;
-    const epsilon = 1e-10;
+    let high = 1; // 100% monthly interest max
+    let mid = 0;
+    const epsilon = 1e-8;
     const maxIterations = 100;
 
     for (let i = 0; i < maxIterations; i++) {
       mid = (low + high) / 2;
-      const interest = balanceNum * mid;
+      const months = simulatePayoff(balance, mid, payment);
 
-      if (paymentNum > interest) {
+      if (months === -1) {
+        // Payment too low at this rate, need lower rate
         high = mid;
       } else {
+        // Payment suffices to pay off loan, try higher rate to find max APR
         low = mid;
       }
 
       if (high - low < epsilon) break;
     }
 
-    return mid * 12 * 100; // convert monthly rate to annual APR in %
+    return mid * 12 * 100; // convert monthly rate to annual APR percentage
   };
 
   const resetAll = () => {
@@ -63,7 +81,7 @@ const CreditCardCalculator = () => {
     // Estimate APR if not provided
     if (!aprNum) {
       const estimatedAPR = estimateAPR(balanceNum, paymentNum);
-      if (estimatedAPR <= 0) {
+      if (estimatedAPR <= 0 || estimatedAPR > 1000) {
         setWarning('The payment is too low to ever pay off the balance.');
         setAprEstimated(false);
         setResultsVisible(false);
@@ -76,7 +94,6 @@ const CreditCardCalculator = () => {
       setAprEstimated(false);
     }
 
-    // For now, just show APR result (no months/interest yet)
     setResultsVisible(true);
   };
 
