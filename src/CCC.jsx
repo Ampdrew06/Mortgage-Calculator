@@ -16,42 +16,51 @@ const CreditCardCalculator = () => {
     setResultsVisible(false);
   };
 
-  // Function to estimate APR from balance and minimum payment
-  // Returns APR as a decimal (e.g. 0.243 for 24.3%)
-  const estimateAPR = (principal, payment) => {
-    // Use binary search to find monthly interest rate
-    // Lower bound 0, upper bound 100% monthly rate (1.0)
-    let low = 0;
-    let high = 1;
-    let guess = 0;
-    const tolerance = 0.01; // Payment tolerance in currency
-    const maxIterations = 100;
-    
-    // Helper to simulate payment with guessed monthly rate
-    const simulatePayment = (monthlyRate) => {
-      let remaining = principal;
-      let interestAccrued = 0;
-      // Only one month needed for estimation, so payment must cover interest + some principal
-      // So monthly payment should be >= interest
-      return monthlyRate * remaining; // monthly interest amount
-    };
-
-    for (let i = 0; i < maxIterations; i++) {
-      guess = (low + high) / 2;
-      const interestOnly = simulatePayment(guess);
-      if (Math.abs(interestOnly - payment) < tolerance) {
-        return guess * 12 * 100; // Convert monthly rate to APR % (annual)
+  // Simulate loan payoff with given monthlyRate and payment
+  // Returns true if loan is paid off within maxMonths, false otherwise
+  const canPayOff = (principal, monthlyRate, payment, maxMonths = 600) => {
+    let remaining = principal;
+    for (let month = 0; month < maxMonths; month++) {
+      const interest = remaining * monthlyRate;
+      const principalPaid = payment - interest;
+      if (principalPaid <= 0) {
+        // Payment too low to reduce principal
+        return false;
       }
-      if (interestOnly > payment) {
-        // Guess too high (interest alone > payment)
-        high = guess;
-      } else {
-        // Guess too low
-        low = guess;
+      remaining -= principalPaid;
+      if (remaining <= 0) {
+        return true;
       }
     }
-    // If not found, return best guess
-    return guess * 12 * 100;
+    return false;
+  };
+
+  // Estimate APR (%) from principal and payment using binary search on monthlyRate
+  const estimateAPR = (principal, payment) => {
+    let low = 0;
+    let high = 1; // 100% monthly rate upper bound (very high, will be adjusted)
+    const tolerance = 0.01;
+    let bestAPR = -1;
+
+    for (let i = 0; i < 50; i++) {
+      const mid = (low + high) / 2;
+      const paidOff = canPayOff(principal, mid, payment);
+
+      if (paidOff) {
+        bestAPR = mid;
+        high = mid;
+      } else {
+        low = mid;
+      }
+    }
+
+    if (bestAPR === -1) {
+      // Payment too low to pay off any reasonable APR
+      return null;
+    }
+
+    // Convert monthly rate to annual APR in percentage
+    return bestAPR * 12 * 100;
   };
 
   const handleSubmit = (e) => {
@@ -69,6 +78,13 @@ const CreditCardCalculator = () => {
     if (!aprValue) {
       // Estimate APR
       const estimatedAPR = estimateAPR(principal, payment);
+      if (estimatedAPR === null) {
+        alert('The payment is too low to ever pay off the balance.');
+        setApr('');
+        setAprEstimated(false);
+        setResultsVisible(false);
+        return;
+      }
       setApr(estimatedAPR.toFixed(2));
       setAprEstimated(true);
     } else {
