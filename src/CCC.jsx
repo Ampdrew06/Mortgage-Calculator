@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import PieChart from './PieChart'; // shared PieChart component
+import PieChart from './PieChart';
 import './App.css';
 
 const CreditCardCalculator = () => {
@@ -29,6 +29,8 @@ const CreditCardCalculator = () => {
   const handleSubmit = (e) => {
     e.preventDefault();
     setErrorMessage('');
+    setResultsVisible(false);
+    setAprEstimated(false);
 
     const principal = parseFloat(balance.replace(/,/g, ''));
     const payment = parseFloat(monthlyPayment.replace(/,/g, ''));
@@ -41,25 +43,25 @@ const CreditCardCalculator = () => {
 
     let currentAPR = parseFloat(apr);
 
-    // Estimate APR if empty or invalid
     if (!currentAPR || currentAPR <= 0) {
-      // Early check: If payment <= interest of first month at some high APR, payment will never pay off
-      // We assume max APR to test: 500% (very high for safety)
-      const maxAPR = 5; // 500% annual = 5 monthly rate approx (for binary search upper bound)
+      // Use a more reasonable max APR for search: 200% annually = 2 monthly approx
+      const maxAPR = 2;
       const monthlyRateHigh = maxAPR / 12;
       const firstMonthInterestHigh = principal * monthlyRateHigh;
+      console.log('First month interest at max APR:', firstMonthInterestHigh);
+      console.log('Payment:', payment);
+
       if (payment <= firstMonthInterestHigh) {
         setErrorMessage('Payment is too low to ever pay off the balance.');
         return;
       }
 
-      // Binary search between 0% and 500% APR
       let low = 0;
       let high = maxAPR;
-      let mid;
+      let mid = 0;
       let estimatedAPR = 0;
 
-      for (let i = 0; i < 25; i++) { // increased iterations for precision
+      for (let i = 0; i < 30; i++) {
         mid = (low + high) / 2;
         const monthlyRateTest = mid / 12;
         let balanceTest = principal;
@@ -73,8 +75,11 @@ const CreditCardCalculator = () => {
           monthsTest++;
         }
 
+        // Debug logs
+        console.log(`Iteration ${i}: mid APR = ${(mid*100).toFixed(2)}%, balance left = ${balanceTest.toFixed(2)}`);
+
         if (balanceTest <= 0) {
-          estimatedAPR = mid * 100; // convert to percent
+          estimatedAPR = mid * 100;
           high = mid;
         } else {
           low = mid;
@@ -82,6 +87,7 @@ const CreditCardCalculator = () => {
       }
 
       currentAPR = estimatedAPR;
+      console.log('Estimated APR:', currentAPR.toFixed(2));
       setApr(currentAPR.toFixed(2));
       setAprEstimated(true);
     } else {
@@ -107,11 +113,9 @@ const CreditCardCalculator = () => {
       months = target;
       remaining = tempRemaining;
     } else {
-      // Check if payment covers interest of first month to avoid infinite loop
       const firstMonthInterest = remaining * monthlyRate;
       if (payment <= firstMonthInterest) {
         setErrorMessage('Payment is too low to ever pay off the balance.');
-        setResultsVisible(false);
         return;
       }
 
@@ -252,7 +256,7 @@ const CreditCardCalculator = () => {
             <PieChart
               interest={parseFloat(resultData.totalInterest)}
               principal={parseFloat(balance.replace(/,/g, ''))}
-              colors={['#e74c3c', '#4aa4e3']} // red and blue
+              colors={['#e74c3c', '#4aa4e3']}
             />
 
             <p
