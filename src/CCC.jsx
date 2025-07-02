@@ -13,7 +13,8 @@ const CreditCardCalculator = () => {
     totalPaid: 0,
     monthsToPayoff: 0,
   });
-  const [aprEstimated, setAprEstimated] = useState(false); // track if APR was estimated
+  const [aprEstimated, setAprEstimated] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
 
   const resetAll = () => {
     setBalance('');
@@ -22,17 +23,19 @@ const CreditCardCalculator = () => {
     setTargetMonths('');
     setResultsVisible(false);
     setAprEstimated(false);
+    setErrorMessage('');
   };
 
   const handleSubmit = (e) => {
     e.preventDefault();
+    setErrorMessage('');
 
     const principal = parseFloat(balance.replace(/,/g, ''));
     const payment = parseFloat(monthlyPayment.replace(/,/g, ''));
     const target = parseFloat(targetMonths);
 
     if (!principal || !payment) {
-      alert('Please enter valid Amount Outstanding and Minimum Monthly Payment.');
+      setErrorMessage('Please enter valid Amount Outstanding and Minimum Monthly Payment.');
       return;
     }
 
@@ -40,13 +43,23 @@ const CreditCardCalculator = () => {
 
     // Estimate APR if empty or invalid
     if (!currentAPR || currentAPR <= 0) {
-      // Binary search between 0% and 300% APR (0 to 3 decimal)
+      // Early check: If payment <= interest of first month at some high APR, payment will never pay off
+      // We assume max APR to test: 500% (very high for safety)
+      const maxAPR = 5; // 500% annual = 5 monthly rate approx (for binary search upper bound)
+      const monthlyRateHigh = maxAPR / 12;
+      const firstMonthInterestHigh = principal * monthlyRateHigh;
+      if (payment <= firstMonthInterestHigh) {
+        setErrorMessage('Payment is too low to ever pay off the balance.');
+        return;
+      }
+
+      // Binary search between 0% and 500% APR
       let low = 0;
-      let high = 3;
+      let high = maxAPR;
       let mid;
       let estimatedAPR = 0;
 
-      for (let i = 0; i < 20; i++) {
+      for (let i = 0; i < 25; i++) { // increased iterations for precision
         mid = (low + high) / 2;
         const monthlyRateTest = mid / 12;
         let balanceTest = principal;
@@ -61,7 +74,7 @@ const CreditCardCalculator = () => {
         }
 
         if (balanceTest <= 0) {
-          estimatedAPR = mid * 100; // convert to %
+          estimatedAPR = mid * 100; // convert to percent
           high = mid;
         } else {
           low = mid;
@@ -82,9 +95,7 @@ const CreditCardCalculator = () => {
     let remaining = principal;
 
     if (!isNaN(target) && target > 0) {
-      // Calculate required payment for target months (override entered payment)
       const requiredPayment = (principal * monthlyRate) / (1 - Math.pow(1 + monthlyRate, -target));
-      // Use requiredPayment for calculation
       let tempRemaining = principal;
       totalInterest = 0;
       for (let i = 0; i < target; i++) {
@@ -95,9 +106,15 @@ const CreditCardCalculator = () => {
       }
       months = target;
       remaining = tempRemaining;
-      payment = requiredPayment;
     } else {
-      // Normal payoff calc using provided or estimated APR and payment
+      // Check if payment covers interest of first month to avoid infinite loop
+      const firstMonthInterest = remaining * monthlyRate;
+      if (payment <= firstMonthInterest) {
+        setErrorMessage('Payment is too low to ever pay off the balance.');
+        setResultsVisible(false);
+        return;
+      }
+
       while (remaining > 0 && months < 1000) {
         const interest = remaining * monthlyRate;
         totalInterest += interest;
@@ -259,6 +276,19 @@ const CreditCardCalculator = () => {
               </p>
             )}
           </div>
+        )}
+
+        {errorMessage && (
+          <p
+            style={{
+              fontSize: '0.9rem',
+              color: '#b00020',
+              marginTop: '0.5rem',
+              textAlign: 'center',
+            }}
+          >
+            {errorMessage}
+          </p>
         )}
       </div>
     </>
