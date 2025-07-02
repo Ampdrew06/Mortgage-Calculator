@@ -8,7 +8,6 @@ const CreditCardCalculator = () => {
   const [monthlyPayment, setMonthlyPayment] = useState('');
   const [targetMonths, setTargetMonths] = useState('');
   const [resultsVisible, setResultsVisible] = useState(false);
-  const [estimatedApr, setEstimatedApr] = useState(null);
   const [aprEstimatedFlag, setAprEstimatedFlag] = useState(false);
   const [resultData, setResultData] = useState({
     totalInterest: 0,
@@ -22,13 +21,12 @@ const CreditCardCalculator = () => {
     setApr('');
     setMonthlyPayment('');
     setTargetMonths('');
-    setEstimatedApr(null);
     setAprEstimatedFlag(false);
     setResultsVisible(false);
     setErrorMsg('');
   };
 
-  // Helper: simulate payoff for given balance, monthly payment, monthly rate
+  // Helper: simulate payoff for given balance, monthly rate, payment
   // Returns months to payoff or -1 if payment too low
   const simulatePayoff = (principal, monthlyRate, payment, maxMonths = 1000) => {
     let remaining = principal;
@@ -37,7 +35,7 @@ const CreditCardCalculator = () => {
       const interest = remaining * monthlyRate;
       const principalPaid = payment - interest;
       if (principalPaid <= 0) {
-        // Payment too low to reduce principal => no payoff
+        // Payment too low to reduce principal
         return -1;
       }
       remaining -= principalPaid;
@@ -50,25 +48,32 @@ const CreditCardCalculator = () => {
   const estimateAPR = (principal, payment) => {
     const maxIterations = 50;
     const tolerance = 0.0001;
-    let low = 0.0001; // Avoid zero to prevent div by zero
-    let high = 1; // 100% APR monthly approx (very high)
+    let low = 0.0001; // 0.01% APR
+    let high = 1; // 100% APR
     let mid = 0;
-    let months = -1;
+
+    // Quick check: If payment < interest-only payment at min APR, return -1
+    const minMonthlyInterest = principal * (low / 12);
+    if (payment <= minMonthlyInterest) {
+      return -1; // Payment too low to pay off
+    }
 
     for (let i = 0; i < maxIterations; i++) {
       mid = (low + high) / 2;
-      months = simulatePayoff(principal, mid / 12, payment);
+      const months = simulatePayoff(principal, mid / 12, payment);
       if (months === -1) {
-        // Payment too low for this APR, increase APR guess
         low = mid;
       } else {
-        // We can pay off at this APR, try lower APR
         high = mid;
       }
       if (high - low < tolerance) break;
     }
 
-    // Return APR as annual percentage (mid * 100)
+    if (high >= 0.9999) {
+      // APR near 100%, consider payment too low
+      return -1;
+    }
+
     return mid * 100;
   };
 
@@ -87,18 +92,16 @@ const CreditCardCalculator = () => {
       return;
     }
 
-    // Estimate APR if missing
     if (!annualRate && payment) {
       const aprEstimate = estimateAPR(principal, payment);
-      if (aprEstimate > 1000) {
-        // APR estimate too high => payment too low to pay off
+      if (aprEstimate === -1) {
         setErrorMsg('The payment is too low to ever pay off the balance.');
         setResultsVisible(false);
         return;
       }
       annualRate = aprEstimate;
       setAprEstimatedFlag(true);
-      setApr(annualRate.toFixed(2)); // Show estimated APR in input box
+      setApr(annualRate.toFixed(2));
     }
 
     if (!annualRate) {
@@ -110,7 +113,6 @@ const CreditCardCalculator = () => {
     const monthlyRate = annualRate / 100 / 12;
 
     if (target) {
-      // User entered target months: calculate required payment for target
       const requiredPayment = (principal * monthlyRate) / (1 - Math.pow(1 + monthlyRate, -target));
       let totalInterest = 0;
       let remaining = principal;
@@ -131,7 +133,6 @@ const CreditCardCalculator = () => {
       return;
     }
 
-    // No target: simulate payoff months based on current payment and rate
     const monthsToPayoff = simulatePayoff(principal, monthlyRate, payment);
     if (monthsToPayoff === -1) {
       setErrorMsg('The payment is too low to ever pay off the balance.');
@@ -139,7 +140,6 @@ const CreditCardCalculator = () => {
       return;
     }
 
-    // Calculate total interest paid over payoff period
     let totalInterest = 0;
     let remaining = principal;
     for (let i = 0; i < monthsToPayoff; i++) {
@@ -259,12 +259,7 @@ const CreditCardCalculator = () => {
             <button className="submit-btn ccc" type="submit" style={{ flex: 1 }}>
               Calculate
             </button>
-            <button
-              type="button"
-              className="reset-btn"
-              style={{ flex: 1 }}
-              onClick={resetAll}
-            >
+            <button type="button" className="reset-btn" style={{ flex: 1 }} onClick={resetAll}>
               Reset All
             </button>
           </div>
