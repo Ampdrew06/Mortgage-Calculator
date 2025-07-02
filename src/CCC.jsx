@@ -1,21 +1,32 @@
 import React, { useState } from 'react';
-import PieChart from './PieChart'; // shared PieChart component
+import PieChart from './PieChart'; // Using the shared PieChart component
 import './App.css';
 
 const CreditCardCalculator = () => {
   const [balance, setBalance] = useState('');
   const [apr, setApr] = useState('');
-  const [minPayment, setMinPayment] = useState('');
-  const [overpayment, setOverpayment] = useState('');
-  const [results, setResults] = useState(null);
-  const [error, setError] = useState('');
-  const [aprIsEstimated, setAprIsEstimated] = useState(false);
+  const [monthlyPayment, setMonthlyPayment] = useState('');
+  const [targetMonths, setTargetMonths] = useState('');
+  const [resultsVisible, setResultsVisible] = useState(false);
+  const [resultData, setResultData] = useState({
+    totalInterest: 0,
+    totalPaid: 0,
+    monthsToPayoff: 0,
+  });
+  const [aprEstimated, setAprEstimated] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
 
-  const parseInput = (value) => {
-    const num = parseFloat(value.replace(/,/g, ''));
-    return isNaN(num) ? null : num;
+  const resetAll = () => {
+    setBalance('');
+    setApr('');
+    setMonthlyPayment('');
+    setTargetMonths('');
+    setResultsVisible(false);
+    setAprEstimated(false);
+    setErrorMessage('');
   };
 
+  // Calculate payoff months & total interest for given monthlyRate & payment
   const calculatePayoff = (balance, monthlyRate, monthlyPayment) => {
     let remaining = balance;
     let totalInterest = 0;
@@ -40,12 +51,13 @@ const CreditCardCalculator = () => {
     return { months, totalInterest };
   };
 
+  // Estimate APR from balance and min payment by binary search
   const estimateAPR = (balance, minPayment) => {
     if (minPayment <= 0 || balance <= 0) return null;
 
-    let low = 0;
-    let high = 1; // 100% monthly upper bound
-    let mid;
+    let low = 0.0001;   // small positive number to avoid divide by zero
+    let high = 0.1;     // max monthly interest rate (10% = 120% APR)
+    let mid = 0;
 
     for (let i = 0; i < 30; i++) {
       mid = (low + high) / 2;
@@ -61,163 +73,230 @@ const CreditCardCalculator = () => {
       } else {
         high = mid;
       }
+
+      if (high - low < 0.00001) break;
     }
 
-    return mid * 12 * 100;
+    return mid * 12 * 100; // convert monthly rate to annual percentage
   };
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    setError('');
-    setResults(null);
-    setAprIsEstimated(false);
+    setErrorMessage('');
+    setAprEstimated(false);
 
-    const bal = parseInput(balance);
-    if (bal === null || bal <= 0) {
-      setError('Please enter a valid positive amount outstanding.');
+    const principal = parseFloat(balance.replace(/,/g, ''));
+    let annualRate = parseFloat(apr);
+    const monthlyRate = annualRate ? annualRate / 100 / 12 : 0;
+    let payment = parseFloat(monthlyPayment.replace(/,/g, ''));
+    const target = parseFloat(targetMonths);
+    let months = 0;
+    let totalInterest = 0;
+    let remaining = principal;
+
+    if (!principal) {
+      setErrorMessage('Please enter the Amount Outstanding.');
+      setResultsVisible(false);
+      return;
+    }
+    if (!payment) {
+      setErrorMessage('Please enter the Minimum Monthly Payment.');
+      setResultsVisible(false);
       return;
     }
 
-    let annualAPR = parseInput(apr);
-    let minPay = parseInput(minPayment);
-    const overpay = parseInput(overpayment) || 0;
-
-    if (!annualAPR && !minPay) {
-      setError('Please enter either APR or Minimum Monthly Payment.');
-      return;
-    }
-
-    // Estimate APR if missing
-    if (!annualAPR && minPay) {
-      const estimatedAPR = estimateAPR(bal, minPay);
-      if (!estimatedAPR) {
-        setError('Unable to estimate APR from given inputs.');
+    // If APR is missing, estimate it
+    if (!annualRate) {
+      const estAPR = estimateAPR(principal, payment);
+      if (estAPR === null) {
+        setErrorMessage('The Payment is too low to ever pay off the balance.');
+        setResultsVisible(false);
         return;
+      } else {
+        annualRate = estAPR;
+        setApr(annualRate.toFixed(2));
+        setAprEstimated(true);
       }
-      annualAPR = estimatedAPR;
-      setApr(estimatedAPR.toFixed(2));
-      setAprIsEstimated(true);
     }
 
-    const monthlyRate = annualAPR / 100 / 12;
+    const calcMonthlyRate = annualRate / 100 / 12;
 
-    let paymentToUse = minPay || 0;
-    if (overpay > 0) paymentToUse += overpay;
-
-    if (!minPay) {
-      // Estimate minimum payment if missing: interest + 1% balance + overpay
-      paymentToUse = bal * monthlyRate + bal * 0.01 + overpay;
+    if (!isNaN(target)) {
+      const requiredPayment = (principal * calcMonthlyRate) / (1 - Math.pow(1 + calcMonthlyRate, -target));
+      payment = requiredPayment;
+      months = target;
+      for (let i = 0; i < months; i++) {
+        const interest = remaining * calcMonthlyRate;
+        totalInterest += interest;
+        const principalPaid = payment - interest;
+        remaining -= principalPaid;
+      }
+    } else {
+      while (remaining > 0 && months < 1000) {
+        const interest = remaining * calcMonthlyRate;
+        totalInterest += interest;
+        const principalPaid = payment - interest;
+        if (principalPaid <= 0) {
+          setErrorMessage('The Payment is too low to ever pay off the balance.');
+          setResultsVisible(false);
+          return;
+        }
+        remaining -= principalPaid;
+        months++;
+      }
     }
 
-    const payoff = calculatePayoff(bal, monthlyRate, paymentToUse);
+    const totalPaid = principal + totalInterest;
 
-    if (!payoff) {
-      setError('The payment is too low to ever pay off the balance.');
-      return;
-    }
-
-    const { months, totalInterest } = payoff;
-
-    setResults({
-      payoffTimeMonths: months,
-      payoffTimeYears: (months / 12).toFixed(1),
+    setResultData({
       totalInterest: totalInterest.toFixed(2),
-      totalPaid: (bal + totalInterest).toFixed(2),
-      usedAPR: annualAPR.toFixed(2),
-      monthlyPayment: paymentToUse.toFixed(2),
+      totalPaid: totalPaid.toFixed(2),
+      monthsToPayoff: months,
     });
+
+    setResultsVisible(true);
   };
 
   return (
-    <div className="container">
-      <h2>Credit Card Calculator</h2>
+    <>
+      <div className="header-box">
+        <h2>Credit Card Calculator</h2>
+      </div>
 
-      <form onSubmit={handleSubmit} autoComplete="off" spellCheck="false">
-        <div className="input-row">
-          <label>Amount Outstanding (£)*</label>
-          <input
-            type="text"
-            inputMode="decimal"
-            value={balance}
-            onChange={(e) => setBalance(e.target.value)}
-            placeholder="e.g. 1500"
-            required
-          />
-        </div>
+      <div className="container">
+        <form autoComplete="off" onSubmit={handleSubmit}>
+          <div className="input-row">
+            <label htmlFor="balance-input">Amount Outstanding (£)</label>
+            <input
+              id="balance-input"
+              name="balance"
+              type="text"
+              inputMode="decimal"
+              autoComplete="off"
+              autoCorrect="off"
+              spellCheck="false"
+              aria-autocomplete="none"
+              aria-haspopup="false"
+              value={balance}
+              onChange={(e) => setBalance(e.target.value)}
+            />
+            <button type="button" className="clear-btn" onClick={() => setBalance('')}>
+              Clear
+            </button>
+          </div>
 
-        <div className="input-row" style={{ flexDirection: 'column', alignItems: 'flex-start' }}>
-          <label style={{ marginBottom: '0.25rem' }}>APR (%)</label>
-          <input
-            type="text"
-            inputMode="decimal"
-            value={apr}
-            onChange={(e) => {
-              setApr(e.target.value);
-              setAprIsEstimated(false);
-            }}
-            placeholder="e.g. 18"
-          />
-          {aprIsEstimated && (
-            <small style={{ color: '#f39c12', fontStyle: 'italic', marginTop: '0.25rem' }}>
-              * APR estimated from minimum payment
-            </small>
+          <div className="input-row">
+            <label htmlFor="apr-input">APR (%)</label>
+            <input
+              id="apr-input"
+              name="apr"
+              type="text"
+              inputMode="decimal"
+              autoComplete="off"
+              autoCorrect="off"
+              spellCheck="false"
+              aria-autocomplete="none"
+              aria-haspopup="false"
+              value={apr}
+              onChange={(e) => setApr(e.target.value)}
+            />
+            <button type="button" className="clear-btn" onClick={() => setApr('')}>
+              Clear
+            </button>
+          </div>
+
+          {aprEstimated && (
+            <div style={{ color: 'red', fontStyle: 'italic', marginBottom: '1rem' }}>
+              *APR estimated from minimum payment
+            </div>
           )}
-        </div>
 
-        <div className="input-row">
-          <label>Minimum Monthly Payment (£)</label>
-          <input
-            type="text"
-            inputMode="decimal"
-            value={minPayment}
-            onChange={(e) => setMinPayment(e.target.value)}
-            placeholder="e.g. 50"
-          />
-        </div>
+          <div className="input-row">
+            <label htmlFor="monthly-payment-input">Minimum Monthly Payment (£)</label>
+            <input
+              id="monthly-payment-input"
+              name="monthlyPayment"
+              type="text"
+              inputMode="decimal"
+              autoComplete="off"
+              autoCorrect="off"
+              spellCheck="false"
+              aria-autocomplete="none"
+              aria-haspopup="false"
+              value={monthlyPayment}
+              onChange={(e) => setMonthlyPayment(e.target.value)}
+            />
+            <button type="button" className="clear-btn" onClick={() => setMonthlyPayment('')}>
+              Clear
+            </button>
+          </div>
 
-        <div className="input-row">
-          <label>Optional Overpayment (£)</label>
-          <input
-            type="text"
-            inputMode="decimal"
-            value={overpayment}
-            onChange={(e) => setOverpayment(e.target.value)}
-            placeholder="e.g. 20"
-          />
-        </div>
+          <div className="input-row">
+            <label htmlFor="target-months-input">Target (Months)</label>
+            <input
+              id="target-months-input"
+              name="targetMonths"
+              type="text"
+              inputMode="decimal"
+              autoComplete="off"
+              autoCorrect="off"
+              spellCheck="false"
+              aria-autocomplete="none"
+              aria-haspopup="false"
+              value={targetMonths}
+              onChange={(e) => setTargetMonths(e.target.value)}
+            />
+            <button type="button" className="clear-btn" onClick={() => setTargetMonths('')}>
+              Clear
+            </button>
+          </div>
 
-        <button type="submit" className="submit-btn ccc" style={{ marginTop: '1rem' }}>
-          Calculate
-        </button>
-      </form>
+          <div className="button-row" style={{ display: 'flex', gap: '0.5rem' }}>
+            <button className="submit-btn ccc" type="submit" style={{ flex: 1 }}>
+              Calculate
+            </button>
+            <button type="button" className="reset-btn" onClick={resetAll} style={{ flex: 1 }}>
+              Reset All
+            </button>
+          </div>
+        </form>
 
-      {error && <p style={{ color: 'red', marginTop: '1rem' }}>{error}</p>}
+        {resultsVisible && (
+          <div className="results-box">
+            <p>
+              <strong>Months to Pay Off:</strong> {resultData.monthsToPayoff}
+            </p>
+            <p>
+              <strong>Total Interest Paid:</strong> £
+              {parseFloat(resultData.totalInterest).toLocaleString(undefined, { minimumFractionDigits: 2 })}
+            </p>
+            <p>
+              <strong>Total Paid:</strong> £
+              {parseFloat(resultData.totalPaid).toLocaleString(undefined, { minimumFractionDigits: 2 })}
+            </p>
 
-      {results && (
-        <div className="results-box" style={{ marginTop: '1rem' }}>
-          <p>
-            <strong>Used APR (%):</strong> {results.usedAPR}
-          </p>
-          <p>
-            <strong>Monthly Payment (£):</strong> {results.monthlyPayment}
-          </p>
-          <p>
-            <strong>Time to Pay Off:</strong> {results.payoffTimeMonths} months (~{results.payoffTimeYears} years)
-          </p>
-          <p>
-            <strong>Total Interest Paid (£):</strong> {results.totalInterest}
-          </p>
-          <p>
-            <strong>Total Amount Paid (£):</strong> {results.totalPaid}
-          </p>
+            <PieChart
+              interest={parseFloat(resultData.totalInterest)}
+              principal={parseFloat(balance.replace(/,/g, ''))}
+            />
 
-          <PieChart
-            interest={parseFloat(results.totalInterest)}
-            principal={parseFloat(balance.replace(/,/g, ''))}
-          />
-        </div>
-      )}
-    </div>
+            <p
+              className="chart-labels"
+              style={{ marginTop: '0.8rem', display: 'flex', justifyContent: 'center', gap: '2rem' }}
+            >
+              <span style={{ color: '#e74c3c', fontWeight: 'bold' }}>Interest Paid</span>
+              <span style={{ color: '#4aa4e3', fontWeight: 'bold' }}>Principal Paid</span>
+            </p>
+          </div>
+        )}
+
+        {errorMessage && (
+          <div style={{ color: 'red', fontWeight: 'bold', marginTop: '1rem', textAlign: 'center' }}>
+            {errorMessage}
+          </div>
+        )}
+      </div>
+    </>
   );
 };
 
