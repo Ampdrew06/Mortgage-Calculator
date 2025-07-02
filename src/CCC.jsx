@@ -26,16 +26,19 @@ const CreditCardCalculator = () => {
     setErrorMessage('');
   };
 
-  // Improved APR estimator using binary search
+  // Estimate APR using binary search within realistic bounds
   const estimateAPR = (principal, payment) => {
-    const minMonthlyInterestRate = 0.0001; // 0.01% monthly (~0.12% APR)
+    if (principal <= 0 || payment <= 0) return -1;
+
+    const minMonthlyInterestRate = 0.0001; // ~0.01% monthly
+    const maxMonthlyInterestRate = 0.05; // 5% monthly (60% APR)
     if (payment <= principal * minMonthlyInterestRate) {
-      console.log('Payment too low even for minimal interest.');
+      // Payment too low even at minimal interest
       return -1;
     }
 
     let low = 0;
-    let high = 1.666; // ~166.6% monthly interest, approx 2000% APR upper bound
+    let high = maxMonthlyInterestRate;
     let mid;
     const maxIterations = 100;
     const tolerance = 0.0000001;
@@ -46,7 +49,7 @@ const CreditCardCalculator = () => {
       while (balance > 0 && months < 1000) {
         const interest = balance * monthlyRate;
         const principalPaid = payment - interest;
-        if (principalPaid <= 0) return false;
+        if (principalPaid <= 0) return false; // Can't pay off with this payment & rate
         balance -= principalPaid;
         months++;
       }
@@ -56,7 +59,6 @@ const CreditCardCalculator = () => {
     for (let i = 0; i < maxIterations; i++) {
       mid = (low + high) / 2;
       const canPay = canPayOff(mid);
-      console.log(`Iteration ${i}: trying monthlyRate=${mid}, canPayOff=${canPay}`);
       if (canPay) {
         high = mid;
       } else {
@@ -66,9 +68,8 @@ const CreditCardCalculator = () => {
     }
 
     const aprPercent = mid * 12 * 100;
-    console.log(`Estimated APR: ${aprPercent.toFixed(2)}%`);
     if (aprPercent > 1200) {
-      return -1; // Consider this too high to be realistic
+      return -1; // Unrealistically high APR
     }
     return aprPercent;
   };
@@ -89,7 +90,6 @@ const CreditCardCalculator = () => {
       return;
     }
 
-    // Estimate APR if blank
     if (!inputAPR) {
       const estimatedAPR = estimateAPR(principal, payment);
       if (estimatedAPR === -1) {
@@ -103,7 +103,6 @@ const CreditCardCalculator = () => {
       }
     }
 
-    // Use input or estimated APR to calculate payoff time and interest
     const monthlyRate = inputAPR / 100 / 12;
     let months = 0;
     let totalInterest = 0;
@@ -288,5 +287,5 @@ const CreditCardCalculator = () => {
     </>
   );
 };
-
+ 
 export default CreditCardCalculator;
