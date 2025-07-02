@@ -26,25 +26,25 @@ const CreditCardCalculator = () => {
     setErrorMsg('');
   };
 
-  // Helper: simulate payoff for given balance, monthly rate, payment
-  // Returns months to payoff or -1 if payment too low
   const simulatePayoff = (principal, monthlyRate, payment, maxMonths = 1000) => {
     let remaining = principal;
     let months = 0;
+    console.log(`SimulatePayoff start: principal=${principal}, monthlyRate=${monthlyRate}, payment=${payment}`);
+
     while (remaining > 0 && months < maxMonths) {
       const interest = remaining * monthlyRate;
       const principalPaid = payment - interest;
       if (principalPaid <= 0) {
-        // Payment too low to reduce principal
+        console.log(`Payment too low at month ${months + 1}: principalPaid=${principalPaid}`);
         return -1;
       }
       remaining -= principalPaid;
       months++;
     }
+    console.log(`SimulatePayoff end: months=${months}, remaining=${remaining}`);
     return months >= maxMonths ? -1 : months;
   };
 
-  // Estimate APR via bisection between low and high APR guesses
   const estimateAPR = (principal, payment) => {
     const maxIterations = 50;
     const tolerance = 0.0001;
@@ -52,10 +52,13 @@ const CreditCardCalculator = () => {
     let high = 1; // 100% APR
     let mid = 0;
 
-    // Quick check: If payment < interest-only payment at min APR, return -1
     const minMonthlyInterest = principal * (low / 12);
+    console.log(`EstimateAPR start: principal=${principal}, payment=${payment}`);
+    console.log(`Minimum monthly interest at low APR: ${minMonthlyInterest}`);
+
     if (payment <= minMonthlyInterest) {
-      return -1; // Payment too low to pay off
+      console.log('Payment too low compared to min interest. Returning -1.');
+      return -1;
     }
 
     for (let i = 0; i < maxIterations; i++) {
@@ -70,10 +73,11 @@ const CreditCardCalculator = () => {
     }
 
     if (high >= 0.9999) {
-      // APR near 100%, consider payment too low
+      console.log('APR estimate near 100%, returning -1.');
       return -1;
     }
 
+    console.log(`Estimated APR: ${mid * 100}`);
     return mid * 100;
   };
 
@@ -86,6 +90,9 @@ const CreditCardCalculator = () => {
     let annualRate = apr ? parseFloat(apr) : null;
     const payment = parseFloat(monthlyPayment.replace(/,/g, ''));
     const target = parseFloat(targetMonths);
+
+    console.log(`HandleSubmit: principal=${principal}, apr=${annualRate}, payment=${payment}, target=${target}`);
+
     if (!principal || !payment) {
       setErrorMsg('Please enter Amount Outstanding and Minimum Monthly Payment.');
       setResultsVisible(false);
