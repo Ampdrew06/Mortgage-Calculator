@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import PieChart from './PieChart'; // use your shared PieChart component
+import PieChart from './PieChart'; // Make sure this uses blue principal color
 import './App.css';
 
 const CreditCardCalculator = () => {
@@ -13,7 +13,7 @@ const CreditCardCalculator = () => {
     totalPaid: 0,
     monthsToPayoff: 0,
   });
-  const [aprEstimated, setAprEstimated] = useState(false); // flag for showing message
+  const [aprEstimated, setAprEstimated] = useState(false);
 
   const resetAll = () => {
     setBalance('');
@@ -27,8 +27,6 @@ const CreditCardCalculator = () => {
   const handleSubmit = (e) => {
     e.preventDefault();
 
-    console.log('Calculate clicked');
-
     const principal = parseFloat(balance.replace(/,/g, ''));
     let annualRate = parseFloat(apr) / 100;
     const monthlyRate = annualRate / 12;
@@ -38,24 +36,21 @@ const CreditCardCalculator = () => {
     let totalInterest = 0;
     let remaining = principal;
 
-    console.log({ principal, annualRate, payment, target });
-
-    // Require principal and either APR or payment to proceed
+    // Validation: require principal and either APR or payment
     if (!principal || (!annualRate && !payment)) {
-      console.log('Required inputs missing: principal and either APR or payment');
       return;
     }
 
-    // Estimate APR if missing but payment provided
+    // Estimate APR if missing and payment is provided
     if (!annualRate && payment) {
       setAprEstimated(true);
       let low = 0;
-      let high = 100; // Max APR 100%
+      let high = 100;
       let estAPR = 0;
+
       for (let i = 0; i < 50; i++) {
         let mid = (low + high) / 2;
         let midMonthly = mid / 12 / 100;
-
         let rem = principal;
         let mths = 0;
 
@@ -75,13 +70,12 @@ const CreditCardCalculator = () => {
         }
       }
       annualRate = estAPR / 100;
-      console.log('Estimated APR:', estAPR);
-      setApr(estAPR.toFixed(2));
+      setApr(estAPR.toFixed(2));  // This will update the APR input field properly
     } else {
       setAprEstimated(false);
     }
 
-    // Update monthlyRate after possible APR estimate
+    // Use updated monthly rate after APR estimation
     const updatedMonthlyRate = annualRate / 12;
 
     if (!isNaN(target)) {
