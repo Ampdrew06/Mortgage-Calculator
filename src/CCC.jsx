@@ -28,7 +28,7 @@ const CreditCardCalculator = () => {
 
   // Helper: Calculate payoff months for given balance, monthly interest rate, payment
   const calculatePayoff = (balance, monthlyRate, payment) => {
-    if (payment <= balance * monthlyRate) return null; // payment too low
+    if (payment <= balance * monthlyRate * 0.99) return null; // Allow small margin
 
     let remaining = balance;
     let months = 0;
@@ -46,12 +46,13 @@ const CreditCardCalculator = () => {
     return { months, remaining };
   };
 
-  // Improved APR Estimation function
+  // Improved APR Estimation function with debug logs
   const estimateAPR = (balance, minPayment) => {
     if (minPayment <= 0 || balance <= 0) return null;
 
     const maxMonthlyRateCheck = 0.20; // 20% monthly = 240% APR
-    if (minPayment <= balance * maxMonthlyRateCheck) return null;
+
+    if (minPayment <= balance * maxMonthlyRateCheck * 0.99) return null;
 
     let low = 0.0001;
     let high = maxMonthlyRateCheck;
@@ -75,6 +76,7 @@ const CreditCardCalculator = () => {
       if (high - low < 0.00001) break;
     }
 
+    console.log('APR estimation debug:', mid * 12 * 100);
     return mid * 12 * 100;
   };
 
@@ -90,14 +92,13 @@ const CreditCardCalculator = () => {
     const target = parseFloat(targetMonths);
 
     if (!principal || !payment) {
-      setErrorMessage('Please enter both Amount Outstanding and Monthly Payment.');
+      setErrorMessage('Please enter both Amount Outstanding and Minimum Monthly Payment.');
       return;
     }
 
-    // If APR missing, try to estimate it from balance and min payment
     if (!annualRate) {
       const estimatedAPR = estimateAPR(principal, payment);
-      if (estimatedAPR === null) {
+      if (estimatedAPR === null || estimatedAPR > 9999) {
         setErrorMessage('The payment is too low to ever pay off the balance.');
         setResultsVisible(false);
         return;
@@ -112,7 +113,6 @@ const CreditCardCalculator = () => {
     let remaining = principal;
 
     if (!isNaN(target)) {
-      // If target months entered, calculate required payment instead
       const requiredPayment =
         (principal * (annualRate / 12)) /
         (1 - Math.pow(1 + annualRate / 12, -target));
@@ -125,7 +125,6 @@ const CreditCardCalculator = () => {
         remaining -= principalPaid;
       }
     } else {
-      // Calculate payoff months for given payment & interest
       while (remaining > 0 && months < 1000) {
         const interest = remaining * (annualRate / 12);
         totalInterest += interest;
