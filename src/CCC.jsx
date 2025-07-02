@@ -26,41 +26,36 @@ const CreditCardCalculator = () => {
     setErrorMsg('');
   };
 
-  // Estimate APR from balance and monthly payment using algebraic rearrangement of annuity formula
-  // Returns APR as a decimal (e.g. 0.24 for 24%), or null if invalid
-  const estimateAPR = (principal, payment) => {
-    if (payment <= 0 || principal <= 0) return null;
+  // Given principal, payment, and n months, returns monthly interest rate that satisfies payment formula
+  // Using binary search between 0 and max rate
+  const estimateMonthlyInterestRate = (principal, payment, n) => {
+    if (payment <= principal / n) return null; // Payment too low even at 0% interest
 
-    // Minimum monthly interest rate is > 0 and < ~1 (100%)
-    // Use binary search between 0.00001 and 1 monthly interest rate to find APR matching payment
-    let low = 0.000001;
-    let high = 1;
-    let mid = 0;
-    const tolerance = 0.0000001;
+    let low = 0;
+    let high = 1; // 100% monthly interest max (absurdly high)
     const maxIter = 100;
-    let iter = 0;
+    const tol = 1e-10;
+    let mid;
 
-    while (iter < maxIter) {
+    for (let i = 0; i < maxIter; i++) {
       mid = (low + high) / 2;
-      // Calculate payment for given mid interest rate
-      // Using formula: payment = principal * r / (1 - (1+r)^-n)
-      // Here n is unknown, but since we want minimum payment to cover interest, check if payment >= principal * mid
-      // So approximate number of months by formula rearranged:
-      // We can't solve n here directly, so instead check monthly payment for large n:
-      // For minimum payment, payment must > principal * mid
-      if (payment > principal * mid) {
+      // Calculate payment for mid interest rate
+      const calcPayment = (principal * mid) / (1 - Math.pow(1 + mid, -n));
+
+      if (Math.abs(calcPayment - payment) < tol) {
+        return mid;
+      }
+      if (calcPayment > payment) {
         high = mid;
       } else {
         low = mid;
       }
-      if (high - low < tolerance) break;
-      iter++;
     }
-    return mid * 12; // return annual rate decimal
+
+    return mid;
   };
 
-  // Simulate payoff over time given principal, monthly interest rate, payment
-  // Returns {months, totalInterest} or null if payment too low
+  // Simulate payoff with monthly interest rate and payment, returns months & totalInterest or null if never pays off
   const simulatePayoff = (principal, monthlyRate, payment, maxMonths = 1000) => {
     let remaining = principal;
     let totalInterest = 0;
@@ -71,11 +66,12 @@ const CreditCardCalculator = () => {
       totalInterest += interest;
       const principalPaid = payment - interest;
       if (principalPaid <= 0) {
-        return null; // payment too low to reduce balance
+        return null; // Payment too low to reduce principal
       }
       remaining -= principalPaid;
       months++;
     }
+
     return { months, totalInterest };
   };
 
@@ -92,30 +88,37 @@ const CreditCardCalculator = () => {
     const target = parseFloat(targetMonths);
 
     if (!principal || !payment) {
-      setErrorMsg('Please enter valid Balance and Monthly Payment.');
+      setErrorMsg('Please enter valid Amount Outstanding and Minimum Monthly Payment.');
       return;
     }
 
-    // If APR not entered, estimate it
     if (isNaN(annualRate) || annualRate <= 0) {
-      const aprEstimateDecimal = estimateAPR(principal, payment);
-      if (aprEstimateDecimal === null) {
-        setErrorMsg('Payment too low to ever pay off the balance.');
+      if (isNaN(target)) {
+        // If no target months provided, estimate APR from payment and assume 60 months (5 years) payoff period
+        const assumedMonths = 60;
+
+        const monthlyRateEstimate = estimateMonthlyInterestRate(principal, payment, assumedMonths);
+        if (monthlyRateEstimate === null) {
+          setErrorMsg('The payment is too low to ever pay off the balance.');
+          return;
+        }
+        annualRate = monthlyRateEstimate * 12 * 100; // Convert to APR %
+        setApr(annualRate.toFixed(2));
+        setAprEstimated(true);
+      } else {
+        // If target months is provided, no APR estimate needed — APR must be input or 0
+        setErrorMsg('Please enter APR or leave Target months blank to estimate APR.');
         return;
       }
-      annualRate = aprEstimateDecimal * 100; // convert to percentage
-      setApr(annualRate.toFixed(2));
-      setAprEstimated(true);
     }
 
     const monthlyRate = annualRate / 100 / 12;
-
     let months = 0;
     let totalInterest = 0;
 
     if (!isNaN(target)) {
-      // If target months given, compute required payment, simulate payoff
-      let requiredPayment = (principal * monthlyRate) / (1 - Math.pow(1 + monthlyRate, -target));
+      // Calculate payment needed for target months
+      const requiredPayment = (principal * monthlyRate) / (1 - Math.pow(1 + monthlyRate, -target));
       payment = requiredPayment;
       months = target;
 
@@ -127,7 +130,6 @@ const CreditCardCalculator = () => {
         remainingBalance -= principalPaid;
       }
     } else {
-      // Simulate payoff based on given payment
       const payoff = simulatePayoff(principal, monthlyRate, payment);
       if (!payoff) {
         setErrorMsg('The payment is too low to ever pay off the balance.');
@@ -194,7 +196,7 @@ const CreditCardCalculator = () => {
             <button type="button" className="clear-btn" onClick={() => setApr('')}>
               Clear
             </button>
-            {aprEstimated && <p style={{ color: 'red', fontWeight: 'bold' }}>* APR estimated from minimum payment</p>}
+            {aprEstimated && <p style={{ color: 'red', fontWeight: 'bold' }}>* APR estimated assuming 5-year payoff period</p>}
           </div>
 
           <div className="input-row">
