@@ -1,44 +1,6 @@
 import React, { useState } from 'react';
-import PieChart from './PieChart'; // Your shared PieChart component
+import PieChart from './PieChart'; // use your shared PieChart component
 import './App.css';
-
-function estimateAPR(principal, payment) {
-  if (payment <= principal / 12) {
-    // Payment too low to ever pay off balance
-    return -1;
-  }
-
-  let low = 0;
-  let high = 1; // 100% monthly interest max (very high to start)
-  let mid;
-  const maxIterations = 50;
-  const tolerance = 0.0001;
-
-  function canPayOff(monthlyRate) {
-    let balance = principal;
-    let months = 0;
-    while (balance > 0 && months < 1000) {
-      const interest = balance * monthlyRate;
-      const principalPaid = payment - interest;
-      if (principalPaid <= 0) return false;
-      balance -= principalPaid;
-      months++;
-    }
-    return months < 1000;
-  }
-
-  for (let i = 0; i < maxIterations; i++) {
-    mid = (low + high) / 2;
-    if (canPayOff(mid)) {
-      high = mid;
-    } else {
-      low = mid;
-    }
-    if (high - low < tolerance) break;
-  }
-
-  return mid * 12 * 100; // convert monthly rate to annual percentage rate (APR)
-}
 
 const CreditCardCalculator = () => {
   const [balance, setBalance] = useState('');
@@ -51,8 +13,7 @@ const CreditCardCalculator = () => {
     totalPaid: 0,
     monthsToPayoff: 0,
   });
-  const [errorMessage, setErrorMessage] = useState('');
-  const [infoMessage, setInfoMessage] = useState('');
+  const [aprEstimated, setAprEstimated] = useState(false);
 
   const resetAll = () => {
     setBalance('');
@@ -60,46 +21,116 @@ const CreditCardCalculator = () => {
     setMonthlyPayment('');
     setTargetMonths('');
     setResultsVisible(false);
-    setErrorMessage('');
-    setInfoMessage('');
+    setAprEstimated(false);
   };
+
+  // Improved APR estimator with realistic search range and checks
+  function estimateAPR(principal, payment) {
+    const minMonthlyInterestRate = 0.001; // 0.1% monthly (~12% APR)
+    if (payment <= principal * minMonthlyInterestRate) {
+      return -1; // Payment too low to pay off balance
+    }
+
+    let low = 0;
+    let high = 0.1; // 10% monthly (120% APR) upper bound
+    let mid;
+    const maxIterations = 60;
+    const tolerance = 0.000001;
+
+    function canPayOff(monthlyRate) {
+      let balance = principal;
+      let months = 0;
+      while (balance > 0 && months < 1000) {
+        const interest = balance * monthlyRate;
+        const principalPaid = payment - interest;
+        if (principalPaid <= 0) return false;
+        balance -= principalPaid;
+        months++;
+      }
+      return months < 1000;
+    }
+
+    for (let i = 0; i < maxIterations; i++) {
+      mid = (low + high) / 2;
+      if (canPayOff(mid)) {
+        high = mid;
+      } else {
+        low = mid;
+      }
+      if (high - low < tolerance) break;
+    }
+
+    return mid * 12 * 100; // convert monthly rate to APR %
+  }
 
   const handleSubmit = (e) => {
     e.preventDefault();
 
     const principal = parseFloat(balance.replace(/,/g, ''));
-    let aprValue = parseFloat(apr);
-    const payment = parseFloat(monthlyPayment.replace(/,/g, ''));
+    let inputAPR = parseFloat(apr);
+    let payment = parseFloat(monthlyPayment.replace(/,/g, ''));
     const target = parseFloat(targetMonths);
 
     if (!principal || !payment) {
-      setErrorMessage('Please enter at least Amount Outstanding and Minimum Payment.');
-      setResultsVisible(false);
+      alert('Please enter Amount Outstanding and Minimum Monthly Payment.');
       return;
     }
 
-    if (isNaN(aprValue) || aprValue <= 0) {
-      // Estimate APR if blank or invalid
-      const estimatedAPR = estimateAPR(principal, payment);
-      if (estimatedAPR === -1) {
-        setErrorMessage('The payment is too low to ever pay off the balance.');
-        setResultsVisible(false);
+    let monthlyRate;
+    let aprToUse;
+
+    if (!inputAPR) {
+      // Estimate APR if not entered
+      aprToUse = estimateAPR(principal, payment);
+      if (aprToUse === -1) {
+        alert('The payment is too low to ever pay off the balance.');
         return;
       }
-      aprValue = estimatedAPR;
-      setApr(estimatedAPR.toFixed(2));
-      setInfoMessage('* APR estimated from Amount Outstanding & Minimum Payment');
-      setErrorMessage('');
+      setApr(aprToUse.toFixed(2));
+      setAprEstimated(true);
+      inputAPR = aprToUse;
     } else {
-      setErrorMessage('');
-      setInfoMessage('');
+      aprToUse = inputAPR;
+      setAprEstimated(false);
     }
 
-    // For now, just show estimated APR and basic results placeholders
+    monthlyRate = aprToUse / 100 / 12;
+
+    // If target months provided, calculate payoff using that; else use payment
+    let months = 0;
+    let totalInterest = 0;
+    let remaining = principal;
+
+    if (!isNaN(target)) {
+      const requiredPayment = (principal * monthlyRate) / (1 - Math.pow(1 + monthlyRate, -target));
+      payment = requiredPayment;
+      months = target;
+      for (let i = 0; i < months; i++) {
+        const interest = remaining * monthlyRate;
+        totalInterest += interest;
+        const principalPaid = payment - interest;
+        remaining -= principalPaid;
+      }
+    } else {
+      while (remaining > 0 && months < 1000) {
+        const interest = remaining * monthlyRate;
+        totalInterest += interest;
+        const principalPaid = payment - interest;
+        if (principalPaid <= 0) {
+          alert('The payment is too low to ever pay off the balance.');
+          return;
+        }
+        remaining -= principalPaid;
+        months++;
+      }
+    }
+
+    const totalPaid = principal + totalInterest;
+
     setResultData({
-      totalInterest: 0,
-      totalPaid: principal.toFixed(2),
-      monthsToPayoff: target || 0,
+      totalInterest: totalInterest.toFixed(2),
+      totalPaid: totalPaid.toFixed(2),
+      monthsToPayoff: months,
     });
 
     setResultsVisible(true);
@@ -133,7 +164,7 @@ const CreditCardCalculator = () => {
             </button>
           </div>
 
-          <div className="input-row" style={{ flexDirection: 'column', alignItems: 'flex-start' }}>
+          <div className="input-row">
             <label htmlFor="apr-input">APR (%)</label>
             <input
               id="apr-input"
@@ -148,9 +179,9 @@ const CreditCardCalculator = () => {
               value={apr}
               onChange={(e) => setApr(e.target.value)}
             />
-            {infoMessage && (
-              <small style={{ color: 'blue', marginTop: '4px' }}>{infoMessage}</small>
-            )}
+            <button type="button" className="clear-btn" onClick={() => setApr('')}>
+              Clear
+            </button>
           </div>
 
           <div className="input-row">
@@ -203,23 +234,24 @@ const CreditCardCalculator = () => {
           </div>
         </form>
 
-        {errorMessage && (
-          <p style={{ color: 'red', marginTop: '1rem', fontWeight: 'bold' }}>{errorMessage}</p>
+        {aprEstimated && (
+          <p style={{ color: 'red', fontWeight: 'bold', marginTop: '0.5rem' }}>
+            * APR estimated from Amount Outstanding & Minimum Payment
+          </p>
         )}
 
         {resultsVisible && (
           <div className="results-box">
             <p>
-              <strong>Estimated APR (%):</strong> {parseFloat(apr).toFixed(2)}
+              <strong>Months to Pay Off:</strong> {resultData.monthsToPayoff}
             </p>
             <p>
-              <strong>Months to Pay Off:</strong> {resultData.monthsToPayoff || 'N/A'}
+              <strong>Total Interest Paid:</strong> £
+              {parseFloat(resultData.totalInterest).toLocaleString(undefined, { minimumFractionDigits: 2 })}
             </p>
             <p>
-              <strong>Total Interest Paid:</strong> £{parseFloat(resultData.totalInterest).toFixed(2)}
-            </p>
-            <p>
-              <strong>Total Paid:</strong> £{parseFloat(resultData.totalPaid).toFixed(2)}
+              <strong>Total Paid:</strong> £
+              {parseFloat(resultData.totalPaid).toLocaleString(undefined, { minimumFractionDigits: 2 })}
             </p>
 
             <PieChart
