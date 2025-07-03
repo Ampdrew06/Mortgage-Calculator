@@ -87,32 +87,34 @@ body {
   color: white;
 }
 
-/* --- UPDATED INPUT ROWS WITH FIXED INPUT WIDTHS --- */
+/* --- UPDATED INPUT ROWS WITH BALANCED WIDTHS --- */
 .input-row {
   display: flex;
   align-items: center;
   gap: 0.5rem;
   margin-bottom: 1rem;
   flex-wrap: nowrap; /* prevent inputs and buttons wrapping */
+  max-width: 100%;
+  box-sizing: border-box;
 }
 
 .input-row label {
-  flex: 0 0 140px; /* fixed label width for alignment */
+  flex: 0 0 130px; /* slightly narrower label to free space */
   white-space: nowrap;
 }
 
 .input-row input {
-  flex-grow: 1;
-  min-width: 220px; /* prevent input shrinking, show placeholder fully */
+  flex: 1 1 auto; /* allow grow and shrink */
+  min-width: 0; /* allow shrinking without overflow */
   padding: 0.5rem;
   font-size: 1rem;
   border: 1px solid #ccc;
   border-radius: 4px;
-  /* removed min-width: 0 to avoid shrinking */
+  max-width: 100%; /* prevent overflow */
 }
 
 .clear-btn {
-  flex: 0 0 70px;
+  flex: 0 0 60px; /* fixed smaller width */
   padding: 0.5rem;
   background-color: #e0e0e0;
   color: #333;
