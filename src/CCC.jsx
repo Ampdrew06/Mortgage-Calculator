@@ -1,150 +1,93 @@
 import React, { useState } from 'react';
-import PieChart from './PieChart'; // Use your shared PieChart component
+import PieChart from './PieChart'; // use your shared PieChart component
 import './App.css';
 
 const CreditCardCalculator = () => {
   const [balance, setBalance] = useState('');
   const [apr, setApr] = useState('');
   const [monthlyPayment, setMonthlyPayment] = useState('');
-  const [targetMonths, setTargetMonths] = useState('');
   const [resultsVisible, setResultsVisible] = useState(false);
-  const [resultData, setResultData] = useState({
-    totalInterest: 0,
-    totalPaid: 0,
-    monthsToPayoff: 0,
-  });
-  const [aprEstimated, setAprEstimated] = useState(false);
+  const [estimatedAprNote, setEstimatedAprNote] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
 
   const resetAll = () => {
     setBalance('');
     setApr('');
     setMonthlyPayment('');
-    setTargetMonths('');
     setResultsVisible(false);
-    setAprEstimated(false);
+    setEstimatedAprNote('');
     setErrorMessage('');
   };
 
-  // Estimate APR using binary search within realistic bounds
-  const estimateAPR = (principal, payment) => {
-    if (principal <= 0 || payment <= 0) return -1;
-
-    const minMonthlyInterestRate = 0.0001; // ~0.01% monthly
-    const maxMonthlyInterestRate = 0.05; // 5% monthly (60% APR)
-    if (payment <= principal * minMonthlyInterestRate) {
-      // Payment too low even at minimal interest
-      return -1;
+  // Simulate payoff with given monthly rate; returns true if payment pays off principal eventually
+  const canPayOff = (principal, monthlyRate, payment) => {
+    let balance = principal;
+    for (let month = 0; month < 600; month++) { // 50 years max
+      const interest = balance * monthlyRate;
+      const principalPaid = payment - interest;
+      if (principalPaid <= 0) return false; // payment too low to reduce balance
+      balance -= principalPaid;
+      if (balance <= 0) return true;
     }
+    return false;
+  };
 
+  // Binary search to estimate monthlyRate that can pay off balance with given payment
+  const estimateMonthlyRate = (principal, payment) => {
     let low = 0;
-    let high = maxMonthlyInterestRate;
-    let mid;
-    const maxIterations = 100;
-    const tolerance = 0.0000001;
-
-    function canPayOff(monthlyRate) {
-      let balance = principal;
-      let months = 0;
-      while (balance > 0 && months < 1000) {
-        const interest = balance * monthlyRate;
-        const principalPaid = payment - interest;
-        if (principalPaid <= 0) return false; // Can't pay off with this payment & rate
-        balance -= principalPaid;
-        months++;
-      }
-      return months < 1000;
-    }
-
-    for (let i = 0; i < maxIterations; i++) {
+    let high = 1; // 100% monthly is absurdly high but safe upper bound
+    let mid = 0;
+    let iterations = 0;
+    while (high - low > 0.0000001 && iterations < 100) {
       mid = (low + high) / 2;
-      const canPay = canPayOff(mid);
-      if (canPay) {
-        high = mid;
-      } else {
+      if (canPayOff(principal, mid, payment)) {
         low = mid;
+      } else {
+        high = mid;
       }
-      if (high - low < tolerance) break;
+      iterations++;
     }
-
-    const aprPercent = mid * 12 * 100;
-    if (aprPercent > 1200) {
-      return -1; // Unrealistically high APR
-    }
-    return aprPercent;
+    return mid;
   };
 
   const handleSubmit = (e) => {
     e.preventDefault();
+    setEstimatedAprNote('');
     setErrorMessage('');
-    setAprEstimated(false);
+    setResultsVisible(false);
 
     const principal = parseFloat(balance.replace(/,/g, ''));
-    let inputAPR = apr ? parseFloat(apr) : null;
-    const payment = parseFloat(monthlyPayment.replace(/,/g, ''));
-    const target = targetMonths ? parseFloat(targetMonths) : null;
+    let payment = parseFloat(monthlyPayment.replace(/,/g, ''));
 
     if (!principal || !payment) {
-      setErrorMessage('Please enter both Amount Outstanding and Minimum Monthly Payment.');
-      setResultsVisible(false);
+      setErrorMessage('Please enter Amount Outstanding and Minimum Monthly Payment.');
       return;
     }
 
-    if (!inputAPR) {
-      const estimatedAPR = estimateAPR(principal, payment);
-      if (estimatedAPR === -1) {
-        setErrorMessage('The payment is too low to ever pay off the balance.');
-        setResultsVisible(false);
-        return;
-      } else {
-        inputAPR = estimatedAPR;
-        setApr(estimatedAPR.toFixed(2));
-        setAprEstimated(true);
-      }
+    // If APR provided, just show results (for now no calculation)
+    if (apr && !isNaN(parseFloat(apr))) {
+      setErrorMessage('APR input currently ignored. Enter blank APR to estimate.');
+      return;
     }
 
-    const monthlyRate = inputAPR / 100 / 12;
-    let months = 0;
-    let totalInterest = 0;
-    let remaining = principal;
-
-    if (target) {
-      // Calculate required payment for target payoff period
-      const requiredPayment = (principal * monthlyRate) / (1 - Math.pow(1 + monthlyRate, -target));
-      months = target;
-      totalInterest = 0;
-      remaining = principal;
-
-      for (let i = 0; i < months; i++) {
-        const interest = remaining * monthlyRate;
-        totalInterest += interest;
-        const principalPaid = requiredPayment - interest;
-        remaining -= principalPaid;
-      }
-    } else {
-      // Calculate months and interest for given payment
-      while (remaining > 0 && months < 1000) {
-        const interest = remaining * monthlyRate;
-        totalInterest += interest;
-        const principalPaid = payment - interest;
-        if (principalPaid <= 0) {
-          setErrorMessage('The payment is too low to ever pay off the balance.');
-          setResultsVisible(false);
-          return;
-        }
-        remaining -= principalPaid;
-        months++;
-      }
+    // Check if payment is enough to cover minimum interest assuming some very low APR (e.g. 0.1% monthly)
+    const minMonthlyInterest = principal * 0.001;
+    if (payment <= minMonthlyInterest) {
+      setErrorMessage('The payment is too low to ever pay off the balance.');
+      return;
     }
 
-    const totalPaid = principal + totalInterest;
+    // Estimate monthly rate by binary search
+    const monthlyRate = estimateMonthlyRate(principal, payment);
+    const estimatedAPR = monthlyRate * 12 * 100;
 
-    setResultData({
-      totalInterest: totalInterest.toFixed(2),
-      totalPaid: totalPaid.toFixed(2),
-      monthsToPayoff: months,
-    });
+    if (estimatedAPR > 1000) {
+      setErrorMessage('APR estimation failed — payment too low or data invalid.');
+      return;
+    }
 
+    setApr(estimatedAPR.toFixed(2));
+    setEstimatedAprNote('* APR estimated from Amount Outstanding & Minimum Payment');
     setResultsVisible(true);
   };
 
@@ -190,6 +133,7 @@ const CreditCardCalculator = () => {
               aria-haspopup="false"
               value={apr}
               onChange={(e) => setApr(e.target.value)}
+              placeholder="Leave blank to estimate"
             />
             <button type="button" className="clear-btn" onClick={() => setApr('')}>
               Clear
@@ -216,26 +160,6 @@ const CreditCardCalculator = () => {
             </button>
           </div>
 
-          <div className="input-row">
-            <label htmlFor="target-months-input">Target (Months)</label>
-            <input
-              id="target-months-input"
-              name="targetMonths"
-              type="text"
-              inputMode="decimal"
-              autoComplete="off"
-              autoCorrect="off"
-              spellCheck="false"
-              aria-autocomplete="none"
-              aria-haspopup="false"
-              value={targetMonths}
-              onChange={(e) => setTargetMonths(e.target.value)}
-            />
-            <button type="button" className="clear-btn" onClick={() => setTargetMonths('')}>
-              Clear
-            </button>
-          </div>
-
           <div className="button-row" style={{ display: 'flex', gap: '0.5rem' }}>
             <button className="submit-btn ccc" type="submit" style={{ flex: 1 }}>
               Calculate
@@ -249,43 +173,16 @@ const CreditCardCalculator = () => {
         {resultsVisible && (
           <div className="results-box">
             <p>
-              <strong>Estimated APR (%):</strong> {aprEstimated ? <em>{apr}</em> : apr}
+              <strong>Estimated APR (%):</strong> {apr}
             </p>
-            <p>
-              <strong>Months to Pay Off:</strong> {resultData.monthsToPayoff}
-            </p>
-            <p>
-              <strong>Total Interest Paid:</strong> £
-              {parseFloat(resultData.totalInterest).toLocaleString(undefined, { minimumFractionDigits: 2 })}
-            </p>
-            <p>
-              <strong>Total Paid:</strong> £
-              {parseFloat(resultData.totalPaid).toLocaleString(undefined, { minimumFractionDigits: 2 })}
-            </p>
-
-            <PieChart
-              interest={parseFloat(resultData.totalInterest)}
-              principal={parseFloat(balance.replace(/,/g, ''))}
-            />
-
-            <p
-              className="chart-labels"
-              style={{ marginTop: '0.8rem', display: 'flex', justifyContent: 'center', gap: '2rem' }}
-            >
-              <span style={{ color: '#e74c3c', fontWeight: 'bold' }}>Interest Paid</span>
-              <span style={{ color: '#4aa4e3', fontWeight: 'bold' }}>Principal Paid</span>
-            </p>
+            <p style={{ fontSize: '0.8rem', color: '#555', marginTop: '-0.75rem' }}>{estimatedAprNote}</p>
           </div>
         )}
 
-        {errorMessage && (
-          <p style={{ color: 'red', fontWeight: 'bold', marginTop: '1rem', textAlign: 'center' }}>
-            {errorMessage}
-          </p>
-        )}
+        {errorMessage && <p style={{ color: 'red', fontWeight: 'bold' }}>{errorMessage}</p>}
       </div>
     </>
   );
 };
- 
+
 export default CreditCardCalculator;
