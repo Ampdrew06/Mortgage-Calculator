@@ -35,14 +35,20 @@ const CreditCardCalculator = () => {
     let months = 0;
     let totalInterest = 0;
 
+    const minPrincipalPayment = principal * 0.01; // Enforce minimum 1% principal paid per month
+
     while (remaining > 0 && months < 1000) {
       const interest = remaining * monthlyRate;
       totalInterest += interest;
-      const principalPaid = payment - interest;
+
+      // Enforce minimum principal payment floor
+      const principalPaid = Math.max(payment - interest, minPrincipalPayment);
+
       if (principalPaid <= 0) {
         // Payment too low to pay off
         return { canPayOff: false };
       }
+
       remaining -= principalPaid;
       months++;
     }
