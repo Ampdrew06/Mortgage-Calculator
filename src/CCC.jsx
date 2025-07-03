@@ -35,20 +35,13 @@ const CreditCardCalculator = () => {
     let months = 0;
     let totalInterest = 0;
 
-    const minPrincipalPayment = principal * 0.01; // Enforce minimum 1% principal paid per month
-
     while (remaining > 0 && months < 1000) {
       const interest = remaining * monthlyRate;
       totalInterest += interest;
-
-      // Enforce minimum principal payment floor
-      const principalPaid = Math.max(payment - interest, minPrincipalPayment);
-
+      const principalPaid = payment - interest;
       if (principalPaid <= 0) {
-        // Payment too low to pay off
         return { canPayOff: false };
       }
-
       remaining -= principalPaid;
       months++;
     }
@@ -61,10 +54,10 @@ const CreditCardCalculator = () => {
     };
   };
 
-  // Fixed binary search to estimate monthly APR that matches the minimum payment
+  // Binary search capped to 50% APR max
   const estimateAPR = (principal, payment) => {
     let low = 0;
-    let high = 2; // 200% monthly rate max (~2400% APR)
+    let high = 0.5 / 12; // monthly rate max ~4.17% (50% APR)
     let mid = 0;
     const maxIterations = 50;
     const tolerance = 0.01;
@@ -74,24 +67,19 @@ const CreditCardCalculator = () => {
       const simulation = simulatePayoff(principal, mid, payment);
 
       console.log(
-        `Iteration ${i + 1}: mid=${mid.toFixed(6)}, canPayOff=${simulation.canPayOff}, ` +
+        `Iteration ${i + 1}: APR guess ${(mid * 12 * 100).toFixed(2)}%, canPayOff=${simulation.canPayOff}, ` +
           `months=${simulation.months || 'N/A'}, remaining=${simulation.remaining?.toFixed(4) || 'N/A'}`
       );
 
       if (!simulation.canPayOff) {
-        // Payment too low for this interest rate guess; decrease interest rate guess
-        high = mid;
+        high = mid; // payment too low at this rate, lower APR guess
       } else {
-        // Can pay off with this rate
         if (simulation.remaining < tolerance) {
-          // Close enough, return APR estimate
           return mid * 12 * 100;
         }
-        // Try higher rate to find closer match
-        low = mid;
+        low = mid; // try higher APR
       }
     }
-
     return mid * 12 * 100;
   };
 
@@ -111,7 +99,6 @@ const CreditCardCalculator = () => {
     let monthlyRate;
     let estimatedAPR = 0;
 
-    // If APR provided, use it. Otherwise estimate APR based on balance & payment.
     if (inputAPR && inputAPR > 0) {
       estimatedAPR = inputAPR;
       monthlyRate = inputAPR / 100 / 12;
@@ -130,10 +117,9 @@ const CreditCardCalculator = () => {
     }
 
     if (target && target > 0) {
-      // Optional: Add target months payoff calculation here later
+      // TODO: add target payoff calculation later
     }
 
-    // Simulate payoff with estimated APR and given payment
     const simulation = simulatePayoff(principal, monthlyRate, payment);
 
     if (!simulation.canPayOff) {
