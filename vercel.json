@@ -1,8 +1,13 @@
 {
   "redirects": [
     {
-      "source": "/",
-      "destination": "/ccc",
+      "source": "/ccc",
+      "destination": "/",
+      "permanent": true
+    },
+    {
+      "source": "/ccc-info",
+      "destination": "/",
       "permanent": true
     }
   ]
