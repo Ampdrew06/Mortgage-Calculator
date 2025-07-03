@@ -92,11 +92,11 @@ body {
   align-items: center;
   gap: 0.5rem;
   margin-bottom: 1rem;
-  flex-wrap: wrap;
+  flex-wrap: nowrap; /* Prevent inputs and buttons from wrapping */
 }
 
 .input-row label {
-  flex: 0 0 110px;
+  flex: 0 0 140px; /* Increased label width for better alignment */
   white-space: nowrap;
 }
 
@@ -110,7 +110,7 @@ body {
 }
 
 .clear-btn {
-  flex: 0 0 60px;
+  flex: 0 0 70px; /* Slightly wider clear button */
   padding: 0.5rem;
   background-color: #e0e0e0;
   color: #333;
@@ -118,6 +118,7 @@ body {
   border-radius: 4px;
   font-size: 0.85rem;
   cursor: pointer;
+  white-space: nowrap; /* Prevent button text wrapping */
 }
 
 .clear-btn:hover {
@@ -212,6 +213,62 @@ body {
   user-select: none;
 }
 
+/* Buttons container for submit/reset and info page back/share */
+.button-row {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 1rem;
+}
+
+.submit-btn,
+.reset-btn,
+.back-btn,
+.share-btn {
+  flex: 1;
+  padding: 0.75rem;
+  border: none;
+  border-radius: 4px;
+  font-weight: bold;
+  cursor: pointer;
+  font-size: 1rem;
+  min-width: 0;
+  box-sizing: border-box;
+  color: white;
+}
+
+/* Specific back button styles */
+.back-btn {
+  /* Default green for MC */
+  background-color: #4caf50;
+}
+
+.back-btn.blue-theme {
+  /* Blue theme for CCC */
+  background-color: #4aa4e3;
+}
+
+/* Specific share button styles */
+.share-btn {
+  background-color: #4aa4e3; /* Blue for both */
+}
+
+/* Hover effects */
+.submit-btn:hover {
+  background-color: #388e3c;
+}
+
+.submit-btn.ccc:hover {
+  background-color: #3a8ad6;
+}
+
+.back-btn:hover {
+  filter: brightness(0.9);
+}
+
+.share-btn:hover {
+  filter: brightness(0.9);
+}
+
 /* Mobile-specific styles */
 @media screen and (max-width: 480px) {
   .header > div {
@@ -231,8 +288,15 @@ body {
   }
 
   .submit-btn,
-  .reset-btn {
+  .reset-btn,
+  .back-btn,
+  .share-btn {
     margin-right: 0 !important;
     width: 100% !important;
+  }
+
+  /* Allow input rows to wrap on small screens */
+  .input-row {
+    flex-wrap: wrap;
   }
 }
