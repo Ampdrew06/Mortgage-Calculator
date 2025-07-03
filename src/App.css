@@ -87,35 +87,37 @@ body {
   color: white;
 }
 
-/* --- UPDATED INPUT ROWS WITH BALANCED WIDTHS --- */
+/* --- UPDATED INPUT ROWS WITH FLEXIBLE WIDTHS --- */
 .input-row {
   display: flex;
   align-items: center;
   gap: 0.5rem;
   margin-bottom: 1rem;
-  flex-wrap: nowrap; /* prevent inputs and buttons wrapping */
+  flex-wrap: nowrap;
   max-width: 100%;
   box-sizing: border-box;
 }
 
 .input-row label {
-  flex: 0 0 130px; /* slightly narrower label to free space */
+  flex: 0 0 130px;
   white-space: nowrap;
 }
 
 .input-row input {
   flex-grow: 1;
-  min-width: 280px; /* increased for better placeholder visibility */
+  flex-shrink: 1;
+  flex-basis: 0;
+  min-width: 100px;
+  max-width: 100%;
   padding: 0.5rem;
   font-size: 1rem;
   border: 1px solid #ccc;
   border-radius: 4px;
-  max-width: 100%;
-  box-sizing: border-box; /* ensure padding included in width */
+  box-sizing: border-box;
 }
 
 .clear-btn {
-  flex: 0 0 60px; /* fixed smaller width */
+  flex: 0 0 60px;
   padding: 0.5rem;
   background-color: #e0e0e0;
   color: #333;
@@ -192,21 +194,21 @@ body {
 /* Pie Chart Container */
 .pie-chart-container {
   width: 100%;
-  max-width: 300px;       /* max width for container */
-  margin: 1.5rem auto 0;  /* centered with top margin */
+  max-width: 300px;
+  margin: 1.5rem auto 0;
   text-align: center;
-  min-width: 280px;       /* minimum size to prevent shrinking */
+  min-width: 280px;
   min-height: 180px;
 }
 
 /* Pie Chart Canvas */
 .pie-chart-container canvas {
-  max-width: 300px;       /* limit canvas width */
-  max-height: 180px;      /* limit canvas height */
-  width: 100% !important; /* ensure canvas uses container width */
-  height: auto !important; /* keep aspect ratio */
-  display: block;         /* block-level for centering */
-  margin: 0 auto;         /* center horizontally */
+  max-width: 300px;
+  max-height: 180px;
+  width: 100% !important;
+  height: auto !important;
+  display: block;
+  margin: 0 auto;
 }
 
 /* Chart legend labels for spacing & color */
@@ -243,18 +245,16 @@ body {
 
 /* Specific back button styles */
 .back-btn {
-  /* Default green for MC */
   background-color: #4caf50;
 }
 
 .back-btn.blue-theme {
-  /* Blue theme for CCC */
   background-color: #4aa4e3;
 }
 
 /* Specific share button styles */
 .share-btn {
-  background-color: #4aa4e3; /* Blue for both */
+  background-color: #4aa4e3;
 }
 
 /* Hover effects */
@@ -277,7 +277,7 @@ body {
 /* Mobile-specific styles */
 @media screen and (max-width: 480px) {
   .header > div {
-    margin-right: 1rem; /* keep buttons away from right edge */
+    margin-right: 1rem;
   }
 
   .header h1 {
@@ -286,7 +286,6 @@ body {
     padding-left: 0;
   }
 
-  /* Buttons full width stacked on small screens */
   .button-row {
     flex-direction: column !important;
     gap: 0.5rem !important;
@@ -300,13 +299,19 @@ body {
     width: 100% !important;
   }
 
-  /* Allow input rows to wrap on small screens */
   .input-row {
     flex-wrap: wrap;
   }
 
-  /* Shrink input min-width on mobile to prevent overflow */
-  .input-row input {
-    min-width: 180px;
+  .input-row label,
+  .input-row input,
+  .clear-btn {
+    flex: 1 1 100%;
+    min-width: auto;
+  }
+
+  .clear-btn {
+    max-width: 100px;
+    margin-top: 0.25rem;
   }
 }
