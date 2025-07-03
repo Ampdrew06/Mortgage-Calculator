@@ -241,25 +241,31 @@ const CreditCardCalculator = () => {
             </button>
           </div>
 
-          <div className="input-row">
-            <label htmlFor="target-months-input">Target (Months)</label>
-            <input
-              id="target-months-input"
-              name="targetMonths"
-              type="text"
-              inputMode="decimal"
-              autoComplete="off"
-              autoCorrect="off"
-              spellCheck="false"
-              aria-autocomplete="none"
-              aria-haspopup="false"
-              value={targetMonths}
-              onChange={(e) => setTargetMonths(e.target.value)}
-            />
-            <button type="button" className="clear-btn" onClick={() => setTargetMonths('')}>
-              Clear
-            </button>
-          </div>
+          <div className="input-row apr-row">
+  <label htmlFor="apr-input">APR (%)</label>
+  <input
+    id="apr-input"
+    name="apr"
+    type="text"
+    inputMode="decimal"
+    placeholder="Enter if known, leave blank to estimate"
+    autoComplete="off"
+    autoCorrect="off"
+    spellCheck="false"
+    aria-autocomplete="none"
+    aria-haspopup="false"
+    value={apr}
+    onChange={(e) => {
+      setApr(e.target.value);
+      setAprEstimated(false);
+      setPaymentCalculatedFromAPR(false);
+    }}
+  />
+  <button type="button" className="clear-btn" onClick={() => setApr('')}>
+    Clear
+  </button>
+</div>
+>
 
           <div className="button-row" style={{ display: 'flex', gap: '0.5rem' }}>
             <button className="submit-btn ccc" type="submit" style={{ flex: 1 }}>
