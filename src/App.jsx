@@ -1,5 +1,5 @@
 import React from 'react';
-import { BrowserRouter as Router, Routes, Route, useLocation, useNavigate } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, useLocation, useNavigate, Navigate } from 'react-router-dom';
 import MC from './MC';
 import CCC from './CCC';
 import InfoPage from './InfoPage';
@@ -12,7 +12,6 @@ const HeaderNav = () => {
 
   const isCCC = location.pathname.startsWith('/ccc');
 
-  // Theme colors
   const green = '#4caf50';
   const blue = '#4aa4e3';
   const grey = '#ddd';
@@ -109,9 +108,11 @@ const App = () => {
         <Route path="/ccc" element={<CCC />} />
         <Route path="/info" element={<InfoPage />} />
         <Route path="/ccc-info" element={<CCCInfoPage />} />
+        {/* Catch-all: redirect any unknown route to MC page */}
+        <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </Router>
   );
 };
- 
+
 export default App;

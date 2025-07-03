@@ -263,7 +263,7 @@ const CreditCardCalculator = () => {
 
           <div className="button-row" style={{ display: 'flex', gap: '0.5rem' }}>
             <button className="submit-btn ccc" type="submit" style={{ flex: 1 }}>
-              Calculate APR
+              Submit
             </button>
             <button type="button" className="reset-btn" onClick={resetAll} style={{ flex: 1 }}>
               Reset All
