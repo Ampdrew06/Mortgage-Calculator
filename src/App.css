@@ -101,12 +101,12 @@ body {
 }
 
 .input-row input {
-  flex: 1 1 140px;
+  flex: 1 1 220px; /* Increased width to prevent placeholder cutoff */
+  min-width: 0;
   padding: 0.5rem;
   font-size: 1rem;
   border: 1px solid #ccc;
   border-radius: 4px;
-  min-width: 0;
 }
 
 .clear-btn {
