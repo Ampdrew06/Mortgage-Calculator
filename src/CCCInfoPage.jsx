@@ -4,6 +4,21 @@ import { useNavigate } from 'react-router-dom';
 const CCInfoPage = () => {
   const navigate = useNavigate();
 
+  // Simple share function example (customize as needed)
+  const handleShare = () => {
+    if (navigator.share) {
+      navigator.share({
+        title: 'Credit Card Calculator',
+        text: 'Check out this Credit Card Calculator app!',
+        url: window.location.href,
+      }).catch((error) => {
+        console.error('Error sharing:', error);
+      });
+    } else {
+      alert('Sharing is not supported on this browser.');
+    }
+  };
+
   return (
     <div className="info-page">
       <div className="header-box blue-theme">
@@ -35,8 +50,21 @@ const CCInfoPage = () => {
         <p>This calculator is for illustration purposes only. It does not constitute financial advice. Always check with your lender before making financial decisions.</p>
       </div>
 
-      <div className="button-row">
-        <button className="submit-btn" onClick={() => navigate('/ccc')}>Back to Calculator</button>
+      <div className="button-row" style={{ display: 'flex', gap: '0.5rem', marginTop: '1rem' }}>
+        <button
+          className="submit-btn"
+          style={{ flex: 1, backgroundColor: '#4aa4e3' /* blue theme */, color: 'white' }}
+          onClick={() => navigate('/ccc')}
+        >
+          Back to Calculator
+        </button>
+        <button
+          className="reset-btn"
+          style={{ flex: 1, backgroundColor: '#4aa4e3', color: 'white' }}
+          onClick={handleShare}
+        >
+          Share
+        </button>
       </div>
     </div>
   );

@@ -1,15 +1,65 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import './App.css';
 
-function InfoPage({ onBack }) {
+const InfoPage = () => {
+  const navigate = useNavigate();
+
+  const handleBack = () => {
+    navigate('/');
+  };
+
+  const handleShare = () => {
+    if (navigator.share) {
+      navigator.share({
+        title: 'Mortgage Calculator',
+        text: 'Check out this Mortgage Calculator app!',
+        url: window.location.href,
+      }).catch((error) => {
+        console.error('Error sharing:', error);
+      });
+    } else {
+      alert('Sharing is not supported on this browser.');
+    }
+  };
+
   return (
     <div className="info-page full-width-info">
       <h1>Info & Disclaimer</h1>
 
-      <div className="header-buttons">
-        <button className="share-btn blue-btn">Share</button>
-        <button className="share-btn back-btn" onClick={onBack} title="Back to Calculator">
-          ← Back
+      <div className="header-buttons" style={{ display: 'flex', gap: '0.5rem', marginBottom: '1rem' }}>
+        <button
+          className="back-btn"
+          style={{
+            flex: 1,
+            backgroundColor: '#4caf50', // green
+            color: 'white',
+            padding: '0.5rem',
+            border: 'none',
+            borderRadius: '6px',
+            cursor: 'pointer',
+            fontWeight: 'bold',
+          }}
+          onClick={handleBack}
+          title="Back to Calculator"
+        >
+          ← Back to Calculator
+        </button>
+        <button
+          className="share-btn"
+          style={{
+            flex: 1,
+            backgroundColor: '#4aa4e3', // blue
+            color: 'white',
+            padding: '0.5rem',
+            border: 'none',
+            borderRadius: '6px',
+            cursor: 'pointer',
+            fontWeight: 'bold',
+          }}
+          onClick={handleShare}
+        >
+          Share
         </button>
       </div>
 
@@ -55,6 +105,6 @@ function InfoPage({ onBack }) {
       </p>
     </div>
   );
-}
+};
 
 export default InfoPage;
