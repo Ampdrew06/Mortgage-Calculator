@@ -6,6 +6,7 @@ const CreditCardCalculator = () => {
   const [balance, setBalance] = useState('');
   const [apr, setApr] = useState('');
   const [monthlyPayment, setMonthlyPayment] = useState('');
+  const [targetMonths, setTargetMonths] = useState('60'); // default target 60 months
   const [resultsVisible, setResultsVisible] = useState(false);
   const [resultData, setResultData] = useState({
     estimatedAPR: 0,
@@ -19,55 +20,50 @@ const CreditCardCalculator = () => {
     setBalance('');
     setApr('');
     setMonthlyPayment('');
+    setTargetMonths('60');
     setResultsVisible(false);
     setMessage('');
   };
 
   // Simulate paying off the balance with given monthly interest rate and fixed payment.
-  // Returns remaining balance after maxMonths or -1 if payment too low to pay off.
   const simulatePayoff = (principal, monthlyRate, payment, maxMonths = 1000) => {
     let remaining = principal;
     for (let month = 0; month < maxMonths; month++) {
       let interest = remaining * monthlyRate;
       let principalPaid = payment - interest;
-      if (principalPaid <= 0) return -1; // Payment too low, balance will never be paid off
+      if (principalPaid <= 0) return -1; // Payment too low, balance won't be paid off
       remaining -= principalPaid;
-      if (remaining <= 0) return month + 1; // Months taken to pay off
+      if (remaining <= 0) return month + 1;
     }
     return -1; // Didn't pay off in maxMonths
   };
 
-  // Estimate APR using binary search on monthly interest rate to get close to target months (e.g., 60)
-  const estimateAPR = (principal, payment, targetMonths = 60) => {
-    let low = 0;
-    let high = 1; // 100% monthly (way too high, just an upper bound)
-    let estMonthlyRate = 0;
-    const epsilon = 0.000001;
-    let iterations = 0;
+  // Estimate APR using binary search to get payoff near target months
+  const estimateAPR = (principal, payment, target) => {
+    let low = 0.0001; // Avoid 0 exactly
+    let high = 0.1; // Start with 10% monthly (~120% APR), adjust if needed
+    let mid;
     let monthsToPayoff = -1;
 
-    while (high - low > epsilon && iterations < 100) {
-      const mid = (low + high) / 2;
-      const months = simulatePayoff(principal, mid, payment, targetMonths * 2);
+    // Expand high if needed (in case payment is too low even for 10%)
+    while (simulatePayoff(principal, high, payment) === -1 && high < 1) {
+      high *= 2;
+    }
 
-      if (months === -1 || months > targetMonths * 2) {
-        // Payment too low, increase interest guess (higher rate means more interest so payment less effective)
+    for (let i = 0; i < 100; i++) {
+      mid = (low + high) / 2;
+      monthsToPayoff = simulatePayoff(principal, mid, payment);
+      if (monthsToPayoff === -1 || monthsToPayoff > target) {
         high = mid;
       } else {
-        // Can pay off faster, lower interest guess
         low = mid;
-        monthsToPayoff = months;
       }
-      iterations++;
-    }
-    estMonthlyRate = low;
-
-    if (monthsToPayoff === -1) {
-      // Payment too low to ever pay off balance
-      return { apr: 0, months: -1 };
+      if (high - low < 1e-7) break;
     }
 
-    return { apr: estMonthlyRate * 12 * 100, months: monthsToPayoff };
+    if (monthsToPayoff === -1) return { apr: 0, months: -1 };
+
+    return { apr: mid * 12 * 100, months: monthsToPayoff };
   };
 
   const handleSubmit = (e) => {
@@ -76,6 +72,7 @@ const CreditCardCalculator = () => {
 
     const principal = parseFloat(balance.replace(/,/g, ''));
     let payment = parseFloat(monthlyPayment.replace(/,/g, ''));
+    const target = parseInt(targetMonths) || 60;
 
     if (!principal || !payment || payment <= 0) {
       setMessage('Please enter valid Amount Outstanding and Minimum Monthly Payment.');
@@ -84,7 +81,7 @@ const CreditCardCalculator = () => {
     }
 
     if (apr && apr.trim() !== '') {
-      // If APR is entered, just show results based on given APR and payment
+      // If APR given, calculate months and interest
       const monthlyRate = parseFloat(apr) / 100 / 12;
       const months = simulatePayoff(principal, monthlyRate, payment);
       if (months === -1) {
@@ -92,7 +89,6 @@ const CreditCardCalculator = () => {
         setResultsVisible(false);
         return;
       }
-      // Calculate total interest and total paid
       let totalInterest = 0;
       let remaining = principal;
       for (let i = 0; i < months; i++) {
@@ -111,8 +107,8 @@ const CreditCardCalculator = () => {
       return;
     }
 
-    // Otherwise estimate APR based on principal and payment only
-    const { apr: estimatedAPR, months } = estimateAPR(principal, payment, 60); // target 5 years payoff
+    // Estimate APR based on inputs and target months
+    const { apr: estimatedAPR, months } = estimateAPR(principal, payment, target);
 
     if (months === -1 || estimatedAPR === 0) {
       setMessage('The payment is too low to ever pay off the balance.');
@@ -120,7 +116,6 @@ const CreditCardCalculator = () => {
       return;
     }
 
-    // Calculate total interest and total paid with estimated APR
     const monthlyRate = estimatedAPR / 100 / 12;
     let totalInterest = 0;
     let remaining = principal;
@@ -137,7 +132,7 @@ const CreditCardCalculator = () => {
       totalInterest,
       totalPaid: principal + totalInterest,
     });
-    setApr(estimatedAPR.toFixed(2)); // show estimated APR in box
+    setApr(estimatedAPR.toFixed(2));
     setResultsVisible(true);
   };
 
@@ -193,6 +188,22 @@ const CreditCardCalculator = () => {
               onChange={(e) => setMonthlyPayment(e.target.value)}
             />
             <button type="button" className="clear-btn" onClick={() => setMonthlyPayment('')}>
+              Clear
+            </button>
+          </div>
+
+          <div className="input-row">
+            <label htmlFor="target-months-input">Target Payoff Period (Months)</label>
+            <input
+              id="target-months-input"
+              name="targetMonths"
+              type="text"
+              inputMode="decimal"
+              autoComplete="off"
+              value={targetMonths}
+              onChange={(e) => setTargetMonths(e.target.value)}
+            />
+            <button type="button" className="clear-btn" onClick={() => setTargetMonths('')}>
               Clear
             </button>
           </div>
