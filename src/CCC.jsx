@@ -55,32 +55,38 @@ const CreditCardCalculator = () => {
     };
   };
 
-  // Binary search to estimate monthly APR that matches the minimum payment
+  // Fixed binary search to estimate monthly APR that matches the minimum payment
   const estimateAPR = (principal, payment) => {
     let low = 0;
-    let high = 2; // 200% monthly rate is very high, approx 2400% APR
-    let mid;
-    let iterations = 0;
+    let high = 2; // 200% monthly rate max (~2400% APR)
+    let mid = 0;
     const maxIterations = 50;
     const tolerance = 0.01;
 
-    while (iterations < maxIterations) {
+    for (let i = 0; i < maxIterations; i++) {
       mid = (low + high) / 2;
       const simulation = simulatePayoff(principal, mid, payment);
 
+      console.log(
+        `Iteration ${i + 1}: mid=${mid.toFixed(6)}, canPayOff=${simulation.canPayOff}, ` +
+          `months=${simulation.months || 'N/A'}, remaining=${simulation.remaining?.toFixed(4) || 'N/A'}`
+      );
+
       if (!simulation.canPayOff) {
-        low = mid; // Increase rate to raise interest, thus lowering principalPaid
-      } else {
-        // Calculate estimated payment for this rate to compare with actual payment
-        // Here, we use difference between payment and needed payment indirectly by months and remaining
-        if (simulation.remaining < tolerance) {
-          return mid * 12 * 100; // Convert monthly rate to APR percentage
-        }
+        // Payment too low for this interest rate guess; decrease interest rate guess
         high = mid;
+      } else {
+        // Can pay off with this rate
+        if (simulation.remaining < tolerance) {
+          // Close enough, return APR estimate
+          return mid * 12 * 100;
+        }
+        // Try higher rate to find closer match
+        low = mid;
       }
-      iterations++;
     }
-    return mid * 12 * 100; // Return APR percentage after max iterations
+
+    return mid * 12 * 100;
   };
 
   const handleSubmit = (e) => {
@@ -103,6 +109,7 @@ const CreditCardCalculator = () => {
     if (inputAPR && inputAPR > 0) {
       estimatedAPR = inputAPR;
       monthlyRate = inputAPR / 100 / 12;
+      setAprEstimated(false);
     } else {
       estimatedAPR = estimateAPR(principal, payment);
       monthlyRate = estimatedAPR / 100 / 12;
@@ -183,7 +190,7 @@ const CreditCardCalculator = () => {
               value={apr}
               onChange={(e) => {
                 setApr(e.target.value);
-                setAprEstimated(false); // Reset flag if manually edited
+                setAprEstimated(false);
               }}
             />
             <button type="button" className="clear-btn" onClick={() => setApr('')}>
