@@ -1,5 +1,5 @@
 import React from 'react';
-import { BrowserRouter as Router, Routes, Route, useLocation, useNavigate, Navigate } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate, useLocation, useNavigate } from 'react-router-dom';
 import MC from './MC';
 import CCC from './CCC';
 import InfoPage from './InfoPage';
@@ -104,11 +104,14 @@ const App = () => {
     <Router>
       <HeaderNav />
       <Routes>
+        {/* MC is default and accessible */}
         <Route path="/" element={<MC />} />
-        <Route path="/ccc" element={<CCC />} />
+        {/* Redirect CCC to MC */}
+        <Route path="/ccc" element={<Navigate to="/" replace />} />
+        <Route path="/ccc-info" element={<Navigate to="/" replace />} />
+        {/* Other pages accessible */}
         <Route path="/info" element={<InfoPage />} />
-        <Route path="/ccc-info" element={<CCCInfoPage />} />
-        {/* Catch-all: redirect any unknown route to MC page */}
+        {/* Catch-all redirect */}
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </Router>
