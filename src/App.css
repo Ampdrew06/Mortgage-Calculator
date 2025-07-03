@@ -87,30 +87,32 @@ body {
   color: white;
 }
 
+/* --- UPDATED INPUT ROWS WITH FIXED INPUT WIDTHS --- */
 .input-row {
   display: flex;
   align-items: center;
   gap: 0.5rem;
   margin-bottom: 1rem;
-  flex-wrap: nowrap; /* Prevent inputs and buttons from wrapping */
+  flex-wrap: nowrap; /* prevent inputs and buttons wrapping */
 }
 
 .input-row label {
-  flex: 0 0 140px; /* Increased label width for better alignment */
+  flex: 0 0 140px; /* fixed label width for alignment */
   white-space: nowrap;
 }
 
 .input-row input {
-  flex: 1 1 220px; /* Increased width to prevent placeholder cutoff */
-  min-width: 0;
+  flex-grow: 1;
+  min-width: 220px; /* prevent input shrinking, show placeholder fully */
   padding: 0.5rem;
   font-size: 1rem;
   border: 1px solid #ccc;
   border-radius: 4px;
+  /* removed min-width: 0 to avoid shrinking */
 }
 
 .clear-btn {
-  flex: 0 0 70px; /* Slightly wider clear button */
+  flex: 0 0 70px;
   padding: 0.5rem;
   background-color: #e0e0e0;
   color: #333;
@@ -118,7 +120,7 @@ body {
   border-radius: 4px;
   font-size: 0.85rem;
   cursor: pointer;
-  white-space: nowrap; /* Prevent button text wrapping */
+  white-space: nowrap;
 }
 
 .clear-btn:hover {
