@@ -104,13 +104,14 @@ body {
 }
 
 .input-row input {
-  flex: 1 1 auto; /* allow grow and shrink */
-  min-width: 0; /* allow shrinking without overflow */
+  flex-grow: 1;
+  min-width: 280px; /* increased for better placeholder visibility */
   padding: 0.5rem;
   font-size: 1rem;
   border: 1px solid #ccc;
   border-radius: 4px;
-  max-width: 100%; /* prevent overflow */
+  max-width: 100%;
+  box-sizing: border-box; /* ensure padding included in width */
 }
 
 .clear-btn {
@@ -302,5 +303,10 @@ body {
   /* Allow input rows to wrap on small screens */
   .input-row {
     flex-wrap: wrap;
+  }
+
+  /* Shrink input min-width on mobile to prevent overflow */
+  .input-row input {
+    min-width: 180px;
   }
 }
