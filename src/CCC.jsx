@@ -33,7 +33,6 @@ const CreditCardCalculator = () => {
     });
   };
 
-  // Simulate payoff to get months needed for a given monthly payment & monthly interest rate
   const simulatePayoff = (principal, monthlyRate, payment) => {
     let remaining = principal;
     let months = 0;
@@ -58,7 +57,6 @@ const CreditCardCalculator = () => {
     };
   };
 
-  // Binary search capped to 50% APR max
   const estimateAPR = (principal, payment) => {
     let low = 0;
     let high = 0.5 / 12; // monthly rate max ~4.17% (50% APR)
@@ -76,21 +74,20 @@ const CreditCardCalculator = () => {
       );
 
       if (!simulation.canPayOff) {
-        high = mid; // payment too low at this rate, lower APR guess
+        high = mid;
       } else {
         if (simulation.remaining < tolerance) {
           return mid * 12 * 100;
         }
-        low = mid; // try higher APR
+        low = mid;
       }
     }
     return mid * 12 * 100;
   };
 
-  // Calculate monthly payment given principal, monthly interest rate, and payoff months
   const calculateMonthlyPayment = (principal, monthlyRate, months) => {
     if (months <= 0) return 0;
-    if (monthlyRate === 0) return principal / months; // zero interest case
+    if (monthlyRate === 0) return principal / months;
 
     const numerator = monthlyRate * Math.pow(1 + monthlyRate, months);
     const denominator = Math.pow(1 + monthlyRate, months) - 1;
@@ -111,7 +108,6 @@ const CreditCardCalculator = () => {
     }
 
     if (inputAPR && inputAPR > 0) {
-      // APR known: calculate min payment based on target months or default 36
       if (!target || target <= 0) target = 36;
 
       const monthlyRate = inputAPR / 100 / 12;
@@ -123,7 +119,6 @@ const CreditCardCalculator = () => {
       setMonthlyPayment(calculatedPayment.toFixed(2));
       setTargetMonths(target.toString());
 
-      // Simulate payoff with calculated payment
       const simulation = simulatePayoff(principal, monthlyRate, calculatedPayment);
 
       if (!simulation.canPayOff) {
@@ -143,7 +138,6 @@ const CreditCardCalculator = () => {
       return;
     }
 
-    // APR unknown: estimate APR from balance and payment entered
     if (!payment) {
       alert('Please enter Minimum Monthly Payment or APR and Target months.');
       return;
@@ -156,7 +150,6 @@ const CreditCardCalculator = () => {
     setPaymentCalculatedFromAPR(false);
     setApr(estimatedAPR.toFixed(2));
 
-    // Simulate payoff with estimated APR and given payment
     const simulation = simulatePayoff(principal, monthlyRate, payment);
 
     if (!simulation.canPayOff) {
@@ -310,13 +303,14 @@ const CreditCardCalculator = () => {
             <PieChart
               interest={parseFloat(resultData.totalInterest)}
               principal={parseFloat(balance.replace(/,/g, ''))}
+              colors={['#ff4d4f', '#4aa4e3']} // red and blue for CCC theme
             />
 
             <p
               className="chart-labels"
               style={{ marginTop: '0.8rem', display: 'flex', justifyContent: 'center', gap: '2rem' }}
             >
-              <span style={{ color: '#e74c3c', fontWeight: 'bold' }}>Interest Paid</span>
+              <span style={{ color: '#ff4d4f', fontWeight: 'bold' }}>Interest Paid</span>
               <span style={{ color: '#4aa4e3', fontWeight: 'bold' }}>Principal Paid</span>
             </p>
 
