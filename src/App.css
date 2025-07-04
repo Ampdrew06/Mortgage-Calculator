@@ -87,7 +87,7 @@ body {
   color: white;
 }
 
-/* --- UPDATED INPUT ROWS WITH FLEXIBLE WIDTHS --- */
+/* --- UPDATED INPUT ROWS WITH ABSOLUTE POSITIONED CLEAR BUTTONS --- */
 .input-row {
   display: flex;
   align-items: center;
@@ -96,6 +96,7 @@ body {
   flex-wrap: nowrap;
   max-width: 100%;
   box-sizing: border-box;
+  position: relative; /* needed for absolute clear button */
 }
 
 .input-row label {
@@ -110,6 +111,7 @@ body {
   min-width: 100px;
   max-width: 100%;
   padding: 0.5rem;
+  padding-right: 70px; /* prevent input text under clear button */
   font-size: 1rem;
   border: 1px solid #ccc;
   border-radius: 4px;
@@ -117,7 +119,11 @@ body {
 }
 
 .clear-btn {
-  flex: 0 0 60px;
+  position: absolute; /* fixed position inside input-row */
+  right: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 60px;
   padding: 0.5rem;
   background-color: #e0e0e0;
   color: #333;
@@ -126,6 +132,7 @@ body {
   font-size: 0.85rem;
   cursor: pointer;
   white-space: nowrap;
+  box-sizing: border-box;
 }
 
 .clear-btn:hover {
@@ -321,7 +328,13 @@ body {
   }
 
   .clear-btn {
+    position: static;
+    transform: none;
     max-width: 100px;
     margin-top: 0.25rem;
+  }
+
+  .input-row.apr-row input {
+    min-width: auto;
   }
 }
