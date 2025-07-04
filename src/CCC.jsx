@@ -59,7 +59,7 @@ const CreditCardCalculator = () => {
 
   const estimateAPR = (principal, payment) => {
     let low = 0;
-    let high = 0.5 / 12; // monthly rate max ~4.17% (50% APR)
+    let high = 0.5 / 12; // max monthly rate ~4.17% (50% APR)
     let mid = 0;
     const maxIterations = 50;
     const tolerance = 0.01;
@@ -67,11 +67,6 @@ const CreditCardCalculator = () => {
     for (let i = 0; i < maxIterations; i++) {
       mid = (low + high) / 2;
       const simulation = simulatePayoff(principal, mid, payment);
-
-      console.log(
-        `Iteration ${i + 1}: APR guess ${(mid * 12 * 100).toFixed(2)}%, canPayOff=${simulation.canPayOff}, ` +
-          `months=${simulation.months || 'N/A'}, remaining=${simulation.remaining?.toFixed(4) || 'N/A'}`
-      );
 
       if (!simulation.canPayOff) {
         high = mid;
@@ -196,7 +191,7 @@ const CreditCardCalculator = () => {
             </button>
           </div>
 
-          <div className="input-row">
+          <div className="input-row apr-row">
             <label htmlFor="apr-input">APR (%)</label>
             <input
               id="apr-input"
@@ -241,31 +236,25 @@ const CreditCardCalculator = () => {
             </button>
           </div>
 
-          <div className="input-row apr-row">
-  <label htmlFor="apr-input">APR (%)</label>
-  <input
-    id="apr-input"
-    name="apr"
-    type="text"
-    inputMode="decimal"
-    placeholder="Enter if known, leave blank to estimate"
-    autoComplete="off"
-    autoCorrect="off"
-    spellCheck="false"
-    aria-autocomplete="none"
-    aria-haspopup="false"
-    value={apr}
-    onChange={(e) => {
-      setApr(e.target.value);
-      setAprEstimated(false);
-      setPaymentCalculatedFromAPR(false);
-    }}
-  />
-  <button type="button" className="clear-btn" onClick={() => setApr('')}>
-    Clear
-  </button>
-</div>
->
+          <div className="input-row">
+            <label htmlFor="target-months-input">Target (Months)</label>
+            <input
+              id="target-months-input"
+              name="targetMonths"
+              type="text"
+              inputMode="decimal"
+              autoComplete="off"
+              autoCorrect="off"
+              spellCheck="false"
+              aria-autocomplete="none"
+              aria-haspopup="false"
+              value={targetMonths}
+              onChange={(e) => setTargetMonths(e.target.value)}
+            />
+            <button type="button" className="clear-btn" onClick={() => setTargetMonths('')}>
+              Clear
+            </button>
+          </div>
 
           <div className="button-row" style={{ display: 'flex', gap: '0.5rem' }}>
             <button className="submit-btn ccc" type="submit" style={{ flex: 1 }}>
