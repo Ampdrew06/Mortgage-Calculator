@@ -19,23 +19,22 @@ const CreditCardCalculator = () => {
   const [errorMsg, setErrorMsg] = useState('');
   const [aprEstimated, setAprEstimated] = useState(false);
 
-  // Tune these constants to fit your expected results:
-  const minPercent = 0.012; // 1.2% of balance, closer to typical card minimums
-  const fixedFloor = 25;    // £25 floor
+  // Adjusted constants:
+  const minPercent = 0.01; // 1%
+  const fixedFloor = 25;   // £25 floor
 
   const parseNumber = (val) => {
     if (!val) return NaN;
     return parseFloat(val.toString().replace(/,/g, ''));
   };
 
-  // Calculate initial min payment: floor or % of balance + interest on initial balance
+  // Calculate initial min payment = interest + max(floor, % of balance)
   const calculateInitialMinPayment = (principal, monthlyRate) => {
     const interest = principal * monthlyRate;
     const principalPart = Math.max(fixedFloor, principal * minPercent);
     return interest + principalPart;
   };
 
-  // Simulate paying min payments month by month
   const simulatePayments = (principal, monthlyRate, minPercent, fixedFloor, fixedPayment = null) => {
     let remaining = principal;
     let months = 0;
@@ -76,23 +75,24 @@ const CreditCardCalculator = () => {
     return principal * (numerator / denominator);
   };
 
-  // Estimate APR by binary search trying to match initial min payment calculated
-  const estimateAPR = (principal, targetMinPayment, minPercent, fixedFloor) => {
+  // Modified estimateAPR using total payment and allowing slight tolerance
+  const estimateAPR = (principal, targetPayment, minPercent, fixedFloor) => {
     let low = 0;
     let high = 0.5 / 12;
-    const tolerance = 0.01;
     let mid = 0;
-    const maxIterations = 50;
+    const tolerance = 0.1;
+    const maxIterations = 100;
 
     for (let i = 0; i < maxIterations; i++) {
       mid = (low + high) / 2;
 
-      const testMinPayment = calculateInitialMinPayment(principal, mid);
-      if (Math.abs(testMinPayment - targetMinPayment) < tolerance) {
+      const testPayment = calculateInitialMinPayment(principal, mid);
+
+      if (Math.abs(testPayment - targetPayment) < tolerance) {
         return mid * 12 * 100;
       }
 
-      if (testMinPayment > targetMinPayment) {
+      if (testPayment > targetPayment) {
         high = mid;
       } else {
         low = mid;
@@ -169,7 +169,6 @@ const CreditCardCalculator = () => {
         return;
       }
     } else if (inputMinPayment && inputMinPayment > 0) {
-      // Estimate APR using the provided min payment
       const estimatedAPR = estimateAPR(principal, inputMinPayment, minPercent, fixedFloor);
       const monthlyRate = estimatedAPR / 100 / 12;
 
