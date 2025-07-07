@@ -3,11 +3,13 @@ import PieChart from './PieChart';
 import './App.css';
 
 const CreditCardCalculator = () => {
+  // User inputs
   const [balance, setBalance] = useState('');
   const [apr, setApr] = useState('');
   const [minPayment, setMinPayment] = useState('');
   const [targetYears, setTargetYears] = useState('');
 
+  // UI state
   const [resultsVisible, setResultsVisible] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
   const [resultData, setResultData] = useState({
@@ -17,9 +19,11 @@ const CreditCardCalculator = () => {
     firstMinPayment: 0,
   });
 
-  const MIN_PAYMENT_FLOOR = 25;
-  const MIN_PAYMENT_PERCENT = 0.02;
+  // Constants for minimum payment calculations (hidden from user)
+  const MIN_PAYMENT_FLOOR = 15;     // Lowered floor payment (£15)
+  const MIN_PAYMENT_PERCENT = 0.015; // 1.5% of remaining balance
 
+  // Utility to parse input strings to floats safely
   const parseNumber = (val) => {
     if (!val) return NaN;
     const cleaned = val.toString().replace(/,/g, '').trim();
@@ -27,6 +31,11 @@ const CreditCardCalculator = () => {
     return isNaN(num) ? NaN : num;
   };
 
+  /**
+   * Simulate payoff month-by-month with dynamic minimum payment:
+   * payment = max(floor, percent of remaining balance + interest)
+   * Returns object with payoff info
+   */
   const simulateDynamicPayment = (principal, annualRate, initialMinPayment, maxMonths = 600) => {
     const monthlyRate = annualRate / 12 / 100;
     let remaining = principal;
@@ -41,11 +50,13 @@ const CreditCardCalculator = () => {
       const percentPayment = remaining * MIN_PAYMENT_PERCENT + interest;
       let payment = Math.max(MIN_PAYMENT_FLOOR, percentPayment);
 
+      // Use the user input initial min payment if it's larger (only first month)
       if (months === 0 && initialMinPayment && initialMinPayment > payment) {
         payment = initialMinPayment;
         firstMinPayment = initialMinPayment;
       }
 
+      // If payment does not cover interest, can't pay off loan
       if (payment < interest) {
         return { canPayOff: false };
       }
@@ -64,11 +75,14 @@ const CreditCardCalculator = () => {
     };
   };
 
+  /**
+   * Estimate APR by binary searching for APR that results in payoff near targetMonths
+   */
   const estimateAPR = (principal, initialMinPayment, targetMonths = 180) => {
     let low = 0;
-    let high = 200;
+    let high = 200; // 200% APR max
     const maxIterations = 60;
-    const tolerance = 48;
+    const tolerance = 48; // +/- 4 years
 
     for (let i = 0; i < maxIterations; i++) {
       const midAPR = (low + high) / 2;
@@ -92,10 +106,13 @@ const CreditCardCalculator = () => {
     return -1;
   };
 
+  /**
+   * Calculate initial payment needed to pay off in target years
+   */
   const calcPaymentForTargetYears = (principal, aprPercent, targetYears, maxIterations = 50) => {
     const targetMonths = Math.round(targetYears * 12);
     let low = MIN_PAYMENT_FLOOR;
-    let high = principal * 0.1;
+    let high = principal * 0.1; // 10% upper bound
 
     for (let i = 0; i < maxIterations; i++) {
       const midPayment = (low + high) / 2;
@@ -117,6 +134,7 @@ const CreditCardCalculator = () => {
     return (low + high) / 2;
   };
 
+  // Determine if form can submit
   const canSubmit = () => {
     const p = parseNumber(balance);
     const a = parseNumber(apr);
@@ -171,7 +189,7 @@ const CreditCardCalculator = () => {
     }
 
     if ((inputAPR === 0 || isNaN(inputAPR)) && inputMinPayment && inputMinPayment > 0) {
-      const defaultTargetMonths = 180; // 15 years default target
+      const defaultTargetMonths = 180; // 15 years default target payoff
       const estimatedAPR = estimateAPR(principal, inputMinPayment, defaultTargetMonths);
 
       if (estimatedAPR <= 0) {
