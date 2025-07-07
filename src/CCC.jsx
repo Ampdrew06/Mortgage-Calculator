@@ -3,15 +3,12 @@ import PieChart from './PieChart';
 import './App.css';
 
 const CreditCardCalculator = () => {
-  // User inputs
   const [balance, setBalance] = useState('');
-  const [apr, setApr] = useState('');
   const [minPayment, setMinPayment] = useState('');
   const [targetYears, setTargetYears] = useState('');
-
-  // UI state
-  const [resultsVisible, setResultsVisible] = useState(false);
+  const [apr, setApr] = useState('');
   const [errorMsg, setErrorMsg] = useState('');
+  const [resultsVisible, setResultsVisible] = useState(false);
   const [resultData, setResultData] = useState({
     payoffMonths: 0,
     totalInterest: 0,
@@ -19,11 +16,11 @@ const CreditCardCalculator = () => {
     firstMinPayment: 0,
   });
 
-  // Constants for minimum payment calculations (hidden from user)
-  const MIN_PAYMENT_FLOOR = 15;     // Lowered floor payment (£15)
+  // Constants for min payment calculation
+  const MIN_PAYMENT_FLOOR = 25;    // £25 floor
   const MIN_PAYMENT_PERCENT = 0.015; // 1.5% of remaining balance
 
-  // Utility to parse input strings to floats safely
+  // Parse input to float safely
   const parseNumber = (val) => {
     if (!val) return NaN;
     const cleaned = val.toString().replace(/,/g, '').trim();
@@ -31,12 +28,10 @@ const CreditCardCalculator = () => {
     return isNaN(num) ? NaN : num;
   };
 
-  /**
-   * Simulate payoff month-by-month with dynamic minimum payment:
-   * payment = max(floor, percent of remaining balance + interest)
-   * Returns object with payoff info
-   */
-  const simulateDynamicPayment = (principal, annualRate, initialMinPayment, maxMonths = 600) => {
+  // Simulate payoff month-by-month for given APR,
+  // calculating min payment each month as max(floor, percent * balance)
+  // initialMinPayment is user-given min payment (used in first month)
+  const simulatePayoff = (principal, annualRate, initialMinPayment, maxMonths = 600) => {
     const monthlyRate = annualRate / 12 / 100;
     let remaining = principal;
     let months = 0;
@@ -47,16 +42,17 @@ const CreditCardCalculator = () => {
       const interest = remaining * monthlyRate;
       totalInterest += interest;
 
-      const percentPayment = remaining * MIN_PAYMENT_PERCENT + interest;
+      // Calculate min payment for this month
+      const percentPayment = remaining * MIN_PAYMENT_PERCENT;
       let payment = Math.max(MIN_PAYMENT_FLOOR, percentPayment);
 
-      // Use the user input initial min payment if it's larger (only first month)
+      // On first month use user’s initial min payment if it is higher
       if (months === 0 && initialMinPayment && initialMinPayment > payment) {
         payment = initialMinPayment;
         firstMinPayment = initialMinPayment;
       }
 
-      // If payment does not cover interest, can't pay off loan
+      // If payment doesn’t even cover interest, can’t pay off loan
       if (payment < interest) {
         return { canPayOff: false };
       }
@@ -75,80 +71,54 @@ const CreditCardCalculator = () => {
     };
   };
 
-  /**
-   * Estimate APR by binary searching for APR that results in payoff near targetMonths
-   */
-  const estimateAPR = (principal, initialMinPayment, targetMonths = 180) => {
+  // Binary search to find APR that produces user-given min payment as initial payment
+  const estimateAPR = (principal, initialMinPayment, targetMonths = 360) => {
     let low = 0;
-    let high = 200; // 200% APR max
+    let high = 200; // max 200% APR
     const maxIterations = 60;
-    const tolerance = 48; // +/- 4 years
+    const tolerance = 0.5; // £0.50 tolerance on initial min payment
 
     for (let i = 0; i < maxIterations; i++) {
       const midAPR = (low + high) / 2;
-      const sim = simulateDynamicPayment(principal, midAPR, initialMinPayment, targetMonths + tolerance);
+      const sim = simulatePayoff(principal, midAPR, initialMinPayment, targetMonths);
 
       if (!sim.canPayOff) {
-        high = midAPR;
+        // payment too low, APR guess too low
+        low = midAPR;
       } else {
-        if (Math.abs(sim.months - targetMonths) <= tolerance) {
-          return midAPR;
+        // check difference between simulated first payment and target payment
+        const diff = sim.firstMinPayment - initialMinPayment;
+
+        if (Math.abs(diff) <= tolerance) {
+          return midAPR; // close enough APR found
         }
 
-        if (sim.months > targetMonths + tolerance) {
-          low = midAPR;
-        } else {
+        if (diff > 0) {
+          // simulated payment too high, APR guess too high
           high = midAPR;
+        } else {
+          // simulated payment too low, APR guess too low
+          low = midAPR;
         }
       }
     }
 
-    return -1;
+    return -1; // failed to find APR
   };
 
-  /**
-   * Calculate initial payment needed to pay off in target years
-   */
-  const calcPaymentForTargetYears = (principal, aprPercent, targetYears, maxIterations = 50) => {
-    const targetMonths = Math.round(targetYears * 12);
-    let low = MIN_PAYMENT_FLOOR;
-    let high = principal * 0.1; // 10% upper bound
-
-    for (let i = 0; i < maxIterations; i++) {
-      const midPayment = (low + high) / 2;
-      const sim = simulateDynamicPayment(principal, aprPercent, midPayment, targetMonths + 12);
-
-      if (!sim.canPayOff) {
-        low = midPayment * 1.1;
-        continue;
-      }
-
-      if (sim.months > targetMonths) {
-        low = midPayment;
-      } else if (sim.months < targetMonths) {
-        high = midPayment;
-      } else {
-        return midPayment;
-      }
-    }
-    return (low + high) / 2;
-  };
-
-  // Determine if form can submit
   const canSubmit = () => {
     const p = parseNumber(balance);
-    const a = parseNumber(apr);
     const m = parseNumber(minPayment);
-    return p > 0 && ((a > 0 && !m) || (m > 0 && (!a || isNaN(a))));
+    return p > 0 && m > 0;
   };
 
   const handleSubmit = (e) => {
     e.preventDefault();
     setErrorMsg('');
     setResultsVisible(false);
+    setApr('');
 
     const principal = parseNumber(balance);
-    const inputAPR = parseNumber(apr);
     const inputMinPayment = parseNumber(minPayment);
     const target = parseNumber(targetYears);
 
@@ -156,73 +126,44 @@ const CreditCardCalculator = () => {
       setErrorMsg('Please enter a valid Amount Outstanding.');
       return;
     }
-
-    if (inputAPR > 0 && inputMinPayment > 0) {
-      setErrorMsg('Please enter either APR or Minimum Monthly Payment, not both.');
+    if (!inputMinPayment || inputMinPayment <= 0) {
+      setErrorMsg('Please enter a valid Minimum Monthly Payment.');
       return;
     }
 
-    if (inputAPR && inputAPR > 0) {
-      const monthsTarget = target && target > 0 ? Math.round(target * 12) : 360;
-      const initialPayment = inputMinPayment && inputMinPayment > 0 ? inputMinPayment : MIN_PAYMENT_FLOOR;
+    const targetMonths = target && target > 0 ? Math.round(target * 12) : 360; // default 30 years
 
-      const sim = simulateDynamicPayment(principal, inputAPR, initialPayment, monthsTarget + 24);
+    // Estimate APR that corresponds to given min payment
+    const estimatedAPR = estimateAPR(principal, inputMinPayment, targetMonths);
 
-      if (!sim.canPayOff) {
-        setErrorMsg('Payment too low to pay off balance in target time.');
-        return;
-      }
-
-      let paymentToShow = sim.firstMinPayment;
-      if (target && target > 0) {
-        paymentToShow = calcPaymentForTargetYears(principal, inputAPR, target);
-      }
-
-      setResultData({
-        payoffMonths: sim.months,
-        totalInterest: sim.totalInterest.toFixed(2),
-        totalPaid: sim.totalPaid.toFixed(2),
-        firstMinPayment: paymentToShow.toFixed(2),
-      });
-      setResultsVisible(true);
+    if (estimatedAPR <= 0) {
+      setErrorMsg('Unable to estimate APR with given inputs.');
       return;
     }
 
-    if ((inputAPR === 0 || isNaN(inputAPR)) && inputMinPayment && inputMinPayment > 0) {
-      const defaultTargetMonths = 180; // 15 years default target payoff
-      const estimatedAPR = estimateAPR(principal, inputMinPayment, defaultTargetMonths);
+    // Run simulation with estimated APR and user min payment
+    const sim = simulatePayoff(principal, estimatedAPR, inputMinPayment, targetMonths);
 
-      if (estimatedAPR <= 0) {
-        setErrorMsg('Unable to estimate APR with given inputs.');
-        return;
-      }
-
-      const sim = simulateDynamicPayment(principal, estimatedAPR, inputMinPayment);
-
-      if (!sim.canPayOff) {
-        setErrorMsg('Minimum payment too low to ever pay off the balance.');
-        return;
-      }
-
-      setResultData({
-        payoffMonths: sim.months,
-        totalInterest: sim.totalInterest.toFixed(2),
-        totalPaid: sim.totalPaid.toFixed(2),
-        firstMinPayment: inputMinPayment.toFixed(2),
-      });
-      setApr(estimatedAPR.toFixed(2));
-      setResultsVisible(true);
+    if (!sim.canPayOff) {
+      setErrorMsg('Minimum payment too low to ever pay off the balance.');
       return;
     }
 
-    setErrorMsg('Please enter either a valid APR > 0 or Minimum Monthly Payment.');
+    setResultData({
+      payoffMonths: sim.months,
+      totalInterest: sim.totalInterest.toFixed(2),
+      totalPaid: sim.totalPaid.toFixed(2),
+      firstMinPayment: inputMinPayment.toFixed(2),
+    });
+    setApr(estimatedAPR.toFixed(2));
+    setResultsVisible(true);
   };
 
   const resetAll = () => {
     setBalance('');
-    setApr('');
     setMinPayment('');
     setTargetYears('');
+    setApr('');
     setResultsVisible(false);
     setErrorMsg('');
     setResultData({
@@ -253,6 +194,7 @@ const CreditCardCalculator = () => {
                 setBalance(e.target.value);
                 setErrorMsg('');
                 setResultsVisible(false);
+                setApr('');
               }}
               autoComplete="off"
               autoCorrect="off"
@@ -264,43 +206,18 @@ const CreditCardCalculator = () => {
           </div>
 
           <div className="input-row">
-            <label htmlFor="apr-input">APR (%)</label>
-            <input
-              id="apr-input"
-              name="apr"
-              type="text"
-              inputMode="decimal"
-              placeholder="Enter APR if known"
-              value={apr}
-              onChange={(e) => {
-                setApr(e.target.value);
-                setErrorMsg('');
-                setResultsVisible(false);
-                if (e.target.value.trim() !== '') setMinPayment('');
-              }}
-              autoComplete="off"
-              autoCorrect="off"
-              spellCheck="false"
-            />
-            <button type="button" className="clear-btn" onClick={() => setApr('')}>
-              Clear
-            </button>
-          </div>
-
-          <div className="input-row">
             <label htmlFor="min-payment-input">Minimum Monthly Payment (£)</label>
             <input
               id="min-payment-input"
               name="minPayment"
               type="text"
               inputMode="decimal"
-              placeholder="Enter min payment if APR unknown"
               value={minPayment}
               onChange={(e) => {
                 setMinPayment(e.target.value);
                 setErrorMsg('');
                 setResultsVisible(false);
-                if (e.target.value.trim() !== '') setApr('');
+                setApr('');
               }}
               autoComplete="off"
               autoCorrect="off"
@@ -324,6 +241,7 @@ const CreditCardCalculator = () => {
                 setTargetYears(e.target.value);
                 setErrorMsg('');
                 setResultsVisible(false);
+                setApr('');
               }}
               autoComplete="off"
               autoCorrect="off"
@@ -344,11 +262,7 @@ const CreditCardCalculator = () => {
               type="submit"
               style={{ flex: 1 }}
               disabled={!canSubmit()}
-              title={
-                !canSubmit()
-                  ? 'Enter Amount Outstanding plus either APR or Minimum Monthly Payment'
-                  : 'Submit'
-              }
+              title={!canSubmit() ? 'Enter Amount Outstanding and Minimum Monthly Payment' : 'Submit'}
             >
               Submit
             </button>
@@ -361,19 +275,14 @@ const CreditCardCalculator = () => {
         {resultsVisible && (
           <div className="results-box">
             <p>
-              <strong>Initial Minimum Payment:</strong> £
-              {parseFloat(resultData.firstMinPayment).toLocaleString(undefined, {
-                minimumFractionDigits: 2,
-              })}
+              <strong>Estimated APR:</strong> {apr}%
             </p>
             <p>
               <strong>Estimated Payoff Time:</strong> {(resultData.payoffMonths / 12).toFixed(1)} years
             </p>
             <p>
               <strong>Total Interest Paid:</strong> £
-              {parseFloat(resultData.totalInterest).toLocaleString(undefined, {
-                minimumFractionDigits: 2,
-              })}
+              {parseFloat(resultData.totalInterest).toLocaleString(undefined, { minimumFractionDigits: 2 })}
             </p>
             <p>
               <strong>Total Paid:</strong> £
