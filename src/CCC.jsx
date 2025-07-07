@@ -6,7 +6,7 @@ const CreditCardCalculator = () => {
   const [balance, setBalance] = useState('');
   const [apr, setApr] = useState('');
   const [monthlyPayment, setMonthlyPayment] = useState('');
-  const [targetMonths, setTargetMonths] = useState('');
+  const [targetYears, setTargetYears] = useState('');
   const [resultsVisible, setResultsVisible] = useState(false);
   const [resultData, setResultData] = useState({
     totalInterest: 0,
@@ -16,21 +16,12 @@ const CreditCardCalculator = () => {
   });
   const [aprEstimated, setAprEstimated] = useState(false);
   const [paymentCalculatedFromAPR, setPaymentCalculatedFromAPR] = useState(false);
+  const [errorMsg, setErrorMsg] = useState('');
 
-  const resetAll = () => {
-    setBalance('');
-    setApr('');
-    setMonthlyPayment('');
-    setTargetMonths('');
-    setResultsVisible(false);
-    setAprEstimated(false);
-    setPaymentCalculatedFromAPR(false);
-    setResultData({
-      totalInterest: 0,
-      totalPaid: 0,
-      monthsToPayoff: 0,
-      calculatedMinPayment: 0,
-    });
+  // Helper: parse float safely
+  const parseNumber = (val) => {
+    if (!val) return NaN;
+    return parseFloat(val.toString().replace(/,/g, ''));
   };
 
   const simulatePayoff = (principal, monthlyRate, payment) => {
@@ -89,16 +80,26 @@ const CreditCardCalculator = () => {
     return principal * (numerator / denominator);
   };
 
+  // Validation for enabling submit
+  const canSubmit = () => {
+    const p = parseNumber(balance);
+    const a = parseNumber(apr);
+    const m = parseNumber(monthlyPayment);
+    return p > 0 && ((a > 0) || (m > 0));
+  };
+
   const handleSubmit = (e) => {
     e.preventDefault();
+    setErrorMsg('');
+    setResultsVisible(false);
 
-    const principal = parseFloat(balance.replace(/,/g, ''));
-    const inputAPR = parseFloat(apr);
-    let payment = parseFloat(monthlyPayment.replace(/,/g, ''));
-    let target = parseInt(targetMonths);
+    const principal = parseNumber(balance);
+    const inputAPR = parseNumber(apr);
+    let payment = parseNumber(monthlyPayment);
+    const target = parseNumber(targetYears);
 
-    if (!principal) {
-      alert('Please enter Amount Outstanding.');
+    if (!principal || principal <= 0) {
+      setErrorMsg('Please enter a valid Amount Outstanding.');
       return;
     }
 
@@ -106,22 +107,21 @@ const CreditCardCalculator = () => {
       const monthlyRate = inputAPR / 100 / 12;
 
       if (target && target > 0) {
-        // Calculate min payment to meet target months
-        const calculatedPayment = calculateMonthlyPayment(principal, monthlyRate, target);
+        const targetMonths = Math.round(target * 12);
+        // Calculate payment to pay off in target months
+        const calculatedPayment = calculateMonthlyPayment(principal, monthlyRate, targetMonths);
+
+        const simulation = simulatePayoff(principal, monthlyRate, calculatedPayment);
+        if (!simulation.canPayOff) {
+          setErrorMsg('Calculated payment is too low to pay off balance in target years.');
+          return;
+        }
 
         setPaymentCalculatedFromAPR(true);
         setAprEstimated(false);
         setApr(inputAPR.toFixed(2));
         setMonthlyPayment(calculatedPayment.toFixed(2));
-        setTargetMonths(target.toString());
-
-        const simulation = simulatePayoff(principal, monthlyRate, calculatedPayment);
-
-        if (!simulation.canPayOff) {
-          alert('Calculated payment is too low to pay off balance in target months.');
-          setResultsVisible(false);
-          return;
-        }
+        setTargetYears(target.toString());
 
         setResultData({
           totalInterest: simulation.totalInterest.toFixed(2),
@@ -133,25 +133,21 @@ const CreditCardCalculator = () => {
         setResultsVisible(true);
         return;
       } else {
-        // No target input: user wants estimated time to pay with their entered monthly payment or min payment
-        let paymentAmount = payment;
-        if (!paymentAmount || paymentAmount <= 0) {
-          alert('Please enter Minimum Monthly Payment or Target months.');
-          return;
+        if (!payment || payment <= 0) {
+          payment = calculateMonthlyPayment(principal, monthlyRate, 36);
         }
 
-        const simulation = simulatePayoff(principal, monthlyRate, paymentAmount);
-
+        const simulation = simulatePayoff(principal, monthlyRate, payment);
         if (!simulation.canPayOff) {
-          alert('The payment is too low to ever pay off the balance.');
-          setResultsVisible(false);
+          setErrorMsg('The payment is too low to ever pay off the balance.');
           return;
         }
 
         setPaymentCalculatedFromAPR(false);
         setAprEstimated(false);
-        setMonthlyPayment(paymentAmount.toFixed(2));
-        setTargetMonths('');
+        setApr(inputAPR.toFixed(2));
+        setMonthlyPayment(payment.toFixed(2));
+        setTargetYears('');
 
         setResultData({
           totalInterest: simulation.totalInterest.toFixed(2),
@@ -165,25 +161,25 @@ const CreditCardCalculator = () => {
       }
     }
 
-    if (!payment) {
-      alert('Please enter Minimum Monthly Payment or APR and Target months.');
+    if (!payment || payment <= 0) {
+      setErrorMsg('Please enter a valid Minimum Monthly Payment or APR.');
       return;
     }
 
     const estimatedAPR = estimateAPR(principal, payment);
     const monthlyRate = estimatedAPR / 100 / 12;
 
+    const simulation = simulatePayoff(principal, monthlyRate, payment);
+    if (!simulation.canPayOff) {
+      setErrorMsg('The payment is too low to ever pay off the balance.');
+      return;
+    }
+
     setAprEstimated(true);
     setPaymentCalculatedFromAPR(false);
     setApr(estimatedAPR.toFixed(2));
-
-    const simulation = simulatePayoff(principal, monthlyRate, payment);
-
-    if (!simulation.canPayOff) {
-      alert('The payment is too low to ever pay off the balance.');
-      setResultsVisible(false);
-      return;
-    }
+    setMonthlyPayment(payment.toFixed(2));
+    setTargetYears('');
 
     setResultData({
       totalInterest: simulation.totalInterest.toFixed(2),
@@ -216,7 +212,11 @@ const CreditCardCalculator = () => {
               aria-autocomplete="none"
               aria-haspopup="false"
               value={balance}
-              onChange={(e) => setBalance(e.target.value)}
+              onChange={(e) => {
+                setBalance(e.target.value);
+                setErrorMsg('');
+                setResultsVisible(false);
+              }}
             />
             <button type="button" className="clear-btn" onClick={() => setBalance('')}>
               Clear
@@ -239,8 +239,10 @@ const CreditCardCalculator = () => {
               value={apr}
               onChange={(e) => {
                 setApr(e.target.value);
+                setErrorMsg('');
                 setAprEstimated(false);
                 setPaymentCalculatedFromAPR(false);
+                setResultsVisible(false);
               }}
             />
             <button type="button" className="clear-btn" onClick={() => setApr('')}>
@@ -261,7 +263,11 @@ const CreditCardCalculator = () => {
               aria-autocomplete="none"
               aria-haspopup="false"
               value={monthlyPayment}
-              onChange={(e) => setMonthlyPayment(e.target.value)}
+              onChange={(e) => {
+                setMonthlyPayment(e.target.value);
+                setErrorMsg('');
+                setResultsVisible(false);
+              }}
             />
             <button type="button" className="clear-btn" onClick={() => setMonthlyPayment('')}>
               Clear
@@ -269,10 +275,10 @@ const CreditCardCalculator = () => {
           </div>
 
           <div className="input-row">
-            <label htmlFor="target-months-input">Target (Months)</label>
+            <label htmlFor="target-years-input">Target (Years)</label>
             <input
-              id="target-months-input"
-              name="targetMonths"
+              id="target-years-input"
+              name="targetYears"
               type="text"
               inputMode="decimal"
               autoComplete="off"
@@ -280,16 +286,30 @@ const CreditCardCalculator = () => {
               spellCheck="false"
               aria-autocomplete="none"
               aria-haspopup="false"
-              value={targetMonths}
-              onChange={(e) => setTargetMonths(e.target.value)}
+              value={targetYears}
+              onChange={(e) => {
+                setTargetYears(e.target.value);
+                setErrorMsg('');
+                setResultsVisible(false);
+              }}
             />
-            <button type="button" className="clear-btn" onClick={() => setTargetMonths('')}>
+            <button type="button" className="clear-btn" onClick={() => setTargetYears('')}>
               Clear
             </button>
           </div>
 
+          {errorMsg && (
+            <p style={{ color: 'red', fontWeight: 'bold', marginTop: '0.5rem' }}>{errorMsg}</p>
+          )}
+
           <div className="button-row" style={{ display: 'flex', gap: '0.5rem' }}>
-            <button className="submit-btn ccc" type="submit" style={{ flex: 1 }}>
+            <button
+              className="submit-btn ccc"
+              type="submit"
+              style={{ flex: 1 }}
+              disabled={!canSubmit()}
+              title={!canSubmit() ? 'Enter Amount Outstanding plus APR or Minimum Payment' : 'Submit'}
+            >
               Submit
             </button>
             <button type="button" className="reset-btn" onClick={resetAll} style={{ flex: 1 }}>
@@ -303,8 +323,10 @@ const CreditCardCalculator = () => {
             {paymentCalculatedFromAPR ? (
               <>
                 <p>
-                  <strong>Minimum Payment to Pay Off in {targetMonths || '36'} Months:</strong> £
-                  {parseFloat(resultData.calculatedMinPayment).toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                  <strong>Minimum Payment to Pay Off in {targetYears || '3'} Years:</strong> £
+                  {parseFloat(resultData.calculatedMinPayment).toLocaleString(undefined, {
+                    minimumFractionDigits: 2,
+                  })}
                 </p>
                 <p>
                   <strong>Estimated Years to Pay Off:</strong>{' '}
