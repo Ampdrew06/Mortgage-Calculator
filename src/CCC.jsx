@@ -23,6 +23,7 @@ const CreditCardCalculator = () => {
     return isNaN(num) ? NaN : num;
   };
 
+  // Simulate loan payoff with fixed monthly payment
   const simulateFixedPayment = (principal, monthlyRate, fixedPayment, maxMonths = 1000) => {
     let remaining = principal;
     let months = 0;
@@ -48,24 +49,27 @@ const CreditCardCalculator = () => {
     };
   };
 
-  const estimateAPR = (principal, fixedPayment) => {
+  // Estimate APR given principal and fixed payment, target payoff period default 30 years (360 months)
+  const estimateAPR = (principal, fixedPayment, targetMonths = 360) => {
     let low = 0;
-    let high = 0.5 / 12;
+    let high = 1; // monthly rate max ~100% APR (very high)
     let mid = 0;
     const maxIterations = 100;
-    const targetMonths = 360;
     const tolerance = 1;
 
     for (let i = 0; i < maxIterations; i++) {
       mid = (low + high) / 2;
-      const sim = simulateFixedPayment(principal, mid, fixedPayment);
+      const sim = simulateFixedPayment(principal, mid, fixedPayment, targetMonths);
 
       if (!sim.canPayOff) {
+        // Payment too low, need higher interest (higher monthly rate)
         high = mid;
       } else {
+        // Check if payoff period close enough to target
         if (Math.abs(sim.months - targetMonths) <= tolerance) {
           return mid * 12 * 100;
         }
+        // Adjust search range based on months
         if (sim.months > targetMonths) {
           low = mid;
         } else {
@@ -73,9 +77,12 @@ const CreditCardCalculator = () => {
         }
       }
     }
+
+    // If loop finishes, return mid APR estimate
     return mid * 12 * 100;
   };
 
+  // Calculate fixed monthly payment for given loan parameters
   const calcFixedPaymentForTargetYears = (principal, monthlyRate, targetMonths) => {
     if (monthlyRate === 0) return principal / targetMonths;
     const numerator = monthlyRate * Math.pow(1 + monthlyRate, targetMonths);
@@ -83,11 +90,12 @@ const CreditCardCalculator = () => {
     return principal * (numerator / denominator);
   };
 
+  // Validate inputs for enabling submit
   const canSubmit = () => {
     const p = parseNumber(balance);
     const a = parseNumber(apr);
     const m = parseNumber(minPayment);
-    return p > 0 && ((a > 0 && m === 0) || (m > 0 && (a === 0 || isNaN(a))));
+    return p > 0 && ((a > 0 && !m) || (m > 0 && (!a || isNaN(a))));
   };
 
   const handleSubmit = (e) => {
@@ -100,14 +108,8 @@ const CreditCardCalculator = () => {
     const inputMinPayment = parseNumber(minPayment);
     const target = parseNumber(targetYears);
 
-    console.log('Balance:', balance, 'Parsed:', principal);
-    console.log('APR Input:', apr, 'Parsed:', inputAPR);
-    console.log('Min Payment Input:', minPayment, 'Parsed:', inputMinPayment);
-    console.log('Target Years:', targetYears, 'Parsed:', target);
-
     if (!principal || principal <= 0) {
       setErrorMsg('Please enter a valid Amount Outstanding.');
-      console.log('Invalid principal input.');
       return;
     }
 
@@ -117,37 +119,14 @@ const CreditCardCalculator = () => {
     }
 
     if (inputAPR && inputAPR > 0) {
-      console.log('APR path taken.');
       const monthlyRate = inputAPR / 100 / 12;
+      const monthsTarget = target && target > 0 ? Math.round(target * 12) : 360; // default 30 years
+      const fixedPayment = calcFixedPaymentForTargetYears(principal, monthlyRate, monthsTarget);
 
-      if (target && target > 0) {
-        const targetMonths = Math.round(target * 12);
-        const fixedPayment = calcFixedPaymentForTargetYears(principal, monthlyRate, targetMonths);
-
-        const sim = simulateFixedPayment(principal, monthlyRate, fixedPayment, targetMonths);
-
-        if (!sim.canPayOff) {
-          setErrorMsg('Payment too low to pay off balance in target time.');
-          console.log('Payment too low for target payoff.');
-          return;
-        }
-
-        setResultData({
-          payoffMonths: sim.months,
-          totalInterest: sim.totalInterest.toFixed(2),
-          totalPaid: sim.totalPaid.toFixed(2),
-          firstMinPayment: fixedPayment.toFixed(2),
-        });
-        setResultsVisible(true);
-        return;
-      }
-
-      const fixedPayment = calcFixedPaymentForTargetYears(principal, monthlyRate, 360);
-      const sim = simulateFixedPayment(principal, monthlyRate, fixedPayment);
+      const sim = simulateFixedPayment(principal, monthlyRate, fixedPayment, monthsTarget);
 
       if (!sim.canPayOff) {
-        setErrorMsg('Minimum payment too low to ever pay off the balance.');
-        console.log('Payment too low for 30 year payoff.');
+        setErrorMsg('Payment too low to pay off balance in target time.');
         return;
       }
 
@@ -162,12 +141,11 @@ const CreditCardCalculator = () => {
     }
 
     if ((inputAPR === 0 || isNaN(inputAPR)) && inputMinPayment && inputMinPayment > 0) {
-      console.log('Min payment estimation path taken.');
-      const estimatedAPR = estimateAPR(principal, inputMinPayment);
+      // Estimate APR based on min payment, default target 30 years
+      const estimatedAPR = estimateAPR(principal, inputMinPayment, 360);
 
       if (estimatedAPR <= 0) {
         setErrorMsg('Unable to estimate APR with given inputs.');
-        console.log('APR estimation failed.');
         return;
       }
 
@@ -176,7 +154,6 @@ const CreditCardCalculator = () => {
 
       if (!sim.canPayOff) {
         setErrorMsg('Minimum payment too low to ever pay off the balance.');
-        console.log('Payment too low for payoff.');
         return;
       }
 
@@ -192,7 +169,6 @@ const CreditCardCalculator = () => {
     }
 
     setErrorMsg('Please enter either a valid APR > 0 or Minimum Monthly Payment.');
-    console.log('No valid APR or min payment input.');
   };
 
   const resetAll = () => {
