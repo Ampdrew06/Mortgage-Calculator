@@ -49,34 +49,32 @@ const CreditCardCalculator = () => {
 
   const estimateAPR = (principal, fixedPayment) => {
     let low = 0;
-    let high = 0.5 / 12; // max monthly interest ~4.17%
+    let high = 0.5 / 12;
     let mid = 0;
     const maxIterations = 100;
-    const targetMonths = 360; // 30 years payoff target
-    const tolerance = 1; // 1 month tolerance
+    const targetMonths = 360;
+    const tolerance = 1;
 
     for (let i = 0; i < maxIterations; i++) {
       mid = (low + high) / 2;
 
       const sim = simulateFixedPayment(principal, mid, fixedPayment);
 
+      // eslint-disable-next-line no-console
       console.log(
         `Iteration ${i + 1}: APR guess ${(mid * 12 * 100).toFixed(2)}%, canPayOff=${sim.canPayOff}, payoffMonths=${sim.months}`
       );
 
       if (!sim.canPayOff) {
-        // Payment too low, interest too high, reduce APR guess
+        // Payment too low, reduce APR guess
         high = mid;
       } else {
-        // Payoff months compared to target
         if (Math.abs(sim.months - targetMonths) <= tolerance) {
           return mid * 12 * 100;
         }
         if (sim.months > targetMonths) {
-          // Payoff too slow, increase APR guess
           low = mid;
         } else {
-          // Payoff too fast, decrease APR guess
           high = mid;
         }
       }
@@ -255,21 +253,3 @@ const CreditCardCalculator = () => {
                 spellCheck="false"
               />
               <button type="button" className="clear-btn" onClick={() => setMinPayment('')}>
-                Clear
-              </button>
-            </div>
-          )}
-
-          {errorMsg && (
-            <p style={{ color: 'red', fontWeight: 'bold', marginTop: '0.5rem' }}>{errorMsg}</p>
-          )}
-
-          <div className="button-row" style={{ display: 'flex', gap: '0.5rem' }}>
-            <button
-              className="submit-btn ccc"
-              type="submit"
-              style={{ flex: 1 }}
-              disabled={!canSubmit()}
-              title={!canSubmit() ? 'Enter Amount Outstanding plus APR or Minimum Payment' : 'Submit'}
-            >
-              Submit
