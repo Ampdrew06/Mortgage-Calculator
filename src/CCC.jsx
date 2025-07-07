@@ -3,7 +3,6 @@ import PieChart from './PieChart';
 import './App.css';
 
 const CreditCardCalculator = () => {
-  // States
   const [balance, setBalance] = useState('');
   const [apr, setApr] = useState('');
   const [targetYears, setTargetYears] = useState('');
@@ -19,17 +18,14 @@ const CreditCardCalculator = () => {
   const [errorMsg, setErrorMsg] = useState('');
   const [aprEstimated, setAprEstimated] = useState(false);
 
-  // Fixed realistic defaults (hidden from user)
-  const minPercent = 0.02; // 2% minimum payment percent of balance
-  const fixedFloor = 25;   // £25 minimum fixed floor payment
+  const minPercent = 0.02; // 2%
+  const fixedFloor = 25;   // £25 floor
 
-  // Parse number helper
   const parseNumber = (val) => {
     if (!val) return NaN;
     return parseFloat(val.toString().replace(/,/g, ''));
   };
 
-  // Correct Option 1 simulation: min payment + interest on top
   const simulateMinPaymentPlusInterest = (principal, monthlyRate, minPercent, fixedFloor, fixedPayment = null) => {
     let remaining = principal;
     let months = 0;
@@ -63,7 +59,6 @@ const CreditCardCalculator = () => {
     };
   };
 
-  // Fixed payment calculator (amortized)
   const calculateFixedPayment = (principal, monthlyRate, months) => {
     if (months <= 0) return 0;
     if (monthlyRate === 0) return principal / months;
@@ -72,7 +67,6 @@ const CreditCardCalculator = () => {
     return principal * (numerator / denominator);
   };
 
-  // Estimate APR by binary search on initial payment
   const estimateAPR = (principal, payment, minPercent, fixedFloor) => {
     let low = 0;
     let high = 0.5 / 12;
@@ -96,7 +90,6 @@ const CreditCardCalculator = () => {
     return mid * 12 * 100;
   };
 
-  // Validate inputs to enable submit
   const canSubmit = () => {
     const p = parseNumber(balance);
     const a = parseNumber(apr);
@@ -104,7 +97,6 @@ const CreditCardCalculator = () => {
     return p > 0 && (a > 0 || t > 0);
   };
 
-  // Submit handler
   const handleSubmit = (e) => {
     e.preventDefault();
     setErrorMsg('');
@@ -123,7 +115,6 @@ const CreditCardCalculator = () => {
       const monthlyRate = inputAPR / 100 / 12;
 
       if (target && target > 0) {
-        // Target payoff: calculate fixed payment needed
         const targetMonths = Math.round(target * 12);
         const fixedPayment = calculateFixedPayment(principal, monthlyRate, targetMonths);
 
@@ -146,7 +137,6 @@ const CreditCardCalculator = () => {
         setResultsVisible(true);
         return;
       } else {
-        // No target: simulate minimum payment plus interest model
         const sim = simulateMinPaymentPlusInterest(principal, monthlyRate, minPercent, fixedFloor);
 
         if (!sim.canPayOff) {
@@ -167,7 +157,6 @@ const CreditCardCalculator = () => {
         return;
       }
     } else {
-      // APR unknown: estimate based on initial min payment
       const initialMinPayment = Math.max(fixedFloor, principal * minPercent);
 
       const estimatedAPR = estimateAPR(principal, initialMinPayment, minPercent, fixedFloor);
@@ -193,7 +182,6 @@ const CreditCardCalculator = () => {
     }
   };
 
-  // Reset all inputs and results
   const resetAll = () => {
     setBalance('');
     setApr('');
@@ -219,7 +207,6 @@ const CreditCardCalculator = () => {
 
       <div className="container">
         <form autoComplete="off" onSubmit={handleSubmit}>
-          {/* Amount Outstanding */}
           <div className="input-row">
             <label htmlFor="balance-input">Amount Outstanding (£)</label>
             <input
@@ -242,7 +229,6 @@ const CreditCardCalculator = () => {
             </button>
           </div>
 
-          {/* APR % */}
           <div className="input-row apr-row">
             <label htmlFor="apr-input">APR (%)</label>
             <input
@@ -267,7 +253,6 @@ const CreditCardCalculator = () => {
             </button>
           </div>
 
-          {/* Target Payoff Time in Years */}
           <div className="input-row">
             <label htmlFor="target-years-input">Target Payoff Time (Years, optional)</label>
             <input
@@ -290,20 +275,14 @@ const CreditCardCalculator = () => {
             </button>
           </div>
 
-          {/* Error Message */}
           {errorMsg && (
             <p style={{ color: 'red', fontWeight: 'bold', marginTop: '0.5rem' }}>{errorMsg}</p>
           )}
 
-          {/* Buttons */}
           <div className="button-row" style={{ display: 'flex', gap: '0.5rem' }}>
             <button
               className="submit-btn ccc"
               type="submit"
               style={{ flex: 1 }}
               disabled={!canSubmit()}
-              title={!canSubmit() ? 'Enter Amount Outstanding plus APR or Target Years' : 'Submit'}
-            >
-              Submit
-            </button>
-            <button type="button" className="reset-btn" onClick={resetAll
+              title={!canSubmit() ? 'Enter Amount Out
