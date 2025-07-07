@@ -101,10 +101,14 @@ const CreditCardCalculator = () => {
     const inputMinPayment = parseNumber(minPayment);
     const target = parseNumber(targetYears);
 
-    console.log({ principal, inputAPR, inputMinPayment, target }); // Debug logging
+    console.log('Balance:', balance, 'Parsed:', principal);
+    console.log('APR Input:', apr, 'Parsed:', inputAPR);
+    console.log('Min Payment Input:', minPayment, 'Parsed:', inputMinPayment);
+    console.log('Target Years:', targetYears, 'Parsed:', target);
 
     if (!principal || principal <= 0) {
       setErrorMsg('Please enter a valid Amount Outstanding.');
+      console.log('Invalid principal input.');
       return;
     }
 
@@ -114,6 +118,7 @@ const CreditCardCalculator = () => {
     }
 
     if (inputAPR && inputAPR > 0) {
+      console.log('APR path taken.');
       const monthlyRate = inputAPR / 100 / 12;
 
       if (target && target > 0) {
@@ -124,6 +129,7 @@ const CreditCardCalculator = () => {
 
         if (!sim.canPayOff) {
           setErrorMsg('Payment too low to pay off balance in target time.');
+          console.log('Payment too low for target payoff.');
           return;
         }
 
@@ -142,6 +148,7 @@ const CreditCardCalculator = () => {
 
       if (!sim.canPayOff) {
         setErrorMsg('Minimum payment too low to ever pay off the balance.');
+        console.log('Payment too low for 30 year payoff.');
         return;
       }
 
@@ -156,10 +163,12 @@ const CreditCardCalculator = () => {
     }
 
     if ((inputAPR === 0 || isNaN(inputAPR)) && inputMinPayment && inputMinPayment > 0) {
+      console.log('Min payment estimation path taken.');
       const estimatedAPR = estimateAPR(principal, inputMinPayment);
 
       if (estimatedAPR <= 0) {
         setErrorMsg('Unable to estimate APR with given inputs.');
+        console.log('APR estimation failed.');
         return;
       }
 
@@ -168,6 +177,7 @@ const CreditCardCalculator = () => {
 
       if (!sim.canPayOff) {
         setErrorMsg('Minimum payment too low to ever pay off the balance.');
+        console.log('Payment too low for payoff.');
         return;
       }
 
@@ -183,6 +193,7 @@ const CreditCardCalculator = () => {
     }
 
     setErrorMsg('Please enter either a valid APR > 0 or Minimum Monthly Payment.');
+    console.log('No valid APR or min payment input.');
   };
 
   const resetAll = () => {
@@ -345,26 +356,3 @@ const CreditCardCalculator = () => {
             <p>
               <strong>Total Paid:</strong> £
               {parseFloat(resultData.totalPaid).toLocaleString(undefined, { minimumFractionDigits: 2 })}
-            </p>
-
-            <PieChart
-              interest={parseFloat(resultData.totalInterest)}
-              principal={parseFloat(balance.replace(/,/g, ''))}
-              colors={['#ff4d4f', '#4aa4e3']}
-            />
-
-            <p
-              className="chart-labels"
-              style={{ marginTop: '0.8rem', display: 'flex', justifyContent: 'center', gap: '2rem' }}
-            >
-              <span style={{ color: '#ff4d4f', fontWeight: 'bold' }}>Interest Paid</span>
-              <span style={{ color: '#4aa4e3', fontWeight: 'bold' }}>Principal Paid</span>
-            </p>
-          </div>
-        )}
-      </div>
-    </>
-  );
-};
-
-export default CreditCardCalculator;
