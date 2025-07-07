@@ -88,6 +88,24 @@ const CreditCardCalculator = () => {
     return p > 0 && ((a > 0) || (m > 0));
   };
 
+  // Define resetAll inside the component to clear all states
+  const resetAll = () => {
+    setBalance('');
+    setApr('');
+    setMonthlyPayment('');
+    setTargetYears('');
+    setResultsVisible(false);
+    setAprEstimated(false);
+    setPaymentCalculatedFromAPR(false);
+    setResultData({
+      totalInterest: 0,
+      totalPaid: 0,
+      monthsToPayoff: 0,
+      calculatedMinPayment: 0,
+    });
+    setErrorMsg('');
+  };
+
   const handleSubmit = (e) => {
     e.preventDefault();
     setErrorMsg('');
@@ -108,7 +126,6 @@ const CreditCardCalculator = () => {
 
       if (target && target > 0) {
         const targetMonths = Math.round(target * 12);
-        // Calculate payment to pay off in target months
         const calculatedPayment = calculateMonthlyPayment(principal, monthlyRate, targetMonths);
 
         const simulation = simulatePayoff(principal, monthlyRate, calculatedPayment);
@@ -334,11 +351,9 @@ const CreditCardCalculator = () => {
                 </p>
               </>
             ) : (
-              <>
-                <p>
-                  <strong>Years to Pay Off:</strong> {(resultData.monthsToPayoff / 12).toFixed(1)}
-                </p>
-              </>
+              <p>
+                <strong>Years to Pay Off:</strong> {(resultData.monthsToPayoff / 12).toFixed(1)}
+              </p>
             )}
 
             <p>
