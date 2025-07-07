@@ -19,16 +19,16 @@ const CreditCardCalculator = () => {
   const [errorMsg, setErrorMsg] = useState('');
   const [aprEstimated, setAprEstimated] = useState(false);
 
-  // Constants for minimum payment calc (hidden from user)
-  const minPercent = 0.02; // 2%
-  const fixedFloor = 25;   // £25 floor
+  // Adjusted constants for min payment calculation to better reflect real-world cards
+  const minPercent = 0.015; // 1.5% of balance
+  const fixedFloor = 25;    // £25 floor
 
   const parseNumber = (val) => {
     if (!val) return NaN;
     return parseFloat(val.toString().replace(/,/g, ''));
   };
 
-  // Corrected simulation: month-by-month balance reducing payment
+  // Simulate monthly payments with min payment + interest properly accounted
   const simulatePayments = (principal, monthlyRate, minPercent, fixedFloor, fixedPayment = null) => {
     let remaining = principal;
     let months = 0;
@@ -39,11 +39,12 @@ const CreditCardCalculator = () => {
       const interest = remaining * monthlyRate;
       totalInterest += interest;
 
-      const minPayment = Math.max(fixedFloor, remaining * minPercent);
+      const principalPart = Math.max(fixedFloor, remaining * minPercent);
 
-      const payment = fixedPayment !== null ? fixedPayment : minPayment + interest;
+      // Total payment: interest + principal portion (or fixedPayment if given)
+      const payment = fixedPayment !== null ? fixedPayment : interest + principalPart;
 
-      if (months === 0) firstMinPayment = minPayment;
+      if (months === 0) firstMinPayment = payment;
 
       const principalPaid = payment - interest;
       if (principalPaid <= 0) return { canPayOff: false };
@@ -115,7 +116,6 @@ const CreditCardCalculator = () => {
     }
 
     if (inputAPR && inputAPR > 0) {
-      // User entered APR
       const monthlyRate = inputAPR / 100 / 12;
 
       if (target && target > 0) {
@@ -161,7 +161,6 @@ const CreditCardCalculator = () => {
         return;
       }
     } else if (inputMinPayment && inputMinPayment > 0) {
-      // User entered min payment, APR unknown
       const estimatedAPR = estimateAPR(principal, inputMinPayment, minPercent, fixedFloor);
       const monthlyRate = estimatedAPR / 100 / 12;
       const sim = simulatePayments(principal, monthlyRate, minPercent, fixedFloor, inputMinPayment);
