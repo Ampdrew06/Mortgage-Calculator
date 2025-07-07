@@ -6,8 +6,6 @@ const CreditCardCalculator = () => {
   // States
   const [balance, setBalance] = useState('');
   const [apr, setApr] = useState('');
-  const [minPaymentPercent, setMinPaymentPercent] = useState('2'); // default 2%
-  const [fixedFloor, setFixedFloor] = useState('25'); // default £25 floor
   const [targetYears, setTargetYears] = useState('');
   const [resultsVisible, setResultsVisible] = useState(false);
   const [resultData, setResultData] = useState({
@@ -20,6 +18,10 @@ const CreditCardCalculator = () => {
   });
   const [errorMsg, setErrorMsg] = useState('');
   const [aprEstimated, setAprEstimated] = useState(false);
+
+  // Fixed realistic defaults (hidden from user)
+  const minPercent = 0.02; // 2% minimum payment percent of balance
+  const fixedFloor = 25;   // £25 minimum fixed floor payment
 
   // Parse number helper
   const parseNumber = (val) => {
@@ -110,20 +112,10 @@ const CreditCardCalculator = () => {
 
     const principal = parseNumber(balance);
     const inputAPR = parseNumber(apr);
-    const minPercent = parseNumber(minPaymentPercent) / 100;
-    const floor = parseNumber(fixedFloor);
     const target = parseNumber(targetYears);
 
     if (!principal || principal <= 0) {
       setErrorMsg('Please enter a valid Amount Outstanding.');
-      return;
-    }
-    if (!minPercent || minPercent <= 0) {
-      setErrorMsg('Please enter a valid Minimum Payment Percentage.');
-      return;
-    }
-    if (!floor || floor < 0) {
-      setErrorMsg('Please enter a valid Fixed Floor Minimum Payment.');
       return;
     }
 
@@ -135,7 +127,7 @@ const CreditCardCalculator = () => {
         const targetMonths = Math.round(target * 12);
         const fixedPayment = calculateFixedPayment(principal, monthlyRate, targetMonths);
 
-        const sim = simulateMinPaymentPlusInterest(principal, monthlyRate, minPercent, floor, fixedPayment);
+        const sim = simulateMinPaymentPlusInterest(principal, monthlyRate, minPercent, fixedFloor, fixedPayment);
 
         if (!sim.canPayOff) {
           setErrorMsg('Fixed payment too low to pay off balance in target years.');
@@ -155,7 +147,7 @@ const CreditCardCalculator = () => {
         return;
       } else {
         // No target: simulate minimum payment plus interest model
-        const sim = simulateMinPaymentPlusInterest(principal, monthlyRate, minPercent, floor);
+        const sim = simulateMinPaymentPlusInterest(principal, monthlyRate, minPercent, fixedFloor);
 
         if (!sim.canPayOff) {
           setErrorMsg('Minimum payment too low to ever pay off the balance.');
@@ -176,11 +168,11 @@ const CreditCardCalculator = () => {
       }
     } else {
       // APR unknown: estimate based on initial min payment
-      const initialMinPayment = Math.max(floor, principal * minPercent);
+      const initialMinPayment = Math.max(fixedFloor, principal * minPercent);
 
-      const estimatedAPR = estimateAPR(principal, initialMinPayment, minPercent, floor);
+      const estimatedAPR = estimateAPR(principal, initialMinPayment, minPercent, fixedFloor);
       const monthlyRate = estimatedAPR / 100 / 12;
-      const sim = simulateMinPaymentPlusInterest(principal, monthlyRate, minPercent, floor);
+      const sim = simulateMinPaymentPlusInterest(principal, monthlyRate, minPercent, fixedFloor);
 
       if (!sim.canPayOff) {
         setErrorMsg('Minimum payment too low to ever pay off the balance.');
@@ -205,8 +197,6 @@ const CreditCardCalculator = () => {
   const resetAll = () => {
     setBalance('');
     setApr('');
-    setMinPaymentPercent('2');
-    setFixedFloor('25');
     setTargetYears('');
     setResultsVisible(false);
     setAprEstimated(false);
@@ -273,52 +263,6 @@ const CreditCardCalculator = () => {
               spellCheck="false"
             />
             <button type="button" className="clear-btn" onClick={() => setApr('')}>
-              Clear
-            </button>
-          </div>
-
-          {/* Minimum Payment Percentage */}
-          <div className="input-row">
-            <label htmlFor="min-percent-input">Minimum Payment % of Balance</label>
-            <input
-              id="min-percent-input"
-              name="minPercent"
-              type="text"
-              inputMode="decimal"
-              value={minPaymentPercent}
-              onChange={(e) => {
-                setMinPaymentPercent(e.target.value);
-                setErrorMsg('');
-                setResultsVisible(false);
-              }}
-              autoComplete="off"
-              autoCorrect="off"
-              spellCheck="false"
-            />
-            <button type="button" className="clear-btn" onClick={() => setMinPaymentPercent('2')}>
-              Clear
-            </button>
-          </div>
-
-          {/* Fixed Floor Minimum Payment */}
-          <div className="input-row">
-            <label htmlFor="fixed-floor-input">Fixed Floor Minimum Payment (£)</label>
-            <input
-              id="fixed-floor-input"
-              name="fixedFloor"
-              type="text"
-              inputMode="decimal"
-              value={fixedFloor}
-              onChange={(e) => {
-                setFixedFloor(e.target.value);
-                setErrorMsg('');
-                setResultsVisible(false);
-              }}
-              autoComplete="off"
-              autoCorrect="off"
-              spellCheck="false"
-            />
-            <button type="button" className="clear-btn" onClick={() => setFixedFloor('25')}>
               Clear
             </button>
           </div>
