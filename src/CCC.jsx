@@ -87,9 +87,9 @@ const CreditCardCalculator = () => {
    */
   const estimateAPR = (principal, initialMinPayment, targetMonths = 360) => {
     let low = 0;
-    let high = 100; // APR in %
-    const maxIterations = 50;
-    const tolerance = 12; // months tolerance (~1 year)
+    let high = 200; // increase max APR to 200%
+    const maxIterations = 60;
+    const tolerance = 48; // months, 4 years window
 
     for (let i = 0; i < maxIterations; i++) {
       const midAPR = (low + high) / 2;
