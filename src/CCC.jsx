@@ -29,7 +29,7 @@ const CreditCardCalculator = () => {
     return parseFloat(val.toString().replace(/,/g, ''));
   };
 
-  // Option 1 simulation: min payment + interest on top
+  // Correct Option 1 simulation: min payment + interest on top
   const simulateMinPaymentPlusInterest = (principal, monthlyRate, minPercent, fixedFloor, fixedPayment = null) => {
     let remaining = principal;
     let months = 0;
@@ -306,70 +306,4 @@ const CreditCardCalculator = () => {
             >
               Submit
             </button>
-            <button type="button" className="reset-btn" onClick={resetAll} style={{ flex: 1 }}>
-              Reset All
-            </button>
-          </div>
-        </form>
-
-        {/* Results */}
-        {resultsVisible && (
-          <div className="results-box">
-            <p>
-              <strong>Initial Minimum Payment:</strong> £
-              {parseFloat(resultData.initialMinPayment).toLocaleString(undefined, { minimumFractionDigits: 2 })}
-            </p>
-
-            {resultData.isTargetMode ? (
-              <>
-                <p>
-                  <strong>Fixed Payment to Meet Target:</strong> £
-                  {parseFloat(resultData.requiredPaymentForTarget).toLocaleString(undefined, { minimumFractionDigits: 2 })}
-                </p>
-                <p>
-                  <strong>Estimated Payoff Time:</strong>{' '}
-                  {(resultData.payoffMonths / 12).toFixed(1)} years (payments will decrease over time)
-                </p>
-              </>
-            ) : (
-              <p>
-                <strong>Estimated Payoff Time:</strong> {(resultData.payoffMonths / 12).toFixed(1)} years
-              </p>
-            )}
-
-            <p>
-              <strong>Total Interest Paid:</strong> £
-              {parseFloat(resultData.totalInterest).toLocaleString(undefined, { minimumFractionDigits: 2 })}
-            </p>
-            <p>
-              <strong>Total Paid:</strong> £
-              {parseFloat(resultData.totalPaid).toLocaleString(undefined, { minimumFractionDigits: 2 })}
-            </p>
-
-            <PieChart
-              interest={parseFloat(resultData.totalInterest)}
-              principal={parseFloat(balance.replace(/,/g, ''))}
-              colors={['#ff4d4f', '#4aa4e3']}
-            />
-
-            <p
-              className="chart-labels"
-              style={{ marginTop: '0.8rem', display: 'flex', justifyContent: 'center', gap: '2rem' }}
-            >
-              <span style={{ color: '#ff4d4f', fontWeight: 'bold' }}>Interest Paid</span>
-              <span style={{ color: '#4aa4e3', fontWeight: 'bold' }}>Principal Paid</span>
-            </p>
-
-            {aprEstimated && (
-              <p style={{ color: '#cc0000', marginTop: '1rem' }}>
-                * APR estimated from Amount Outstanding and initial minimum payment
-              </p>
-            )}
-          </div>
-        )}
-      </div>
-    </>
-  );
-};
-
-export default CreditCardCalculator;
+            <button type="button" className="reset-btn" onClick={resetAll
