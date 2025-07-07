@@ -19,7 +19,7 @@ const CreditCardCalculator = () => {
   const [errorMsg, setErrorMsg] = useState('');
   const [aprEstimated, setAprEstimated] = useState(false);
 
-  // Constants for minimum payment calculation (used only if minPayment not entered)
+  // Constants for minimum payment calc (hidden from user)
   const minPercent = 0.02; // 2%
   const fixedFloor = 25;   // £25 floor
 
@@ -28,7 +28,7 @@ const CreditCardCalculator = () => {
     return parseFloat(val.toString().replace(/,/g, ''));
   };
 
-  // Simulation function with explicit min payment or calculated min payment + interest
+  // Corrected simulation: month-by-month balance reducing payment
   const simulatePayments = (principal, monthlyRate, minPercent, fixedFloor, fixedPayment = null) => {
     let remaining = principal;
     let months = 0;
@@ -39,10 +39,11 @@ const CreditCardCalculator = () => {
       const interest = remaining * monthlyRate;
       totalInterest += interest;
 
-      const calculatedMinPayment = Math.max(fixedFloor, remaining * minPercent);
-      const payment = fixedPayment !== null ? fixedPayment : calculatedMinPayment + interest;
+      const minPayment = Math.max(fixedFloor, remaining * minPercent);
 
-      if (months === 0) firstMinPayment = fixedPayment !== null ? fixedPayment : calculatedMinPayment;
+      const payment = fixedPayment !== null ? fixedPayment : minPayment + interest;
+
+      if (months === 0) firstMinPayment = minPayment;
 
       const principalPaid = payment - interest;
       if (principalPaid <= 0) return { canPayOff: false };
@@ -91,7 +92,6 @@ const CreditCardCalculator = () => {
     return mid * 12 * 100;
   };
 
-  // Enable submit if balance >0 and either apr >0 or minPayment >0
   const canSubmit = () => {
     const p = parseNumber(balance);
     const a = parseNumber(apr);
@@ -115,7 +115,7 @@ const CreditCardCalculator = () => {
     }
 
     if (inputAPR && inputAPR > 0) {
-      // User knows APR, calculate min payment and payoff time
+      // User entered APR
       const monthlyRate = inputAPR / 100 / 12;
 
       if (target && target > 0) {
@@ -161,7 +161,7 @@ const CreditCardCalculator = () => {
         return;
       }
     } else if (inputMinPayment && inputMinPayment > 0) {
-      // APR unknown, user inputs min payment → estimate APR and payoff time
+      // User entered min payment, APR unknown
       const estimatedAPR = estimateAPR(principal, inputMinPayment, minPercent, fixedFloor);
       const monthlyRate = estimatedAPR / 100 / 12;
       const sim = simulatePayments(principal, monthlyRate, minPercent, fixedFloor, inputMinPayment);
@@ -249,7 +249,6 @@ const CreditCardCalculator = () => {
                 setErrorMsg('');
                 setAprEstimated(false);
                 setResultsVisible(false);
-                // clear min payment if APR entered
                 if (e.target.value.trim() !== '') setMinPayment('');
               }}
               autoComplete="off"
@@ -275,7 +274,6 @@ const CreditCardCalculator = () => {
                   setMinPayment(e.target.value);
                   setErrorMsg('');
                   setResultsVisible(false);
-                  // clear APR if min payment entered
                   if (e.target.value.trim() !== '') setApr('');
                 }}
                 autoComplete="off"
