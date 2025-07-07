@@ -103,34 +103,66 @@ const CreditCardCalculator = () => {
     }
 
     if (inputAPR && inputAPR > 0) {
-      if (!target || target <= 0) target = 36;
-
       const monthlyRate = inputAPR / 100 / 12;
-      const calculatedPayment = calculateMonthlyPayment(principal, monthlyRate, target);
 
-      setPaymentCalculatedFromAPR(true);
-      setAprEstimated(false);
-      setApr(inputAPR.toFixed(2));
-      setMonthlyPayment(calculatedPayment.toFixed(2));
-      setTargetMonths(target.toString());
+      if (target && target > 0) {
+        // Calculate min payment to meet target months
+        const calculatedPayment = calculateMonthlyPayment(principal, monthlyRate, target);
 
-      const simulation = simulatePayoff(principal, monthlyRate, calculatedPayment);
+        setPaymentCalculatedFromAPR(true);
+        setAprEstimated(false);
+        setApr(inputAPR.toFixed(2));
+        setMonthlyPayment(calculatedPayment.toFixed(2));
+        setTargetMonths(target.toString());
 
-      if (!simulation.canPayOff) {
-        alert('Calculated payment is too low to pay off balance in target months.');
-        setResultsVisible(false);
+        const simulation = simulatePayoff(principal, monthlyRate, calculatedPayment);
+
+        if (!simulation.canPayOff) {
+          alert('Calculated payment is too low to pay off balance in target months.');
+          setResultsVisible(false);
+          return;
+        }
+
+        setResultData({
+          totalInterest: simulation.totalInterest.toFixed(2),
+          totalPaid: (principal + simulation.totalInterest).toFixed(2),
+          monthsToPayoff: simulation.months,
+          calculatedMinPayment: calculatedPayment.toFixed(2),
+        });
+
+        setResultsVisible(true);
+        return;
+      } else {
+        // No target input: user wants estimated time to pay with their entered monthly payment or min payment
+        let paymentAmount = payment;
+        if (!paymentAmount || paymentAmount <= 0) {
+          alert('Please enter Minimum Monthly Payment or Target months.');
+          return;
+        }
+
+        const simulation = simulatePayoff(principal, monthlyRate, paymentAmount);
+
+        if (!simulation.canPayOff) {
+          alert('The payment is too low to ever pay off the balance.');
+          setResultsVisible(false);
+          return;
+        }
+
+        setPaymentCalculatedFromAPR(false);
+        setAprEstimated(false);
+        setMonthlyPayment(paymentAmount.toFixed(2));
+        setTargetMonths('');
+
+        setResultData({
+          totalInterest: simulation.totalInterest.toFixed(2),
+          totalPaid: (principal + simulation.totalInterest).toFixed(2),
+          monthsToPayoff: simulation.months,
+          calculatedMinPayment: 0,
+        });
+
+        setResultsVisible(true);
         return;
       }
-
-      setResultData({
-        totalInterest: simulation.totalInterest.toFixed(2),
-        totalPaid: (principal + simulation.totalInterest).toFixed(2),
-        monthsToPayoff: simulation.months,
-        calculatedMinPayment: calculatedPayment.toFixed(2),
-      });
-
-      setResultsVisible(true);
-      return;
     }
 
     if (!payment) {
@@ -275,13 +307,14 @@ const CreditCardCalculator = () => {
                   {parseFloat(resultData.calculatedMinPayment).toLocaleString(undefined, { minimumFractionDigits: 2 })}
                 </p>
                 <p>
-                  <strong>Estimated Months to Pay Off:</strong> {resultData.monthsToPayoff}
+                  <strong>Estimated Years to Pay Off:</strong>{' '}
+                  {(resultData.monthsToPayoff / 12).toFixed(1)}
                 </p>
               </>
             ) : (
               <>
                 <p>
-                  <strong>Months to Pay Off:</strong> {resultData.monthsToPayoff}
+                  <strong>Years to Pay Off:</strong> {(resultData.monthsToPayoff / 12).toFixed(1)}
                 </p>
               </>
             )}
