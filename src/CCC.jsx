@@ -19,16 +19,15 @@ const CreditCardCalculator = () => {
   const [errorMsg, setErrorMsg] = useState('');
   const [aprEstimated, setAprEstimated] = useState(false);
 
-  // Adjusted constants:
-  const minPercent = 0.01; // 1%
-  const fixedFloor = 25;   // £25 floor
+  // Tweaked constants for better real-world fit:
+  const minPercent = 0.008; // 0.8%
+  const fixedFloor = 30;    // £30 floor
 
   const parseNumber = (val) => {
     if (!val) return NaN;
     return parseFloat(val.toString().replace(/,/g, ''));
   };
 
-  // Calculate initial min payment = interest + max(floor, % of balance)
   const calculateInitialMinPayment = (principal, monthlyRate) => {
     const interest = principal * monthlyRate;
     const principalPart = Math.max(fixedFloor, principal * minPercent);
@@ -52,7 +51,10 @@ const CreditCardCalculator = () => {
       if (months === 0) firstMinPayment = payment;
 
       const principalPaid = payment - interest;
+
+      // Prevent infinite loop if principalPaid <= 0 or payoff unrealistic
       if (principalPaid <= 0) return { canPayOff: false };
+      if (months > 600) break; // safety cap to avoid infinite loops, 50 years approx
 
       remaining -= principalPaid;
       months++;
@@ -75,7 +77,6 @@ const CreditCardCalculator = () => {
     return principal * (numerator / denominator);
   };
 
-  // Modified estimateAPR using total payment and allowing slight tolerance
   const estimateAPR = (principal, targetPayment, minPercent, fixedFloor) => {
     let low = 0;
     let high = 0.5 / 12;
@@ -85,13 +86,10 @@ const CreditCardCalculator = () => {
 
     for (let i = 0; i < maxIterations; i++) {
       mid = (low + high) / 2;
-
       const testPayment = calculateInitialMinPayment(principal, mid);
-
       if (Math.abs(testPayment - targetPayment) < tolerance) {
         return mid * 12 * 100;
       }
-
       if (testPayment > targetPayment) {
         high = mid;
       } else {
