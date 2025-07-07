@@ -21,7 +21,6 @@ const CreditCardCalculator = () => {
     return parseFloat(val.toString().replace(/,/g, ''));
   };
 
-  // Simulate payoff with fixed monthly payment (constant)
   const simulateFixedPayment = (principal, monthlyRate, fixedPayment) => {
     let remaining = principal;
     let months = 0;
@@ -48,13 +47,12 @@ const CreditCardCalculator = () => {
     };
   };
 
-  // Estimate APR via binary search for fixed monthly payment that pays off balance in reasonable time
   const estimateAPR = (principal, fixedPayment) => {
     let low = 0;
-    let high = 0.5 / 12; // ~50% APR max monthly
+    let high = 0.5 / 12; // max monthly interest ~4.17%
     let mid = 0;
     const maxIterations = 100;
-    const targetMonths = 360; // Aim payoff in 30 years max
+    const targetMonths = 360; // 30 years payoff target
     const tolerance = 1; // 1 month tolerance
 
     for (let i = 0; i < maxIterations; i++) {
@@ -62,22 +60,27 @@ const CreditCardCalculator = () => {
 
       const sim = simulateFixedPayment(principal, mid, fixedPayment);
 
+      console.log(
+        `Iteration ${i + 1}: APR guess ${(mid * 12 * 100).toFixed(2)}%, canPayOff=${sim.canPayOff}, payoffMonths=${sim.months}`
+      );
+
       if (!sim.canPayOff) {
-        low = mid; // need higher APR (higher interest -> longer payoff)
-        continue;
-      }
-
-      if (Math.abs(sim.months - targetMonths) <= tolerance) {
-        return mid * 12 * 100;
-      }
-
-      if (sim.months > targetMonths) {
-        low = mid;
-      } else {
+        // Payment too low, interest too high, reduce APR guess
         high = mid;
+      } else {
+        // Payoff months compared to target
+        if (Math.abs(sim.months - targetMonths) <= tolerance) {
+          return mid * 12 * 100;
+        }
+        if (sim.months > targetMonths) {
+          // Payoff too slow, increase APR guess
+          low = mid;
+        } else {
+          // Payoff too fast, decrease APR guess
+          high = mid;
+        }
       }
     }
-
     return mid * 12 * 100;
   };
 
@@ -105,7 +108,6 @@ const CreditCardCalculator = () => {
     if (inputAPR && inputAPR > 0) {
       const monthlyRate = inputAPR / 100 / 12;
 
-      // Calculate payment for fixed APR assuming 30-year payoff max
       const fixedPayment = (() => {
         const numerator = monthlyRate * Math.pow(1 + monthlyRate, 360);
         const denominator = Math.pow(1 + monthlyRate, 360) - 1;
@@ -271,58 +273,3 @@ const CreditCardCalculator = () => {
               title={!canSubmit() ? 'Enter Amount Outstanding plus APR or Minimum Payment' : 'Submit'}
             >
               Submit
-            </button>
-            <button type="button" className="reset-btn" onClick={resetAll} style={{ flex: 1 }}>
-              Reset All
-            </button>
-          </div>
-        </form>
-
-        {resultsVisible && (
-          <div className="results-box">
-            <p>
-              <strong>Initial Minimum Payment:</strong> £
-              {parseFloat(resultData.firstMinPayment).toLocaleString(undefined, { minimumFractionDigits: 2 })}
-            </p>
-
-            <p>
-              <strong>Estimated Payoff Time:</strong> {(resultData.payoffMonths / 12).toFixed(1)} years
-            </p>
-
-            <p>
-              <strong>Total Interest Paid:</strong> £
-              {parseFloat(resultData.totalInterest).toLocaleString(undefined, { minimumFractionDigits: 2 })}
-            </p>
-
-            <p>
-              <strong>Total Paid:</strong> £
-              {parseFloat(resultData.totalPaid).toLocaleString(undefined, { minimumFractionDigits: 2 })}
-            </p>
-
-            <PieChart
-              interest={parseFloat(resultData.totalInterest)}
-              principal={parseFloat(balance.replace(/,/g, ''))}
-              colors={['#ff4d4f', '#4aa4e3']}
-            />
-
-            <p
-              className="chart-labels"
-              style={{ marginTop: '0.8rem', display: 'flex', justifyContent: 'center', gap: '2rem' }}
-            >
-              <span style={{ color: '#ff4d4f', fontWeight: 'bold' }}>Interest Paid</span>
-              <span style={{ color: '#4aa4e3', fontWeight: 'bold' }}>Principal Paid</span>
-            </p>
-
-            {aprEstimated && (
-              <p style={{ color: '#cc0000', marginTop: '1rem' }}>
-                * APR estimated from Amount Outstanding and entered Minimum Payment
-              </p>
-            )}
-          </div>
-        )}
-      </div>
-    </>
-  );
-};
-
-export default CreditCardCalculator;
