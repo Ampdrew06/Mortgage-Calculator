@@ -46,7 +46,13 @@ const CreditCardCalculator = () => {
       }
 
       if (payment < interest) {
-        return { canPayOff: false };
+        return {
+          canPayOff: false,
+          months: 0,
+          totalInterest: 0,
+          totalPaid: 0,
+          firstMinPayment,
+        };
       }
 
       const principalPaid = payment - interest;
@@ -65,15 +71,13 @@ const CreditCardCalculator = () => {
 
   const estimateAPR = (principal, initialMinPayment, targetMonths = 360) => {
     let low = 0;
-    let high = 500; // Increased max APR
+    let high = 500;
     const maxIterations = 100;
-    const tolerance = 1; // Increased tolerance
+    const tolerance = 1;
 
     for (let i = 0; i < maxIterations; i++) {
       const midAPR = (low + high) / 2;
       const sim = simulatePayoff(principal, midAPR, initialMinPayment, targetMonths);
-
-      console.log(`EstimateAPR Iteration ${i + 1}: APR guess=${midAPR.toFixed(2)}, first payment=${sim.firstMinPayment.toFixed(2)}`);
 
       if (!sim.canPayOff) {
         low = midAPR;
@@ -131,15 +135,15 @@ const CreditCardCalculator = () => {
 
     const sim = simulatePayoff(principal, estimatedAPR, inputMinPayment, targetMonths);
 
-    if (!sim.canPayOff) {
+    if (!sim || !sim.canPayOff) {
       setErrorMsg('Minimum payment too low to ever pay off the balance.');
       return;
     }
 
     setResultData({
-      payoffMonths: sim.months,
-      totalInterest: sim.totalInterest.toFixed(2),
-      totalPaid: sim.totalPaid.toFixed(2),
+      payoffMonths: sim.months || 0,
+      totalInterest: (sim.totalInterest || 0).toFixed(2),
+      totalPaid: (sim.totalPaid || 0).toFixed(2),
       firstMinPayment: inputMinPayment.toFixed(2),
     });
     setApr(estimatedAPR.toFixed(2));
