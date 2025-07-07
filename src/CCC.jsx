@@ -16,7 +16,6 @@ const CreditCardCalculator = () => {
     firstMinPayment: 0,
   });
 
-  // Enhanced parseNumber: trim and sanitize input
   const parseNumber = (val) => {
     if (!val) return NaN;
     const cleaned = val.toString().replace(/,/g, '').trim();
@@ -356,3 +355,26 @@ const CreditCardCalculator = () => {
             <p>
               <strong>Total Paid:</strong> £
               {parseFloat(resultData.totalPaid).toLocaleString(undefined, { minimumFractionDigits: 2 })}
+            </p>
+
+            <PieChart
+              interest={parseFloat(resultData.totalInterest)}
+              principal={parseFloat(balance.replace(/,/g, ''))}
+              colors={['#ff4d4f', '#4aa4e3']}
+            />
+
+            <p
+              className="chart-labels"
+              style={{ marginTop: '0.8rem', display: 'flex', justifyContent: 'center', gap: '2rem' }}
+            >
+              <span style={{ color: '#ff4d4f', fontWeight: 'bold' }}>Interest Paid</span>
+              <span style={{ color: '#4aa4e3', fontWeight: 'bold' }}>Principal Paid</span>
+            </p>
+          </div>
+        )}
+      </div>
+    </>
+  );
+};
+
+export default CreditCardCalculator;
