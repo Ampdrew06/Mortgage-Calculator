@@ -66,7 +66,6 @@ const CreditCardCalculator = () => {
       );
 
       if (!sim.canPayOff) {
-        // Payment too low, reduce APR guess
         high = mid;
       } else {
         if (Math.abs(sim.months - targetMonths) <= tolerance) {
@@ -86,7 +85,7 @@ const CreditCardCalculator = () => {
     const p = parseNumber(balance);
     const a = parseNumber(apr);
     const m = parseNumber(minPayment);
-    return p > 0 && (a > 0 || m > 0);
+    return p > 0 && ((a > 0) || (m > 0));
   };
 
   const handleSubmit = (e) => {
@@ -103,10 +102,11 @@ const CreditCardCalculator = () => {
       return;
     }
 
-    if (inputAPR && inputAPR > 0) {
+    if (inputAPR !== undefined && !isNaN(inputAPR) && inputAPR > 0) {
       const monthlyRate = inputAPR / 100 / 12;
 
       const fixedPayment = (() => {
+        if (monthlyRate === 0) return principal / 360; // No interest loan over 30 years
         const numerator = monthlyRate * Math.pow(1 + monthlyRate, 360);
         const denominator = Math.pow(1 + monthlyRate, 360) - 1;
         return principal * (numerator / denominator);
@@ -129,7 +129,7 @@ const CreditCardCalculator = () => {
       setAprEstimated(false);
       setResultsVisible(true);
       return;
-    } else if (inputMinPayment && inputMinPayment > 0) {
+    } else if (inputMinPayment !== undefined && !isNaN(inputMinPayment) && inputMinPayment > 0) {
       const estimatedAPR = estimateAPR(principal, inputMinPayment);
 
       if (estimatedAPR <= 0) {
@@ -157,7 +157,7 @@ const CreditCardCalculator = () => {
       setResultsVisible(true);
       return;
     } else {
-      setErrorMsg('Please enter either APR or Minimum Monthly Payment.');
+      setErrorMsg('Please enter either a valid APR (> 0) or a valid Minimum Monthly Payment.');
       return;
     }
   };
