@@ -59,12 +59,16 @@ const CreditCardCalculator = () => {
 
       // If payment is less than interest, can't pay off loan
       if (payment < interest) {
+        console.log(`Month ${months + 1}: payment too low to cover interest.`);
         return { canPayOff: false };
       }
 
       const principalPaid = payment - interest;
       remaining -= principalPaid;
       months++;
+
+      // Debug log each month
+      console.log(`Month ${months}: Remaining=${remaining.toFixed(2)}, Payment=${payment.toFixed(2)}, Interest=${interest.toFixed(2)}`);
     }
 
     return {
@@ -91,23 +95,24 @@ const CreditCardCalculator = () => {
       const midAPR = (low + high) / 2;
       const sim = simulateDynamicPayment(principal, midAPR, initialMinPayment, targetMonths + tolerance);
 
+      console.log(`Iteration ${i + 1}: APR=${midAPR.toFixed(2)}%, payoffMonths=${sim.months}, canPayOff=${sim.canPayOff}`);
+
       if (!sim.canPayOff) {
-        // Payment too low, increase APR guess to get longer payoff time
         high = midAPR;
       } else {
-        // If payoff months close to target, return this APR
         if (Math.abs(sim.months - targetMonths) <= tolerance) {
           return midAPR;
         }
 
         if (sim.months > targetMonths + tolerance) {
-          low = midAPR; // payoff takes longer => decrease APR guess
+          low = midAPR;
         } else {
-          high = midAPR; // payoff too short => increase APR guess
+          high = midAPR;
         }
       }
     }
-    return -1; // no suitable APR found
+
+    return -1;
   };
 
   /**
