@@ -18,7 +18,6 @@ const CreditCardCalculator = () => {
   const [errorMsg, setErrorMsg] = useState('');
   const [aprEstimated, setAprEstimated] = useState(false);
 
-  // Constants for minimum payment calculation (hidden from user)
   const minPercent = 0.02; // 2%
   const fixedFloor = 25;   // £25 floor
 
@@ -27,7 +26,6 @@ const CreditCardCalculator = () => {
     return parseFloat(val.toString().replace(/,/g, ''));
   };
 
-  // Simulation of payments: min payment + interest added each month
   const simulateMinPaymentPlusInterest = (principal, monthlyRate, minPercent, fixedFloor, fixedPayment = null) => {
     let remaining = principal;
     let months = 0;
@@ -41,7 +39,7 @@ const CreditCardCalculator = () => {
       const minPayment = Math.max(fixedFloor, remaining * minPercent);
       const payment = fixedPayment !== null ? fixedPayment : minPayment + interest;
 
-      if (months === 0) firstMinPayment = minPayment; // Only min payment part, exclude interest
+      if (months === 0) firstMinPayment = minPayment;
 
       const principalPaid = payment - interest;
       if (principalPaid <= 0) {
@@ -196,4 +194,164 @@ const CreditCardCalculator = () => {
       totalPaid: 0,
       firstMinPayment: 0,
       requiredPaymentForTarget: 0,
-      isTargetMode: fal
+      isTargetMode: false,
+    });
+    setErrorMsg('');
+  };
+
+  return (
+    <>
+      <div className="header-box">
+        <h2>Credit Card Calculator</h2>
+      </div>
+
+      <div className="container">
+        <form autoComplete="off" onSubmit={handleSubmit}>
+          <div className="input-row">
+            <label htmlFor="balance-input">Amount Outstanding (£)</label>
+            <input
+              id="balance-input"
+              name="balance"
+              type="text"
+              inputMode="decimal"
+              value={balance}
+              onChange={(e) => {
+                setBalance(e.target.value);
+                setErrorMsg('');
+                setResultsVisible(false);
+              }}
+              autoComplete="off"
+              autoCorrect="off"
+              spellCheck="false"
+            />
+            <button type="button" className="clear-btn" onClick={() => setBalance('')}>
+              Clear
+            </button>
+          </div>
+
+          <div className="input-row apr-row">
+            <label htmlFor="apr-input">APR (%)</label>
+            <input
+              id="apr-input"
+              name="apr"
+              type="text"
+              inputMode="decimal"
+              placeholder="Enter if known, leave blank to estimate"
+              value={apr}
+              onChange={(e) => {
+                setApr(e.target.value);
+                setErrorMsg('');
+                setAprEstimated(false);
+                setResultsVisible(false);
+              }}
+              autoComplete="off"
+              autoCorrect="off"
+              spellCheck="false"
+            />
+            <button type="button" className="clear-btn" onClick={() => setApr('')}>
+              Clear
+            </button>
+          </div>
+
+          <div className="input-row">
+            <label htmlFor="target-years-input">Target Payoff Time (Years, optional)</label>
+            <input
+              id="target-years-input"
+              name="targetYears"
+              type="text"
+              inputMode="decimal"
+              value={targetYears}
+              onChange={(e) => {
+                setTargetYears(e.target.value);
+                setErrorMsg('');
+                setResultsVisible(false);
+              }}
+              autoComplete="off"
+              autoCorrect="off"
+              spellCheck="false"
+            />
+            <button type="button" className="clear-btn" onClick={() => setTargetYears('')}>
+              Clear
+            </button>
+          </div>
+
+          {errorMsg && (
+            <p style={{ color: 'red', fontWeight: 'bold', marginTop: '0.5rem' }}>{errorMsg}</p>
+          )}
+
+          <div className="button-row" style={{ display: 'flex', gap: '0.5rem' }}>
+            <button
+              className="submit-btn ccc"
+              type="submit"
+              style={{ flex: 1 }}
+              disabled={!canSubmit()}
+              title={!canSubmit() ? 'Enter Amount Outstanding plus APR or Target Years' : 'Submit'}
+            >
+              Submit
+            </button>
+            <button type="button" className="reset-btn" onClick={resetAll} style={{ flex: 1 }}>
+              Reset All
+            </button>
+          </div>
+        </form>
+
+        {resultsVisible && (
+          <div className="results-box">
+            <p>
+              <strong>Initial Minimum Payment:</strong> £
+              {parseFloat(resultData.firstMinPayment).toLocaleString(undefined, { minimumFractionDigits: 2 })}
+            </p>
+
+            {resultData.isTargetMode ? (
+              <>
+                <p>
+                  <strong>Fixed Payment to Meet Target:</strong> £
+                  {parseFloat(resultData.requiredPaymentForTarget).toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                </p>
+                <p>
+                  <strong>Estimated Payoff Time:</strong>{' '}
+                  {(resultData.payoffMonths / 12).toFixed(1)} years (payments will decrease over time)
+                </p>
+              </>
+            ) : (
+              <p>
+                <strong>Estimated Payoff Time:</strong> {(resultData.payoffMonths / 12).toFixed(1)} years
+              </p>
+            )}
+
+            <p>
+              <strong>Total Interest Paid:</strong> £
+              {parseFloat(resultData.totalInterest).toLocaleString(undefined, { minimumFractionDigits: 2 })}
+            </p>
+            <p>
+              <strong>Total Paid:</strong> £
+              {parseFloat(resultData.totalPaid).toLocaleString(undefined, { minimumFractionDigits: 2 })}
+            </p>
+
+            <PieChart
+              interest={parseFloat(resultData.totalInterest)}
+              principal={parseFloat(balance.replace(/,/g, ''))}
+              colors={['#ff4d4f', '#4aa4e3']}
+            />
+
+            <p
+              className="chart-labels"
+              style={{ marginTop: '0.8rem', display: 'flex', justifyContent: 'center', gap: '2rem' }}
+            >
+              <span style={{ color: '#ff4d4f', fontWeight: 'bold' }}>Interest Paid</span>
+              <span style={{ color: '#4aa4e3', fontWeight: 'bold' }}>Principal Paid</span>
+            </p>
+
+            {aprEstimated && (
+              <p style={{ color: '#cc0000', marginTop: '1rem' }}>
+                * APR estimated from Amount Outstanding and initial minimum payment
+              </p>
+            )}
+          </div>
+        )}
+      </div>
+    </>
+  );
+};
+
+export default CreditCardCalculator;
