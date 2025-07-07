@@ -6,8 +6,8 @@ const CreditCardCalculator = () => {
   // States
   const [balance, setBalance] = useState('');
   const [apr, setApr] = useState('');
-  const [minPaymentPercent, setMinPaymentPercent] = useState('2'); // default 2% min payment %
-  const [fixedFloor, setFixedFloor] = useState('25'); // default £25 fixed floor min payment
+  const [minPaymentPercent, setMinPaymentPercent] = useState('2'); // default 2%
+  const [fixedFloor, setFixedFloor] = useState('25'); // default £25 floor
   const [targetYears, setTargetYears] = useState('');
   const [resultsVisible, setResultsVisible] = useState(false);
   const [resultData, setResultData] = useState({
@@ -21,18 +21,14 @@ const CreditCardCalculator = () => {
   const [errorMsg, setErrorMsg] = useState('');
   const [aprEstimated, setAprEstimated] = useState(false);
 
-  // Helper: parse floats safely
+  // Parse number helper
   const parseNumber = (val) => {
     if (!val) return NaN;
     return parseFloat(val.toString().replace(/,/g, ''));
   };
 
-  // Simulate payoff with realistic dynamic min payments each month
-  // minPercent as decimal (e.g. 0.02 for 2%)
-  // fixedFloor as minimum payment floor (£)
-  // paymentOverride: if provided, fixed payment each month (target mode)
-  // maxMonths limit to avoid infinite loops
-  const simulateDynamicMinPayment = (principal, monthlyRate, minPercent, fixedFloor, paymentOverride = null) => {
+  // Option 1 simulation: min payment + interest on top
+  const simulateMinPaymentPlusInterest = (principal, monthlyRate, minPercent, fixedFloor, fixedPayment = null) => {
     let remaining = principal;
     let months = 0;
     let totalInterest = 0;
@@ -42,19 +38,16 @@ const CreditCardCalculator = () => {
       const interest = remaining * monthlyRate;
       totalInterest += interest;
 
-      let payment;
-      if (paymentOverride !== null) {
-        payment = paymentOverride; // fixed payment (target mode)
-      } else {
-        // realistic min payment = max fixed floor, percent of balance + interest
-        payment = Math.max(fixedFloor, remaining * minPercent + interest);
-      }
+      const minPayment = Math.max(fixedFloor, remaining * minPercent);
+      const payment = fixedPayment !== null ? fixedPayment : minPayment + interest;
+
       if (months === 0) firstPayment = payment;
 
       const principalPaid = payment - interest;
       if (principalPaid <= 0) {
         return { canPayOff: false };
       }
+
       remaining -= principalPaid;
       months++;
     }
@@ -68,7 +61,7 @@ const CreditCardCalculator = () => {
     };
   };
 
-  // Calculate fixed monthly payment to pay off principal in given months (amortized loan calc)
+  // Fixed payment calculator (amortized)
   const calculateFixedPayment = (principal, monthlyRate, months) => {
     if (months <= 0) return 0;
     if (monthlyRate === 0) return principal / months;
@@ -77,17 +70,17 @@ const CreditCardCalculator = () => {
     return principal * (numerator / denominator);
   };
 
-  // Estimate APR given principal and monthly payment (binary search)
+  // Estimate APR by binary search on initial payment
   const estimateAPR = (principal, payment, minPercent, fixedFloor) => {
     let low = 0;
-    let high = 0.5 / 12; // ~50% APR monthly rate
+    let high = 0.5 / 12;
     const tolerance = 0.01;
     let mid = 0;
     const maxIterations = 50;
 
     for (let i = 0; i < maxIterations; i++) {
       mid = (low + high) / 2;
-      const sim = simulateDynamicMinPayment(principal, mid, minPercent, fixedFloor);
+      const sim = simulateMinPaymentPlusInterest(principal, mid, minPercent, fixedFloor);
       if (!sim.canPayOff) {
         high = mid;
       } else if (Math.abs(sim.firstPayment - payment) < tolerance) {
@@ -101,7 +94,7 @@ const CreditCardCalculator = () => {
     return mid * 12 * 100;
   };
 
-  // Validation for Submit
+  // Validate inputs to enable submit
   const canSubmit = () => {
     const p = parseNumber(balance);
     const a = parseNumber(apr);
@@ -109,6 +102,7 @@ const CreditCardCalculator = () => {
     return p > 0 && (a > 0 || t > 0);
   };
 
+  // Submit handler
   const handleSubmit = (e) => {
     e.preventDefault();
     setErrorMsg('');
@@ -128,20 +122,20 @@ const CreditCardCalculator = () => {
       setErrorMsg('Please enter a valid Minimum Payment Percentage.');
       return;
     }
-    if (!floor || floor <= 0) {
+    if (!floor || floor < 0) {
       setErrorMsg('Please enter a valid Fixed Floor Minimum Payment.');
       return;
     }
 
     if (inputAPR && inputAPR > 0) {
       const monthlyRate = inputAPR / 100 / 12;
+
       if (target && target > 0) {
-        // Target payoff mode: calculate fixed payment needed
+        // Target payoff: calculate fixed payment needed
         const targetMonths = Math.round(target * 12);
         const fixedPayment = calculateFixedPayment(principal, monthlyRate, targetMonths);
 
-        // Simulate payoff using fixed payment
-        const sim = simulateDynamicMinPayment(principal, monthlyRate, minPercent, floor, fixedPayment);
+        const sim = simulateMinPaymentPlusInterest(principal, monthlyRate, minPercent, floor, fixedPayment);
 
         if (!sim.canPayOff) {
           setErrorMsg('Fixed payment too low to pay off balance in target years.');
@@ -160,8 +154,8 @@ const CreditCardCalculator = () => {
         setResultsVisible(true);
         return;
       } else {
-        // No target: simulate with dynamic min payments
-        const sim = simulateDynamicMinPayment(principal, monthlyRate, minPercent, floor);
+        // No target: simulate minimum payment plus interest model
+        const sim = simulateMinPaymentPlusInterest(principal, monthlyRate, minPercent, floor);
 
         if (!sim.canPayOff) {
           setErrorMsg('Minimum payment too low to ever pay off the balance.');
@@ -181,13 +175,12 @@ const CreditCardCalculator = () => {
         return;
       }
     } else {
-      // APR unknown: estimate APR from dynamic minimum payment
-      // Use initial min payment formula as approximation for monthly payment
+      // APR unknown: estimate based on initial min payment
       const initialMinPayment = Math.max(floor, principal * minPercent);
 
       const estimatedAPR = estimateAPR(principal, initialMinPayment, minPercent, floor);
       const monthlyRate = estimatedAPR / 100 / 12;
-      const sim = simulateDynamicMinPayment(principal, monthlyRate, minPercent, floor);
+      const sim = simulateMinPaymentPlusInterest(principal, monthlyRate, minPercent, floor);
 
       if (!sim.canPayOff) {
         setErrorMsg('Minimum payment too low to ever pay off the balance.');
@@ -208,6 +201,26 @@ const CreditCardCalculator = () => {
     }
   };
 
+  // Reset all inputs and results
+  const resetAll = () => {
+    setBalance('');
+    setApr('');
+    setMinPaymentPercent('2');
+    setFixedFloor('25');
+    setTargetYears('');
+    setResultsVisible(false);
+    setAprEstimated(false);
+    setResultData({
+      payoffMonths: 0,
+      totalInterest: 0,
+      totalPaid: 0,
+      initialMinPayment: 0,
+      requiredPaymentForTarget: 0,
+      isTargetMode: false,
+    });
+    setErrorMsg('');
+  };
+
   return (
     <>
       <div className="header-box">
@@ -216,6 +229,7 @@ const CreditCardCalculator = () => {
 
       <div className="container">
         <form autoComplete="off" onSubmit={handleSubmit}>
+          {/* Amount Outstanding */}
           <div className="input-row">
             <label htmlFor="balance-input">Amount Outstanding (£)</label>
             <input
@@ -238,6 +252,7 @@ const CreditCardCalculator = () => {
             </button>
           </div>
 
+          {/* APR % */}
           <div className="input-row apr-row">
             <label htmlFor="apr-input">APR (%)</label>
             <input
@@ -262,6 +277,7 @@ const CreditCardCalculator = () => {
             </button>
           </div>
 
+          {/* Minimum Payment Percentage */}
           <div className="input-row">
             <label htmlFor="min-percent-input">Minimum Payment % of Balance</label>
             <input
@@ -284,6 +300,7 @@ const CreditCardCalculator = () => {
             </button>
           </div>
 
+          {/* Fixed Floor Minimum Payment */}
           <div className="input-row">
             <label htmlFor="fixed-floor-input">Fixed Floor Minimum Payment (£)</label>
             <input
@@ -306,6 +323,7 @@ const CreditCardCalculator = () => {
             </button>
           </div>
 
+          {/* Target Payoff Time in Years */}
           <div className="input-row">
             <label htmlFor="target-years-input">Target Payoff Time (Years, optional)</label>
             <input
@@ -328,10 +346,12 @@ const CreditCardCalculator = () => {
             </button>
           </div>
 
+          {/* Error Message */}
           {errorMsg && (
             <p style={{ color: 'red', fontWeight: 'bold', marginTop: '0.5rem' }}>{errorMsg}</p>
           )}
 
+          {/* Buttons */}
           <div className="button-row" style={{ display: 'flex', gap: '0.5rem' }}>
             <button
               className="submit-btn ccc"
@@ -342,29 +362,13 @@ const CreditCardCalculator = () => {
             >
               Submit
             </button>
-            <button type="button" className="reset-btn" onClick={() => {
-              setBalance('');
-              setApr('');
-              setMinPaymentPercent('2');
-              setFixedFloor('25');
-              setTargetYears('');
-              setResultsVisible(false);
-              setAprEstimated(false);
-              setResultData({
-                payoffMonths: 0,
-                totalInterest: 0,
-                totalPaid: 0,
-                initialMinPayment: 0,
-                requiredPaymentForTarget: 0,
-                isTargetMode: false,
-              });
-              setErrorMsg('');
-            }} style={{ flex: 1 }}>
+            <button type="button" className="reset-btn" onClick={resetAll} style={{ flex: 1 }}>
               Reset All
             </button>
           </div>
         </form>
 
+        {/* Results */}
         {resultsVisible && (
           <div className="results-box">
             <p>
