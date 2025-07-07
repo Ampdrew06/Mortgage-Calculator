@@ -16,9 +16,12 @@ const CreditCardCalculator = () => {
     firstMinPayment: 0,
   });
 
+  // Enhanced parseNumber: trim and sanitize input
   const parseNumber = (val) => {
     if (!val) return NaN;
-    return parseFloat(val.toString().replace(/,/g, ''));
+    const cleaned = val.toString().replace(/,/g, '').trim();
+    const num = parseFloat(cleaned);
+    return isNaN(num) ? NaN : num;
   };
 
   const simulateFixedPayment = (principal, monthlyRate, fixedPayment, maxMonths = 1000) => {
@@ -98,6 +101,8 @@ const CreditCardCalculator = () => {
     const inputMinPayment = parseNumber(minPayment);
     const target = parseNumber(targetYears);
 
+    console.log({ principal, inputAPR, inputMinPayment, target }); // Debug logging
+
     if (!principal || principal <= 0) {
       setErrorMsg('Please enter a valid Amount Outstanding.');
       return;
@@ -108,7 +113,7 @@ const CreditCardCalculator = () => {
       return;
     }
 
-    if (inputAPR > 0) {
+    if (inputAPR && inputAPR > 0) {
       const monthlyRate = inputAPR / 100 / 12;
 
       if (target && target > 0) {
@@ -148,41 +153,36 @@ const CreditCardCalculator = () => {
       });
       setResultsVisible(true);
       return;
-    } else if (inputAPR === 0 || isNaN(inputAPR)) {
-      // APR unknown or zero — estimate from min payment
-      if (inputMinPayment > 0) {
-        const estimatedAPR = estimateAPR(principal, inputMinPayment);
+    }
 
-        if (estimatedAPR <= 0) {
-          setErrorMsg('Unable to estimate APR with given inputs.');
-          return;
-        }
+    if ((inputAPR === 0 || isNaN(inputAPR)) && inputMinPayment && inputMinPayment > 0) {
+      const estimatedAPR = estimateAPR(principal, inputMinPayment);
 
-        const monthlyRate = estimatedAPR / 100 / 12;
-        const sim = simulateFixedPayment(principal, monthlyRate, inputMinPayment);
-
-        if (!sim.canPayOff) {
-          setErrorMsg('Minimum payment too low to ever pay off the balance.');
-          return;
-        }
-
-        setResultData({
-          payoffMonths: sim.months,
-          totalInterest: sim.totalInterest.toFixed(2),
-          totalPaid: sim.totalPaid.toFixed(2),
-          firstMinPayment: inputMinPayment.toFixed(2),
-        });
-        setApr(estimatedAPR.toFixed(2));
-        setResultsVisible(true);
-        return;
-      } else {
-        setErrorMsg('Please enter either a valid APR > 0 or Minimum Monthly Payment.');
+      if (estimatedAPR <= 0) {
+        setErrorMsg('Unable to estimate APR with given inputs.');
         return;
       }
-    } else {
-      setErrorMsg('Please enter either a valid APR > 0 or Minimum Monthly Payment.');
+
+      const monthlyRate = estimatedAPR / 100 / 12;
+      const sim = simulateFixedPayment(principal, monthlyRate, inputMinPayment);
+
+      if (!sim.canPayOff) {
+        setErrorMsg('Minimum payment too low to ever pay off the balance.');
+        return;
+      }
+
+      setResultData({
+        payoffMonths: sim.months,
+        totalInterest: sim.totalInterest.toFixed(2),
+        totalPaid: sim.totalPaid.toFixed(2),
+        firstMinPayment: inputMinPayment.toFixed(2),
+      });
+      setApr(estimatedAPR.toFixed(2));
+      setResultsVisible(true);
       return;
     }
+
+    setErrorMsg('Please enter either a valid APR > 0 or Minimum Monthly Payment.');
   };
 
   const resetAll = () => {
