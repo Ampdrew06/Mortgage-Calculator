@@ -16,11 +16,9 @@ const CreditCardCalculator = () => {
     firstMinPayment: 0,
   });
 
-  // Constants for min payment calculation
-  const MIN_PAYMENT_FLOOR = 25;    // £25 floor
-  const MIN_PAYMENT_PERCENT = 0.015; // 1.5% of remaining balance
+  const MIN_PAYMENT_FLOOR = 25;
+  const MIN_PAYMENT_PERCENT = 0.015;
 
-  // Parse input to float safely
   const parseNumber = (val) => {
     if (!val) return NaN;
     const cleaned = val.toString().replace(/,/g, '').trim();
@@ -28,9 +26,6 @@ const CreditCardCalculator = () => {
     return isNaN(num) ? NaN : num;
   };
 
-  // Simulate payoff month-by-month for given APR,
-  // calculating min payment each month as max(floor, percent * balance)
-  // initialMinPayment is user-given min payment (used in first month)
   const simulatePayoff = (principal, annualRate, initialMinPayment, maxMonths = 600) => {
     const monthlyRate = annualRate / 12 / 100;
     let remaining = principal;
@@ -42,17 +37,14 @@ const CreditCardCalculator = () => {
       const interest = remaining * monthlyRate;
       totalInterest += interest;
 
-      // Calculate min payment for this month
       const percentPayment = remaining * MIN_PAYMENT_PERCENT;
       let payment = Math.max(MIN_PAYMENT_FLOOR, percentPayment);
 
-      // On first month use user’s initial min payment if it is higher
       if (months === 0 && initialMinPayment && initialMinPayment > payment) {
         payment = initialMinPayment;
         firstMinPayment = initialMinPayment;
       }
 
-      // If payment doesn’t even cover interest, can’t pay off loan
       if (payment < interest) {
         return { canPayOff: false };
       }
@@ -71,39 +63,36 @@ const CreditCardCalculator = () => {
     };
   };
 
-  // Binary search to find APR that produces user-given min payment as initial payment
   const estimateAPR = (principal, initialMinPayment, targetMonths = 360) => {
     let low = 0;
-    let high = 200; // max 200% APR
-    const maxIterations = 60;
-    const tolerance = 0.5; // £0.50 tolerance on initial min payment
+    let high = 500; // Increased max APR
+    const maxIterations = 100;
+    const tolerance = 1; // Increased tolerance
 
     for (let i = 0; i < maxIterations; i++) {
       const midAPR = (low + high) / 2;
       const sim = simulatePayoff(principal, midAPR, initialMinPayment, targetMonths);
 
+      console.log(`EstimateAPR Iteration ${i + 1}: APR guess=${midAPR.toFixed(2)}, first payment=${sim.firstMinPayment.toFixed(2)}`);
+
       if (!sim.canPayOff) {
-        // payment too low, APR guess too low
         low = midAPR;
       } else {
-        // check difference between simulated first payment and target payment
         const diff = sim.firstMinPayment - initialMinPayment;
 
         if (Math.abs(diff) <= tolerance) {
-          return midAPR; // close enough APR found
+          return midAPR;
         }
 
         if (diff > 0) {
-          // simulated payment too high, APR guess too high
           high = midAPR;
         } else {
-          // simulated payment too low, APR guess too low
           low = midAPR;
         }
       }
     }
 
-    return -1; // failed to find APR
+    return -1;
   };
 
   const canSubmit = () => {
@@ -131,9 +120,8 @@ const CreditCardCalculator = () => {
       return;
     }
 
-    const targetMonths = target && target > 0 ? Math.round(target * 12) : 360; // default 30 years
+    const targetMonths = target && target > 0 ? Math.round(target * 12) : 360;
 
-    // Estimate APR that corresponds to given min payment
     const estimatedAPR = estimateAPR(principal, inputMinPayment, targetMonths);
 
     if (estimatedAPR <= 0) {
@@ -141,7 +129,6 @@ const CreditCardCalculator = () => {
       return;
     }
 
-    // Run simulation with estimated APR and user min payment
     const sim = simulatePayoff(principal, estimatedAPR, inputMinPayment, targetMonths);
 
     if (!sim.canPayOff) {
