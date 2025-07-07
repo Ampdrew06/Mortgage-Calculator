@@ -3,10 +3,13 @@ import PieChart from './PieChart';
 import './App.css';
 
 const CreditCardCalculator = () => {
+  // User inputs
   const [balance, setBalance] = useState('');
   const [apr, setApr] = useState('');
   const [minPayment, setMinPayment] = useState('');
   const [targetYears, setTargetYears] = useState('');
+
+  // UI state
   const [resultsVisible, setResultsVisible] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
   const [resultData, setResultData] = useState({
@@ -16,6 +19,11 @@ const CreditCardCalculator = () => {
     firstMinPayment: 0,
   });
 
+  // Constants for the dynamic payment model
+  const MIN_PAYMENT_FLOOR = 25;     // Minimum floor payment in £
+  const MIN_PAYMENT_PERCENT = 0.02; // 2% of remaining balance
+
+  // Utility to parse input strings to floats safely
   const parseNumber = (val) => {
     if (!val) return NaN;
     const cleaned = val.toString().replace(/,/g, '').trim();
@@ -23,19 +31,38 @@ const CreditCardCalculator = () => {
     return isNaN(num) ? NaN : num;
   };
 
-  // Simulate loan payoff with fixed monthly payment
-  const simulateFixedPayment = (principal, monthlyRate, fixedPayment, maxMonths = 1000) => {
+  /**
+   * Simulates payoff month-by-month with dynamic minimum payment:
+   * Each month: Payment = max(floor payment, percent of remaining balance + interest)
+   * Returns object with canPayOff, months, totalInterest, totalPaid, firstMinPayment.
+   */
+  const simulateDynamicPayment = (principal, annualRate, initialMinPayment, maxMonths = 600) => {
+    const monthlyRate = annualRate / 12 / 100;
     let remaining = principal;
     let months = 0;
     let totalInterest = 0;
+    let firstMinPayment = initialMinPayment;
 
     while (remaining > 0 && months < maxMonths) {
       const interest = remaining * monthlyRate;
       totalInterest += interest;
 
-      const principalPaid = fixedPayment - interest;
-      if (principalPaid <= 0) return { canPayOff: false };
+      // Minimum payment calculation for this month
+      const percentPayment = remaining * MIN_PAYMENT_PERCENT + interest;
+      let payment = Math.max(MIN_PAYMENT_FLOOR, percentPayment);
 
+      // On the very first month, if initialMinPayment is given and > payment, use that instead
+      if (months === 0 && initialMinPayment && initialMinPayment > payment) {
+        payment = initialMinPayment;
+        firstMinPayment = initialMinPayment;
+      }
+
+      // If payment is less than interest, can't pay off loan
+      if (payment < interest) {
+        return { canPayOff: false };
+      }
+
+      const principalPaid = payment - interest;
       remaining -= principalPaid;
       months++;
     }
@@ -45,52 +72,75 @@ const CreditCardCalculator = () => {
       months,
       totalInterest,
       totalPaid: principal + totalInterest,
-      firstMinPayment: fixedPayment,
+      firstMinPayment,
     };
   };
 
-  // Estimate APR given principal and fixed payment, target payoff period default 30 years (360 months)
-  const estimateAPR = (principal, fixedPayment, targetMonths = 360) => {
+  /**
+   * Estimates APR by trying values via binary search until simulated payoff months
+   * roughly matches target payoff months (default 360 months = 30 years).
+   * Returns estimated APR % or -1 if no solution found.
+   */
+  const estimateAPR = (principal, initialMinPayment, targetMonths = 360) => {
     let low = 0;
-    let high = 1; // monthly rate max ~100% APR (very high)
-    let mid = 0;
-    const maxIterations = 100;
-    const tolerance = 1;
+    let high = 100; // APR in %
+    const maxIterations = 50;
+    const tolerance = 12; // months tolerance (~1 year)
 
     for (let i = 0; i < maxIterations; i++) {
-      mid = (low + high) / 2;
-      const sim = simulateFixedPayment(principal, mid, fixedPayment, targetMonths);
+      const midAPR = (low + high) / 2;
+      const sim = simulateDynamicPayment(principal, midAPR, initialMinPayment, targetMonths + tolerance);
 
       if (!sim.canPayOff) {
-        // Payment too low, need higher interest (higher monthly rate)
-        high = mid;
+        // Payment too low, increase APR guess to get longer payoff time
+        high = midAPR;
       } else {
-        // Check if payoff period close enough to target
+        // If payoff months close to target, return this APR
         if (Math.abs(sim.months - targetMonths) <= tolerance) {
-          return mid * 12 * 100;
+          return midAPR;
         }
-        // Adjust search range based on months
-        if (sim.months > targetMonths) {
-          low = mid;
+
+        if (sim.months > targetMonths + tolerance) {
+          low = midAPR; // payoff takes longer => decrease APR guess
         } else {
-          high = mid;
+          high = midAPR; // payoff too short => increase APR guess
         }
       }
     }
-
-    // If loop finishes, return mid APR estimate
-    return mid * 12 * 100;
+    return -1; // no suitable APR found
   };
 
-  // Calculate fixed monthly payment for given loan parameters
-  const calcFixedPaymentForTargetYears = (principal, monthlyRate, targetMonths) => {
-    if (monthlyRate === 0) return principal / targetMonths;
-    const numerator = monthlyRate * Math.pow(1 + monthlyRate, targetMonths);
-    const denominator = Math.pow(1 + monthlyRate, targetMonths) - 1;
-    return principal * (numerator / denominator);
+  /**
+   * Calculates the initial minimum payment required to payoff loan in targetYears
+   * using the dynamic payment model approximation.
+   * Uses binary search over initial payment amount.
+   */
+  const calcPaymentForTargetYears = (principal, aprPercent, targetYears, maxIterations = 50) => {
+    const targetMonths = Math.round(targetYears * 12);
+    let low = MIN_PAYMENT_FLOOR;
+    let high = principal * 0.1; // arbitrary upper bound (10% of balance)
+
+    for (let i = 0; i < maxIterations; i++) {
+      const midPayment = (low + high) / 2;
+      const sim = simulateDynamicPayment(principal, aprPercent, midPayment, targetMonths + 12);
+
+      if (!sim.canPayOff) {
+        low = midPayment * 1.1; // increase payment guess
+        continue;
+      }
+
+      if (sim.months > targetMonths) {
+        low = midPayment;
+      } else if (sim.months < targetMonths) {
+        high = midPayment;
+      } else {
+        return midPayment;
+      }
+    }
+    return (low + high) / 2; // best guess
   };
 
-  // Validate inputs for enabling submit
+  // Determines if form can be submitted
   const canSubmit = () => {
     const p = parseNumber(balance);
     const a = parseNumber(apr);
@@ -119,38 +169,43 @@ const CreditCardCalculator = () => {
     }
 
     if (inputAPR && inputAPR > 0) {
-      const monthlyRate = inputAPR / 100 / 12;
+      // APR known: simulate payoff with dynamic payments
       const monthsTarget = target && target > 0 ? Math.round(target * 12) : 360; // default 30 years
-      const fixedPayment = calcFixedPaymentForTargetYears(principal, monthlyRate, monthsTarget);
+      const initialPayment = inputMinPayment && inputMinPayment > 0 ? inputMinPayment : MIN_PAYMENT_FLOOR;
 
-      const sim = simulateFixedPayment(principal, monthlyRate, fixedPayment, monthsTarget);
+      const sim = simulateDynamicPayment(principal, inputAPR, initialPayment, monthsTarget + 24);
 
       if (!sim.canPayOff) {
         setErrorMsg('Payment too low to pay off balance in target time.');
         return;
       }
 
+      let paymentToShow = sim.firstMinPayment;
+      if (target && target > 0) {
+        // Calculate payment needed to hit target exactly
+        paymentToShow = calcPaymentForTargetYears(principal, inputAPR, target);
+      }
+
       setResultData({
         payoffMonths: sim.months,
         totalInterest: sim.totalInterest.toFixed(2),
         totalPaid: sim.totalPaid.toFixed(2),
-        firstMinPayment: fixedPayment.toFixed(2),
+        firstMinPayment: paymentToShow.toFixed(2),
       });
       setResultsVisible(true);
       return;
     }
 
     if ((inputAPR === 0 || isNaN(inputAPR)) && inputMinPayment && inputMinPayment > 0) {
-      // Estimate APR based on min payment, default target 30 years
-      const estimatedAPR = estimateAPR(principal, inputMinPayment, 360);
+      // APR unknown: estimate APR by simulating dynamic payments
+      const estimatedAPR = estimateAPR(principal, inputMinPayment);
 
       if (estimatedAPR <= 0) {
         setErrorMsg('Unable to estimate APR with given inputs.');
         return;
       }
 
-      const monthlyRate = estimatedAPR / 100 / 12;
-      const sim = simulateFixedPayment(principal, monthlyRate, inputMinPayment);
+      const sim = simulateDynamicPayment(principal, estimatedAPR, inputMinPayment);
 
       if (!sim.canPayOff) {
         setErrorMsg('Minimum payment too low to ever pay off the balance.');
