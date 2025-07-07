@@ -16,25 +16,31 @@ const CreditCardCalculator = () => {
   const [errorMsg, setErrorMsg] = useState('');
   const [aprEstimated, setAprEstimated] = useState(false);
 
-  const minPercentForEstimation = 0.015; // 1.5%, no floor in APR estimation
+  const minPercent = 0.015; // 1.5% typical credit card min % rate
+  const fixedFloor = 25;    // £25 minimum payment floor
 
   const parseNumber = (val) => {
     if (!val) return NaN;
     return parseFloat(val.toString().replace(/,/g, ''));
   };
 
-  // Simulate full payoff with fixed monthly payment, return payoff months & total interest
-  const simulateFixedPayment = (principal, monthlyRate, fixedPayment) => {
+  // Simulate payoff with declining min payments: max(floor, minPercent*remaining) + interest
+  const simulateDecliningPayments = (principal, monthlyRate, minPercent, fixedFloor) => {
     let remaining = principal;
     let months = 0;
     let totalInterest = 0;
+    let firstMinPayment = 0;
 
     while (remaining > 0 && months < 1000) {
       const interest = remaining * monthlyRate;
       totalInterest += interest;
 
-      const principalPaid = fixedPayment - interest;
+      const principalPart = Math.max(fixedFloor, remaining * minPercent);
+      const payment = interest + principalPart;
 
+      if (months === 0) firstMinPayment = payment;
+
+      const principalPaid = payment - interest;
       if (principalPaid <= 0) return { canPayOff: false };
 
       remaining -= principalPaid;
@@ -46,39 +52,39 @@ const CreditCardCalculator = () => {
       months,
       totalInterest,
       totalPaid: principal + totalInterest,
-      firstMinPayment: fixedPayment,
+      firstMinPayment,
     };
   };
 
-  // Estimate APR by binary searching for monthly rate that results in simulation payoff time
-  const estimateAPR = (principal, minPayment) => {
+  // Estimate APR by binary searching APR that results in payoff using declining payment model to match user min payment
+  const estimateAPR = (principal, userMinPayment) => {
     let low = 0;
-    let high = 0.5 / 12; // max ~4.17% monthly = 50% APR
+    let high = 0.5 / 12; // max monthly rate ~4.17% (50% APR)
     let mid = 0;
     const maxIterations = 100;
-    const toleranceMonths = 1;
+    const tolerance = 0.1;
 
     for (let i = 0; i < maxIterations; i++) {
       mid = (low + high) / 2;
-      const sim = simulateFixedPayment(principal, mid, minPayment);
+
+      const sim = simulateDecliningPayments(principal, mid, minPercent, fixedFloor);
 
       if (!sim.canPayOff) {
         high = mid;
         continue;
       }
 
-      // Target payoff months for estimate is unknown, so instead try to find APR whose first min payment equals user's
-      // Here, we can try to stabilize around a reasonable payoff period ~360 months (30 years) as a heuristic
+      // We want firstMinPayment close to userMinPayment, so compare these:
+      const diff = sim.firstMinPayment - userMinPayment;
 
-      // We'll just look at canPayOff - if it can pay off, check if months is plausible
+      if (Math.abs(diff) < tolerance) {
+        return mid * 12 * 100;
+      }
 
-      if (sim.months > 360) {
-        low = mid;
-      } else if (sim.months < 60) {
+      if (diff > 0) {
         high = mid;
       } else {
-        // Within 5 years range of payoff — accept it
-        return mid * 12 * 100;
+        low = mid;
       }
     }
 
@@ -107,13 +113,9 @@ const CreditCardCalculator = () => {
     }
 
     if (inputAPR && inputAPR > 0) {
-      // Use APR to simulate payoff with default min payment = interest + 1.5% principal (with floor)
       const monthlyRate = inputAPR / 100 / 12;
 
-      // Calculate initial min payment as interest + 1.5% principal part or floor £30 whichever is larger
-      const initialMinPayment = Math.max(30, principal * 0.015) + principal * monthlyRate;
-
-      const sim = simulateFixedPayment(principal, monthlyRate, initialMinPayment);
+      const sim = simulateDecliningPayments(principal, monthlyRate, minPercent, fixedFloor);
 
       if (!sim.canPayOff) {
         setErrorMsg('Minimum payment too low to ever pay off the balance.');
@@ -124,14 +126,13 @@ const CreditCardCalculator = () => {
         payoffMonths: sim.months,
         totalInterest: sim.totalInterest.toFixed(2),
         totalPaid: sim.totalPaid.toFixed(2),
-        firstMinPayment: initialMinPayment.toFixed(2),
+        firstMinPayment: sim.firstMinPayment.toFixed(2),
       });
 
       setAprEstimated(false);
       setResultsVisible(true);
       return;
     } else if (inputMinPayment && inputMinPayment > 0) {
-      // Estimate APR by binary searching monthly rate to match fixed monthly payment and payoff in reasonable time
       const estimatedAPR = estimateAPR(principal, inputMinPayment);
 
       if (estimatedAPR <= 0) {
@@ -140,7 +141,7 @@ const CreditCardCalculator = () => {
       }
 
       const monthlyRate = estimatedAPR / 100 / 12;
-      const sim = simulateFixedPayment(principal, monthlyRate, inputMinPayment);
+      const sim = simulateDecliningPayments(principal, monthlyRate, minPercent, fixedFloor);
 
       if (!sim.canPayOff) {
         setErrorMsg('Minimum payment too low to ever pay off the balance.');
