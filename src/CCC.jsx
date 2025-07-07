@@ -253,3 +253,76 @@ const CreditCardCalculator = () => {
                 spellCheck="false"
               />
               <button type="button" className="clear-btn" onClick={() => setMinPayment('')}>
+                Clear
+              </button>
+            </div>
+          )}
+
+          {errorMsg && (
+            <p style={{ color: 'red', fontWeight: 'bold', marginTop: '0.5rem' }}>{errorMsg}</p>
+          )}
+
+          <div className="button-row" style={{ display: 'flex', gap: '0.5rem' }}>
+            <button
+              className="submit-btn ccc"
+              type="submit"
+              style={{ flex: 1 }}
+              disabled={!canSubmit()}
+              title={!canSubmit() ? 'Enter Amount Outstanding plus APR or Minimum Payment' : 'Submit'}
+            >
+              Submit
+            </button>
+            <button type="button" className="reset-btn" onClick={resetAll} style={{ flex: 1 }}>
+              Reset All
+            </button>
+          </div>
+        </form>
+
+        {resultsVisible && (
+          <div className="results-box">
+            <p>
+              <strong>Initial Minimum Payment:</strong> £
+              {parseFloat(resultData.firstMinPayment).toLocaleString(undefined, { minimumFractionDigits: 2 })}
+            </p>
+
+            <p>
+              <strong>Estimated Payoff Time:</strong> {(resultData.payoffMonths / 12).toFixed(1)} years
+            </p>
+
+            <p>
+              <strong>Total Interest Paid:</strong> £
+              {parseFloat(resultData.totalInterest).toLocaleString(undefined, { minimumFractionDigits: 2 })}
+            </p>
+
+            <p>
+              <strong>Total Paid:</strong> £
+              {parseFloat(resultData.totalPaid).toLocaleString(undefined, { minimumFractionDigits: 2 })}
+            </p>
+
+            <PieChart
+              interest={parseFloat(resultData.totalInterest)}
+              principal={parseFloat(balance.replace(/,/g, ''))}
+              colors={['#ff4d4f', '#4aa4e3']}
+            />
+
+            <p
+              className="chart-labels"
+              style={{ marginTop: '0.8rem', display: 'flex', justifyContent: 'center', gap: '2rem' }}
+            >
+              <span style={{ color: '#ff4d4f', fontWeight: 'bold' }}>Interest Paid</span>
+              <span style={{ color: '#4aa4e3', fontWeight: 'bold' }}>Principal Paid</span>
+            </p>
+
+            {aprEstimated && (
+              <p style={{ color: '#cc0000', marginTop: '1rem' }}>
+                * APR estimated from Amount Outstanding and entered Minimum Payment
+              </p>
+            )}
+          </div>
+        )}
+      </div>
+    </>
+  );
+};
+
+export default CreditCardCalculator;
