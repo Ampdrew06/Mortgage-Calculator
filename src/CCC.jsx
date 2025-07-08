@@ -29,7 +29,6 @@ const CreditCardCalculator = () => {
     return isNaN(num) ? NaN : num;
   };
 
-  // Calculates the fixed payment to pay off principal in given months with given interest rate
   const calculateFixedPayment = (principal, monthlyRate, months) => {
     if (months <= 0) return 0;
     if (monthlyRate === 0) return principal / months;
@@ -38,7 +37,6 @@ const CreditCardCalculator = () => {
     return principal * (numerator / denominator);
   };
 
-  // Simulate month-by-month payoff
   const simulatePayoff = (
     principal,
     annualRate,
@@ -121,6 +119,14 @@ const CreditCardCalculator = () => {
     const overpayment = parseNumber(overpaymentInput) || 0;
     const targetYears = parseNumber(targetYearsInput);
 
+    console.log("Submit clicked with values:", {
+      principal,
+      apr,
+      minPayment,
+      overpayment,
+      targetYears,
+    });
+
     if (!principal || principal <= 0) {
       setErrorMsg("Please enter a valid Amount Outstanding.");
       return;
@@ -142,6 +148,8 @@ const CreditCardCalculator = () => {
       overpayment,
       targetMonths
     );
+
+    console.log("Simulation result:", sim);
 
     if (!sim.canPayOff) {
       setErrorMsg("Payment too low to ever pay off the balance.");
@@ -182,7 +190,7 @@ const CreditCardCalculator = () => {
   return (
     <>
       <div className="header-box">
-        <h2>Credit Card Calculator</h2>
+        <h2>Credit Card Calculator - Version 3 (Debug)</h2>
       </div>
 
       <div className="container">
@@ -349,6 +357,15 @@ const CreditCardCalculator = () => {
             </button>
           </div>
         </form>
+
+        <div style={{ color: "blue", marginTop: "1rem" }}>
+          <p>Debug Inputs:</p>
+          <p>Balance: {balance}</p>
+          <p>APR Input: {aprInput}</p>
+          <p>Min Payment Input: {minPaymentInput}</p>
+          <p>Overpayment Input: {overpaymentInput}</p>
+          <p>Target Years Input: {targetYearsInput}</p>
+        </div>
 
         {resultsVisible && (
           <div className="results-box">
