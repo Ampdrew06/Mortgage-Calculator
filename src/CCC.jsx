@@ -67,9 +67,11 @@ const CreditCardCalculator = () => {
         if (months === 0 && initialMinPayment > 0) {
           payment = initialMinPayment + (overpayment > 0 ? overpayment : 0);
         } else {
-          // Simplified min payment logic without adding interest separately
-          const dynamicMinPayment =
-            Math.max(remaining * MIN_PAYMENT_PERCENT, MIN_PAYMENT_FLOOR);
+          // Updated minimum payment logic to ensure payment covers interest + floor or percent of balance
+          const dynamicMinPayment = Math.max(
+            remaining * MIN_PAYMENT_PERCENT,
+            interest + MIN_PAYMENT_FLOOR
+          );
           payment = dynamicMinPayment + (overpayment > 0 ? overpayment : 0);
         }
       }
@@ -129,8 +131,9 @@ const CreditCardCalculator = () => {
       targetYears && targetYears > 0 ? Math.round(targetYears * 12) : null;
 
     if (!minPayment || minPayment <= 0) {
-      // Auto-calc initial min payment using simplified logic
-      minPayment = Math.max(principal * MIN_PAYMENT_PERCENT, MIN_PAYMENT_FLOOR);
+      const monthlyRate = apr / 12 / 100;
+      const interest = principal * monthlyRate;
+      minPayment = Math.max(principal * MIN_PAYMENT_PERCENT, interest + MIN_PAYMENT_FLOOR);
     }
 
     const sim = simulatePayoff(
