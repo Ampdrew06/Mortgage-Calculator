@@ -19,7 +19,7 @@ const CreditCardCalculator = () => {
     fixedPaymentForTarget: null,
   });
 
-  const MIN_PAYMENT_PERCENT = 0.0156; // 1.56%
+  const MIN_PAYMENT_PERCENT = 0.01; // 1% of balance
   const MIN_PAYMENT_FLOOR = 25;
 
   const parseNumber = (val) => {
@@ -67,10 +67,9 @@ const CreditCardCalculator = () => {
         if (months === 0 && initialMinPayment > 0) {
           payment = initialMinPayment + (overpayment > 0 ? overpayment : 0);
         } else {
-          const dynamicMinPayment = Math.max(
-            MIN_PAYMENT_FLOOR,
-            remaining * MIN_PAYMENT_PERCENT
-          );
+          // New improved min payment logic:
+          const dynamicMinPayment =
+            interest + Math.max(remaining * MIN_PAYMENT_PERCENT, MIN_PAYMENT_FLOOR);
           payment = dynamicMinPayment + (overpayment > 0 ? overpayment : 0);
         }
       }
@@ -119,14 +118,6 @@ const CreditCardCalculator = () => {
     const overpayment = parseNumber(overpaymentInput) || 0;
     const targetYears = parseNumber(targetYearsInput);
 
-    console.log("Submit clicked with values:", {
-      principal,
-      apr,
-      minPayment,
-      overpayment,
-      targetYears,
-    });
-
     if (!principal || principal <= 0) {
       setErrorMsg("Please enter a valid Amount Outstanding.");
       return;
@@ -138,7 +129,10 @@ const CreditCardCalculator = () => {
       targetYears && targetYears > 0 ? Math.round(targetYears * 12) : null;
 
     if (!minPayment || minPayment <= 0) {
-      minPayment = Math.max(MIN_PAYMENT_FLOOR, principal * MIN_PAYMENT_PERCENT);
+      // Auto-calc initial min payment using new logic:
+      const monthlyRate = apr / 12 / 100;
+      const interest = principal * monthlyRate;
+      minPayment = interest + Math.max(principal * MIN_PAYMENT_PERCENT, MIN_PAYMENT_FLOOR);
     }
 
     const sim = simulatePayoff(
@@ -148,8 +142,6 @@ const CreditCardCalculator = () => {
       overpayment,
       targetMonths
     );
-
-    console.log("Simulation result:", sim);
 
     if (!sim.canPayOff) {
       setErrorMsg("Payment too low to ever pay off the balance.");
@@ -190,7 +182,7 @@ const CreditCardCalculator = () => {
   return (
     <>
       <div className="header-box">
-        <h2>Credit Card Calculator - Version 3 (Debug)</h2>
+        <h2>Credit Card Calculator</h2>
       </div>
 
       <div className="container">
@@ -357,15 +349,6 @@ const CreditCardCalculator = () => {
             </button>
           </div>
         </form>
-
-        <div style={{ color: "blue", marginTop: "1rem" }}>
-          <p>Debug Inputs:</p>
-          <p>Balance: {balance}</p>
-          <p>APR Input: {aprInput}</p>
-          <p>Min Payment Input: {minPaymentInput}</p>
-          <p>Overpayment Input: {overpaymentInput}</p>
-          <p>Target Years Input: {targetYearsInput}</p>
-        </div>
 
         {resultsVisible && (
           <div className="results-box">
