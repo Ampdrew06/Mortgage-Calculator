@@ -11,12 +11,8 @@ const CreditCardCalculator = () => {
 
   const [errorMsg, setErrorMsg] = useState("");
   const [resultsVisible, setResultsVisible] = useState(false);
-  const [resultData, setResultData] = useState({
-    payoffMonths: 0,
-    totalInterest: 0,
-    totalPaid: 0,
-    initialMinPayment: 0,
-  });
+  const [userSimData, setUserSimData] = useState(null);
+  const [suggestedSimData, setSuggestedSimData] = useState(null);
 
   const parseNumber = (val) => {
     if (!val) return NaN;
@@ -30,7 +26,7 @@ const CreditCardCalculator = () => {
     annualRate,
     floorPayment,
     minPercent,
-    userMinPayment,
+    paymentOverride,
     overpayment,
     targetMonths
   ) => {
@@ -40,8 +36,8 @@ const CreditCardCalculator = () => {
     let totalInterest = 0;
 
     const initialMinPayment =
-      userMinPayment && userMinPayment > 0
-        ? userMinPayment
+      paymentOverride && paymentOverride > 0
+        ? paymentOverride
         : Math.max(floorPayment, balance * minPercent);
 
     const initialBalance = balance;
@@ -54,7 +50,7 @@ const CreditCardCalculator = () => {
       const currentMinPayment = Math.max(floorPayment, balance * minPercent);
 
       let payment =
-        months === 0 && userMinPayment && userMinPayment > 0
+        months === 0 && paymentOverride && paymentOverride > 0
           ? initialMinPayment + (overpayment > 0 ? overpayment : 0)
           : currentMinPayment + (overpayment > 0 ? overpayment : 0);
 
@@ -90,6 +86,8 @@ const CreditCardCalculator = () => {
     e.preventDefault();
     setErrorMsg("");
     setResultsVisible(false);
+    setUserSimData(null);
+    setSuggestedSimData(null);
 
     const principal = parseNumber(balance);
     let apr = parseNumber(aprInput);
@@ -108,7 +106,11 @@ const CreditCardCalculator = () => {
     const floorPayment = 25; // floor minimum payment £25
     const minPercent = 0.015; // 1.5% min payment
 
-    const sim = simulatePayoff(
+    // Monthly interest for warning and suggestion
+    const monthlyInterest = principal * (apr / 100) / 12;
+
+    // Simulate with user payment if provided, else auto-calc first payment
+    const simUser = simulatePayoff(
       principal,
       apr,
       floorPayment,
@@ -118,22 +120,41 @@ const CreditCardCalculator = () => {
       targetMonths
     );
 
-    if (sim.growingDebt) {
+    // Simulate with suggested minimum payment = monthlyInterest * 1.01 (1% buffer)
+    const suggestedPayment = monthlyInterest * 1.01;
+    const simSuggested = simulatePayoff(
+      principal,
+      apr,
+      floorPayment,
+      minPercent,
+      suggestedPayment,
+      overpayment,
+      targetMonths
+    );
+
+    if (simUser.growingDebt) {
+      // Show warning with both results
       setErrorMsg(
-        `Payment too low to pay off balance; debt grows. Balance after simulation: £${sim.balanceRemaining.toFixed(
+        `Your entered minimum payment (£${userMinPayment?.toFixed(
           2
-        )}`
+        )}) is less than the monthly interest (£${monthlyInterest.toFixed(
+          2
+        )}). Paying only this amount will increase your debt over time.\n\n` +
+          `Estimated payoff time with your payment: >1000 months (debt grows).\n` +
+          `Suggested minimum payment to pay off in ${(
+            simSuggested.payoffMonths / 12
+          ).toFixed(1)} years: £${simSuggested.initialMinPayment.toFixed(2)}`
       );
+      setUserSimData(simUser);
+      setSuggestedSimData(simSuggested);
+      setAprInput(apr.toFixed(2));
+      setResultsVisible(true);
       return;
     }
 
-    setResultData({
-      payoffMonths: sim.payoffMonths,
-      totalInterest: sim.totalInterest.toFixed(2),
-      totalPaid: sim.totalPaid.toFixed(2),
-      initialMinPayment: sim.initialMinPayment.toFixed(2),
-    });
-
+    // No growing debt — just normal results with user payment
+    setUserSimData(simUser);
+    setSuggestedSimData(null);
     setAprInput(apr.toFixed(2));
     setResultsVisible(true);
   };
@@ -146,12 +167,8 @@ const CreditCardCalculator = () => {
     setTargetYearsInput("");
     setErrorMsg("");
     setResultsVisible(false);
-    setResultData({
-      payoffMonths: 0,
-      totalInterest: 0,
-      totalPaid: 0,
-      initialMinPayment: 0,
-    });
+    setUserSimData(null);
+    setSuggestedSimData(null);
   };
 
   return (
@@ -272,7 +289,7 @@ const CreditCardCalculator = () => {
           </div>
 
           {errorMsg && (
-            <p style={{ color: "red", fontWeight: "bold", marginTop: "0.5rem" }}>
+            <p style={{ color: "red", fontWeight: "bold", marginTop: "0.5rem", whiteSpace: "pre-line" }}>
               {errorMsg}
             </p>
           )}
@@ -281,17 +298,22 @@ const CreditCardCalculator = () => {
             <button
               className="submit-btn ccc"
               type="submit"
-              disabled={!canSubmit()}
+              disabled={!balance || (!aprInput && !minPaymentInput)}
               title={
-                !canSubmit()
-                  ? "Enter Amount Outstanding and APR or Min Payment"
+                !balance || (!aprInput && !minPaymentInput)
+                  ? "Enter Amount Outstanding and APR or Minimum Payment"
                   : "Submit"
               }
               style={{ flex: 1 }}
             >
               Submit
             </button>
-            <button type="button" className="reset-btn" onClick={resetAll} style={{ flex: 1 }}>
+            <button
+              type="button"
+              className="reset-btn"
+              onClick={resetAll}
+              style={{ flex: 1 }}
+            >
               Reset All
             </button>
           </div>
@@ -300,28 +322,55 @@ const CreditCardCalculator = () => {
         {resultsVisible && (
           <div className="results-box">
             <p>
-              <strong>APR Used:</strong> {aprInput}%
+              <strong>APR Used:</strong> {aprInput ? aprInput : "25"}%
             </p>
+
             <p>
-              <strong>Initial Minimum Payment:</strong> £{resultData.initialMinPayment}
+              <strong>Initial Minimum Payment:</strong> £
+              {userSimData?.initialMinPayment || "N/A"}
             </p>
+
             <p>
-              <strong>Estimated Payoff Time:</strong> {(resultData.payoffMonths / 12).toFixed(1)} years
+              <strong>Estimated Payoff Time with your payment:</strong>{" "}
+              {userSimData
+                ? (userSimData.payoffMonths / 12).toFixed(1) + " years"
+                : "N/A"}
             </p>
+
+            {suggestedSimData && (
+              <>
+                <p>
+                  <strong>Suggested Minimum Payment (to avoid debt growth):</strong> £
+                  {suggestedSimData.initialMinPayment}
+                </p>
+
+                <p>
+                  <strong>Estimated Payoff Time with suggested payment:</strong>{" "}
+                  {(suggestedSimData.payoffMonths / 12).toFixed(1)} years
+                </p>
+              </>
+            )}
+
             <p>
               <strong>Total Interest Paid:</strong> £
-              {parseFloat(resultData.totalInterest).toLocaleString(undefined, { minimumFractionDigits: 2 })}
+              {userSimData
+                ? parseFloat(userSimData.totalInterest).toLocaleString(undefined, { minimumFractionDigits: 2 })
+                : "N/A"}
             </p>
             <p>
               <strong>Total Paid:</strong> £
-              {parseFloat(resultData.totalPaid).toLocaleString(undefined, { minimumFractionDigits: 2 })}
+              {userSimData
+                ? parseFloat(userSimData.totalPaid).toLocaleString(undefined, { minimumFractionDigits: 2 })
+                : "N/A"}
             </p>
 
-            <PieChart
-              interest={parseFloat(resultData.totalInterest)}
-              principal={parseFloat(balance.replace(/,/g, ""))}
-              colors={["#ff4d4f", "#4aa4e3"]}
-            />
+            {userSimData && (
+              <PieChart
+                interest={parseFloat(userSimData.totalInterest)}
+                principal={parseFloat(balance.replace(/,/g, ""))}
+                colors={["#ff4d4f", "#4aa4e3"]}
+              />
+            )}
 
             <p
               className="chart-labels"
