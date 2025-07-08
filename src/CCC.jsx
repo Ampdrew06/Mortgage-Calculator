@@ -25,44 +25,70 @@ const CreditCardCalculator = () => {
     return isNaN(num) ? NaN : num;
   };
 
-  // Simulate payoff using a fixed monthly payment (user input or auto-calculated)
-  const simulatePayoffFixedPayment = (
+  // Simulate payoff month-by-month with Barclaycard-like min payment
+  const simulateBarclaycard = (
     principal,
     annualRate,
-    monthlyPayment,
-    overpayment
+    floorPayment,
+    minPercent,
+    userMinPayment,
+    overpayment,
+    targetMonths
   ) => {
     const monthlyRate = annualRate / 12 / 100;
-    let remaining = principal;
+    let balance = principal;
     let months = 0;
     let totalInterest = 0;
 
-    const totalMonthlyPayment = monthlyPayment + (overpayment > 0 ? overpayment : 0);
+    // If user provided min payment, use it as initial payment
+    const initialMinPayment = userMinPayment && userMinPayment > 0
+      ? userMinPayment
+      : Math.max(floorPayment, balance * minPercent);
 
-    while (remaining > 0 && months < 1000) {
-      const interest = remaining * monthlyRate;
+    while (balance > 0 && months < 1000) {
+      // 1. Add interest on current balance
+      const interest = balance * monthlyRate;
       totalInterest += interest;
+      balance += interest;
 
-      if (totalMonthlyPayment < interest) {
-        // Payment too low to cover interest
+      // 2. Calculate current min payment (floor or percent of balance)
+      const currentMinPayment = Math.max(floorPayment, balance * minPercent);
+
+      // 3. Payment amount this month = user first payment on month 0, else currentMinPayment + overpayment
+      let payment =
+        months === 0 && userMinPayment && userMinPayment > 0
+          ? initialMinPayment + (overpayment > 0 ? overpayment : 0)
+          : currentMinPayment + (overpayment > 0 ? overpayment : 0);
+
+      // 4. If payment less than interest, cannot pay off
+      if (payment < interest) {
         return {
           canPayOff: false,
           payoffMonths: months,
           totalInterest,
           totalPaid: principal + totalInterest,
+          initialMinPayment,
         };
       }
 
-      const principalPaid = totalMonthlyPayment - interest;
-      remaining -= principalPaid;
+      // 5. Subtract payment
+      balance -= payment;
+      if (balance < 0) balance = 0;
+
       months++;
+
+      // 6. If target months given, stop simulation at target
+      if (targetMonths && months >= targetMonths) {
+        break;
+      }
     }
 
     return {
-      canPayOff: remaining <= 0,
+      canPayOff: balance <= 0,
       payoffMonths: months,
       totalInterest,
       totalPaid: principal + totalInterest,
+      initialMinPayment,
     };
   };
 
@@ -80,8 +106,10 @@ const CreditCardCalculator = () => {
 
     const principal = parseNumber(balance);
     let apr = parseNumber(aprInput);
-    let minPayment = parseNumber(minPaymentInput);
+    const userMinPayment = parseNumber(minPaymentInput);
     const overpayment = parseNumber(overpaymentInput) || 0;
+    const targetYears = parseNumber(targetYearsInput);
+    const targetMonths = targetYears && targetYears > 0 ? Math.round(targetYears * 12) : null;
 
     if (!principal || principal <= 0) {
       setErrorMsg("Please enter a valid Amount Outstanding.");
@@ -90,13 +118,18 @@ const CreditCardCalculator = () => {
 
     if (!apr || apr <= 0) apr = 25;
 
-    if (!minPayment || minPayment <= 0) {
-      const monthlyRate = apr / 12 / 100;
-      const interest = principal * monthlyRate;
-      minPayment = interest + principal * 0.015; // interest + 1.5% principal
-    }
+    const floorPayment = 25; // typical minimum floor payment
+    const minPercent = 0.015; // 1.5% of balance minimum payment
 
-    const sim = simulatePayoffFixedPayment(principal, apr, minPayment, overpayment);
+    const sim = simulateBarclaycard(
+      principal,
+      apr,
+      floorPayment,
+      minPercent,
+      userMinPayment,
+      overpayment,
+      targetMonths
+    );
 
     if (!sim.canPayOff) {
       setErrorMsg("Payment too low to ever pay off the balance.");
@@ -107,7 +140,7 @@ const CreditCardCalculator = () => {
       payoffMonths: sim.payoffMonths,
       totalInterest: sim.totalInterest.toFixed(2),
       totalPaid: sim.totalPaid.toFixed(2),
-      initialMinPayment: minPayment.toFixed(2),
+      initialMinPayment: sim.initialMinPayment.toFixed(2),
     });
 
     setAprInput(apr.toFixed(2));
@@ -236,6 +269,32 @@ const CreditCardCalculator = () => {
               type="button"
               className="clear-btn"
               onClick={() => setOverpaymentInput("")}
+            >
+              Clear
+            </button>
+          </div>
+
+          <div className="input-row">
+            <label htmlFor="target-years-input">Target Payoff Time (Years, optional)</label>
+            <input
+              id="target-years-input"
+              type="text"
+              inputMode="decimal"
+              placeholder="Leave blank if no target"
+              value={targetYearsInput}
+              onChange={(e) => {
+                setTargetYearsInput(e.target.value);
+                setErrorMsg("");
+                setResultsVisible(false);
+              }}
+              autoComplete="off"
+              autoCorrect="off"
+              spellCheck="false"
+            />
+            <button
+              type="button"
+              className="clear-btn"
+              onClick={() => setTargetYearsInput("")}
             >
               Clear
             </button>
