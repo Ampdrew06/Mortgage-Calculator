@@ -19,7 +19,6 @@ const CreditCardCalculator = () => {
     fixedPaymentForTarget: null,
   });
 
-  // Constants for minimum payment calculation
   const MIN_PAYMENT_FLOOR = 25;
   const MIN_PAYMENT_PERCENT = 0.015; // 1.5%
 
@@ -38,11 +37,11 @@ const CreditCardCalculator = () => {
     return principal * (numerator / denominator);
   };
 
-  // Simulates payoff month-by-month
-  // Uses minPaymentInput only for the first month payment (initial payment)
-  // Subsequent months min payment is dynamically calculated as max floor or percent of balance
-  // Adds overpayment each month if specified
-  // If targetMonths given, uses fixed payment calculated for that target (plus overpayment)
+  // Updated simulatePayoff function:
+  // Minimum monthly payment is now max(floor, percent of balance + interest)
+  // User input min payment used only for first month
+  // Overpayment added each month
+  // Target months fixed payment if target set
   const simulatePayoff = (principal, annualRate, initialMinPayment, overpayment, targetMonths) => {
     const monthlyRate = annualRate / 12 / 100;
     let remaining = principal;
@@ -65,11 +64,13 @@ const CreditCardCalculator = () => {
         payment = fixedPayment;
       } else {
         if (months === 0 && initialMinPayment > 0) {
-          // Use user input MMP for first payment
           payment = initialMinPayment + (overpayment > 0 ? overpayment : 0);
         } else {
-          // For subsequent months calculate min payment dynamically
-          const dynamicMinPayment = Math.max(MIN_PAYMENT_FLOOR, remaining * MIN_PAYMENT_PERCENT);
+          // Add interest to min payment calculation (key change)
+          const dynamicMinPayment = Math.max(
+            MIN_PAYMENT_FLOOR,
+            remaining * MIN_PAYMENT_PERCENT + interest
+          );
           payment = dynamicMinPayment + (overpayment > 0 ? overpayment : 0);
         }
       }
@@ -127,7 +128,6 @@ const CreditCardCalculator = () => {
 
     const targetMonths = targetYears && targetYears > 0 ? Math.round(targetYears * 12) : null;
 
-    // If user left minPayment blank, calculate it for first month as max floor or 1.5% balance
     if (!minPayment || minPayment <= 0) {
       minPayment = Math.max(MIN_PAYMENT_FLOOR, principal * MIN_PAYMENT_PERCENT);
     }
