@@ -133,17 +133,18 @@ const CreditCardCalculator = () => {
     );
 
     if (simUser.growingDebt) {
-      // Show warning with both results
+      // Fix display for NaN min payment
+      const enteredPaymentDisplay = !isNaN(userMinPayment) ? userMinPayment.toFixed(2) : "not entered";
+      const suggestedPaymentDisplay = simSuggested.initialMinPayment.toFixed(2);
+      const payoffYearsUser = simUser.payoffMonths ? simUser.payoffMonths / 12 : 0;
+      const payoffYearsSuggested = simSuggested.payoffMonths / 12;
+
       setErrorMsg(
-        `Your entered minimum payment (£${userMinPayment?.toFixed(
-          2
-        )}) is less than the monthly interest (£${monthlyInterest.toFixed(
+        `Your entered minimum payment (£${enteredPaymentDisplay}) is less than the monthly interest (£${monthlyInterest.toFixed(
           2
         )}). Paying only this amount will increase your debt over time.\n\n` +
-          `Estimated payoff time with your payment: >1000 months (debt grows).\n` +
-          `Suggested minimum payment to pay off in ${(
-            simSuggested.payoffMonths / 12
-          ).toFixed(1)} years: £${simSuggested.initialMinPayment.toFixed(2)}`
+          `Estimated payoff time with your payment: >${payoffYearsUser > 80 ? 80 : payoffYearsUser.toFixed(1)} years (debt grows).\n` +
+          `Suggested minimum payment to pay off in ${payoffYearsSuggested.toFixed(1)} years: £${suggestedPaymentDisplay}`
       );
       setUserSimData(simUser);
       setSuggestedSimData(simSuggested);
@@ -327,7 +328,9 @@ const CreditCardCalculator = () => {
 
             <p>
               <strong>Initial Minimum Payment:</strong> £
-              {userSimData?.initialMinPayment || "N/A"}
+              {userSimData?.initialMinPayment
+                ? userSimData.initialMinPayment.toFixed(2)
+                : "N/A"}
             </p>
 
             <p>
@@ -341,7 +344,7 @@ const CreditCardCalculator = () => {
               <>
                 <p>
                   <strong>Suggested Minimum Payment (to avoid debt growth):</strong> £
-                  {suggestedSimData.initialMinPayment}
+                  {suggestedSimData.initialMinPayment.toFixed(2)}
                 </p>
 
                 <p>
@@ -354,13 +357,17 @@ const CreditCardCalculator = () => {
             <p>
               <strong>Total Interest Paid:</strong> £
               {userSimData
-                ? parseFloat(userSimData.totalInterest).toLocaleString(undefined, { minimumFractionDigits: 2 })
+                ? parseFloat(userSimData.totalInterest).toLocaleString(undefined, {
+                    minimumFractionDigits: 2,
+                  })
                 : "N/A"}
             </p>
             <p>
               <strong>Total Paid:</strong> £
               {userSimData
-                ? parseFloat(userSimData.totalPaid).toLocaleString(undefined, { minimumFractionDigits: 2 })
+                ? parseFloat(userSimData.totalPaid).toLocaleString(undefined, {
+                    minimumFractionDigits: 2,
+                  })
                 : "N/A"}
             </p>
 
