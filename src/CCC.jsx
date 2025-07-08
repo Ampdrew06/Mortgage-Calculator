@@ -19,8 +19,9 @@ const CreditCardCalculator = () => {
     fixedPaymentForTarget: null,
   });
 
-  const MIN_PAYMENT_PERCENT = 0.015; // 1.5%
-  const MIN_PAYMENT_FLOOR = 25;
+  // Updated constants
+  const MIN_PAYMENT_PERCENT = 0.01; // 1.0%
+  const MIN_PAYMENT_FLOOR = 20; // £20 floor
 
   const parseNumber = (val) => {
     if (!val) return NaN;
@@ -67,7 +68,6 @@ const CreditCardCalculator = () => {
         if (months === 0 && initialMinPayment > 0) {
           payment = initialMinPayment + (overpayment > 0 ? overpayment : 0);
         } else {
-          // Updated minimum payment logic to ensure payment covers interest + floor or percent of balance
           const dynamicMinPayment = Math.max(
             remaining * MIN_PAYMENT_PERCENT,
             interest + MIN_PAYMENT_FLOOR
