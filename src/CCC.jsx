@@ -19,8 +19,8 @@ const CreditCardCalculator = () => {
     fixedPaymentForTarget: null,
   });
 
-  const MIN_PAYMENT_FLOOR = 25;
   const MIN_PAYMENT_PERCENT = 0.015; // 1.5%
+  const MIN_PAYMENT_FLOOR = 25;
 
   const parseNumber = (val) => {
     if (!val) return NaN;
@@ -37,11 +37,11 @@ const CreditCardCalculator = () => {
     return principal * (numerator / denominator);
   };
 
-  // Updated simulatePayoff function:
-  // Minimum monthly payment is now max(floor, percent of balance + interest)
-  // User input min payment used only for first month
-  // Overpayment added each month
-  // Target months fixed payment if target set
+  // Simulates payoff month-by-month
+  // Uses minPaymentInput only for the first payment
+  // Subsequent payments are max of floor or % balance (no interest added to payment)
+  // Interest accrues monthly and is deducted from payment
+  // Supports overpayment and optional fixed payment if targetMonths is set
   const simulatePayoff = (principal, annualRate, initialMinPayment, overpayment, targetMonths) => {
     const monthlyRate = annualRate / 12 / 100;
     let remaining = principal;
@@ -66,10 +66,9 @@ const CreditCardCalculator = () => {
         if (months === 0 && initialMinPayment > 0) {
           payment = initialMinPayment + (overpayment > 0 ? overpayment : 0);
         } else {
-          // Add interest to min payment calculation (key change)
           const dynamicMinPayment = Math.max(
             MIN_PAYMENT_FLOOR,
-            remaining * MIN_PAYMENT_PERCENT + interest
+            remaining * MIN_PAYMENT_PERCENT
           );
           payment = dynamicMinPayment + (overpayment > 0 ? overpayment : 0);
         }
