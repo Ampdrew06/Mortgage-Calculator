@@ -1,15 +1,15 @@
-import React, { useState } from 'react';
-import PieChart from './PieChart';
-import './App.css';
+import React, { useState } from "react";
+import PieChart from "./PieChart";
+import "./App.css";
 
 const CreditCardCalculator = () => {
-  const [balance, setBalance] = useState('');
-  const [aprInput, setAprInput] = useState('');
-  const [minPaymentInput, setMinPaymentInput] = useState('');
-  const [overpaymentInput, setOverpaymentInput] = useState('');
-  const [targetYearsInput, setTargetYearsInput] = useState('');
+  const [balance, setBalance] = useState("");
+  const [aprInput, setAprInput] = useState("");
+  const [minPaymentInput, setMinPaymentInput] = useState("");
+  const [overpaymentInput, setOverpaymentInput] = useState("");
+  const [targetYearsInput, setTargetYearsInput] = useState("");
 
-  const [errorMsg, setErrorMsg] = useState('');
+  const [errorMsg, setErrorMsg] = useState("");
   const [resultsVisible, setResultsVisible] = useState(false);
   const [resultData, setResultData] = useState({
     payoffMonths: 0,
@@ -19,17 +19,17 @@ const CreditCardCalculator = () => {
     fixedPaymentForTarget: null,
   });
 
-  // Tweak this percent to get ~£78 min payment on £5000 balance:
   const MIN_PAYMENT_PERCENT = 0.0156; // 1.56%
   const MIN_PAYMENT_FLOOR = 25;
 
   const parseNumber = (val) => {
     if (!val) return NaN;
-    const cleaned = val.toString().replace(/,/g, '').trim();
+    const cleaned = val.toString().replace(/,/g, "").trim();
     const num = parseFloat(cleaned);
     return isNaN(num) ? NaN : num;
   };
 
+  // Calculates the fixed payment to pay off principal in given months with given interest rate
   const calculateFixedPayment = (principal, monthlyRate, months) => {
     if (months <= 0) return 0;
     if (monthlyRate === 0) return principal / months;
@@ -38,8 +38,14 @@ const CreditCardCalculator = () => {
     return principal * (numerator / denominator);
   };
 
-  // Enhanced simulation with console logs for debugging:
-  const simulatePayoff = (principal, annualRate, initialMinPayment, overpayment, targetMonths) => {
+  // Simulate month-by-month payoff
+  const simulatePayoff = (
+    principal,
+    annualRate,
+    initialMinPayment,
+    overpayment,
+    targetMonths
+  ) => {
     const monthlyRate = annualRate / 12 / 100;
     let remaining = principal;
     let months = 0;
@@ -49,7 +55,6 @@ const CreditCardCalculator = () => {
     if (targetMonths && targetMonths > 0) {
       fixedPayment = calculateFixedPayment(principal, monthlyRate, targetMonths);
       if (overpayment > 0) fixedPayment += overpayment;
-      console.log(`Using fixed payment for target: £${fixedPayment.toFixed(2)} per month`);
     }
 
     while (remaining > 0 && months < 1000) {
@@ -72,9 +77,7 @@ const CreditCardCalculator = () => {
         }
       }
 
-      // Prevent payment < interest to avoid infinite loop:
       if (payment < interest) {
-        console.log(`Month ${months + 1}: Payment (£${payment.toFixed(2)}) < Interest (£${interest.toFixed(2)}). Cannot pay off.`);
         return {
           canPayOff: false,
           payoffMonths: months,
@@ -87,9 +90,6 @@ const CreditCardCalculator = () => {
 
       const principalPaid = payment - interest;
       remaining -= principalPaid;
-
-      console.log(`Month ${months + 1}: Payment £${payment.toFixed(2)}, Interest £${interest.toFixed(2)}, Principal Paid £${principalPaid.toFixed(2)}, Remaining £${remaining.toFixed(2)}`);
-
       months++;
     }
 
@@ -112,7 +112,7 @@ const CreditCardCalculator = () => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    setErrorMsg('');
+    setErrorMsg("");
     setResultsVisible(false);
 
     const principal = parseNumber(balance);
@@ -122,24 +122,29 @@ const CreditCardCalculator = () => {
     const targetYears = parseNumber(targetYearsInput);
 
     if (!principal || principal <= 0) {
-      setErrorMsg('Please enter a valid Amount Outstanding.');
+      setErrorMsg("Please enter a valid Amount Outstanding.");
       return;
     }
 
     if (!apr || apr <= 0) apr = 25;
 
-    const targetMonths = targetYears && targetYears > 0 ? Math.round(targetYears * 12) : null;
+    const targetMonths =
+      targetYears && targetYears > 0 ? Math.round(targetYears * 12) : null;
 
     if (!minPayment || minPayment <= 0) {
       minPayment = Math.max(MIN_PAYMENT_FLOOR, principal * MIN_PAYMENT_PERCENT);
     }
 
-    console.log(`Starting simulation with Principal: £${principal}, APR: ${apr}%, Initial Min Payment: £${minPayment}, Overpayment: £${overpayment}, Target Months: ${targetMonths}`);
-
-    const sim = simulatePayoff(principal, apr, minPayment, overpayment, targetMonths);
+    const sim = simulatePayoff(
+      principal,
+      apr,
+      minPayment,
+      overpayment,
+      targetMonths
+    );
 
     if (!sim.canPayOff) {
-      setErrorMsg('Payment too low to ever pay off the balance.');
+      setErrorMsg("Payment too low to ever pay off the balance.");
       return;
     }
 
@@ -148,20 +153,22 @@ const CreditCardCalculator = () => {
       totalInterest: sim.totalInterest.toFixed(2),
       totalPaid: sim.totalPaid.toFixed(2),
       initialMinPayment: sim.firstMonthMinPayment.toFixed(2),
-      fixedPaymentForTarget: sim.fixedPaymentForTarget ? sim.fixedPaymentForTarget.toFixed(2) : null,
+      fixedPaymentForTarget: sim.fixedPaymentForTarget
+        ? sim.fixedPaymentForTarget.toFixed(2)
+        : null,
     });
 
-    setApr(apr.toFixed(2));
+    setAprInput(apr.toFixed(2));
     setResultsVisible(true);
   };
 
   const resetAll = () => {
-    setBalance('');
-    setAprInput('');
-    setMinPaymentInput('');
-    setOverpaymentInput('');
-    setTargetYearsInput('');
-    setErrorMsg('');
+    setBalance("");
+    setAprInput("");
+    setMinPaymentInput("");
+    setOverpaymentInput("");
+    setTargetYearsInput("");
+    setErrorMsg("");
     setResultsVisible(false);
     setResultData({
       payoffMonths: 0,
@@ -180,7 +187,6 @@ const CreditCardCalculator = () => {
 
       <div className="container">
         <form autoComplete="off" onSubmit={handleSubmit}>
-
           <div className="input-row">
             <label htmlFor="balance-input">Amount Outstanding (£)</label>
             <input
@@ -188,12 +194,22 @@ const CreditCardCalculator = () => {
               type="text"
               inputMode="decimal"
               value={balance}
-              onChange={e => { setBalance(e.target.value); setErrorMsg(''); setResultsVisible(false); }}
+              onChange={(e) => {
+                setBalance(e.target.value);
+                setErrorMsg("");
+                setResultsVisible(false);
+              }}
               autoComplete="off"
               autoCorrect="off"
               spellCheck="false"
             />
-            <button type="button" className="clear-btn" onClick={() => setBalance('')}>Clear</button>
+            <button
+              type="button"
+              className="clear-btn"
+              onClick={() => setBalance("")}
+            >
+              Clear
+            </button>
           </div>
 
           <div className="input-row">
@@ -204,12 +220,22 @@ const CreditCardCalculator = () => {
               inputMode="decimal"
               placeholder="Enter if known or leave blank for 25%"
               value={aprInput}
-              onChange={e => { setAprInput(e.target.value); setErrorMsg(''); setResultsVisible(false); }}
+              onChange={(e) => {
+                setAprInput(e.target.value);
+                setErrorMsg("");
+                setResultsVisible(false);
+              }}
               autoComplete="off"
               autoCorrect="off"
               spellCheck="false"
             />
-            <button type="button" className="clear-btn" onClick={() => setAprInput('')}>Clear</button>
+            <button
+              type="button"
+              className="clear-btn"
+              onClick={() => setAprInput("")}
+            >
+              Clear
+            </button>
           </div>
 
           <div className="input-row">
@@ -220,12 +246,22 @@ const CreditCardCalculator = () => {
               inputMode="decimal"
               placeholder="Enter if known, or leave blank to auto-calc first payment"
               value={minPaymentInput}
-              onChange={e => { setMinPaymentInput(e.target.value); setErrorMsg(''); setResultsVisible(false); }}
+              onChange={(e) => {
+                setMinPaymentInput(e.target.value);
+                setErrorMsg("");
+                setResultsVisible(false);
+              }}
               autoComplete="off"
               autoCorrect="off"
               spellCheck="false"
             />
-            <button type="button" className="clear-btn" onClick={() => setMinPaymentInput('')}>Clear</button>
+            <button
+              type="button"
+              className="clear-btn"
+              onClick={() => setMinPaymentInput("")}
+            >
+              Clear
+            </button>
           </div>
 
           <div className="input-row">
@@ -236,12 +272,22 @@ const CreditCardCalculator = () => {
               inputMode="decimal"
               placeholder="Extra monthly payment"
               value={overpaymentInput}
-              onChange={e => { setOverpaymentInput(e.target.value); setErrorMsg(''); setResultsVisible(false); }}
+              onChange={(e) => {
+                setOverpaymentInput(e.target.value);
+                setErrorMsg("");
+                setResultsVisible(false);
+              }}
               autoComplete="off"
               autoCorrect="off"
               spellCheck="false"
             />
-            <button type="button" className="clear-btn" onClick={() => setOverpaymentInput('')}>Clear</button>
+            <button
+              type="button"
+              className="clear-btn"
+              onClick={() => setOverpaymentInput("")}
+            >
+              Clear
+            </button>
           </div>
 
           <div className="input-row">
@@ -252,24 +298,43 @@ const CreditCardCalculator = () => {
               inputMode="decimal"
               placeholder="Leave blank if no target"
               value={targetYearsInput}
-              onChange={e => { setTargetYearsInput(e.target.value); setErrorMsg(''); setResultsVisible(false); }}
+              onChange={(e) => {
+                setTargetYearsInput(e.target.value);
+                setErrorMsg("");
+                setResultsVisible(false);
+              }}
               autoComplete="off"
               autoCorrect="off"
               spellCheck="false"
             />
-            <button type="button" className="clear-btn" onClick={() => setTargetYearsInput('')}>Clear</button>
+            <button
+              type="button"
+              className="clear-btn"
+              onClick={() => setTargetYearsInput("")}
+            >
+              Clear
+            </button>
           </div>
 
           {errorMsg && (
-            <p style={{ color: 'red', fontWeight: 'bold', marginTop: '0.5rem' }}>{errorMsg}</p>
+            <p style={{ color: "red", fontWeight: "bold", marginTop: "0.5rem" }}>
+              {errorMsg}
+            </p>
           )}
 
-          <div className="button-row" style={{ display: 'flex', gap: '0.5rem' }}>
+          <div
+            className="button-row"
+            style={{ display: "flex", gap: "0.5rem" }}
+          >
             <button
               className="submit-btn ccc"
               type="submit"
               disabled={!canSubmit()}
-              title={!canSubmit() ? 'Enter Amount Outstanding and APR or Min Payment' : 'Submit'}
+              title={
+                !canSubmit()
+                  ? "Enter Amount Outstanding and APR or Min Payment"
+                  : "Submit"
+              }
               style={{ flex: 1 }}
             >
               Submit
@@ -287,24 +352,57 @@ const CreditCardCalculator = () => {
 
         {resultsVisible && (
           <div className="results-box">
-            <p><strong>APR Used:</strong> {apr}%</p>
-            <p><strong>Initial Minimum Payment:</strong> £{resultData.initialMinPayment}</p>
+            <p>
+              <strong>APR Used:</strong> {aprInput}%
+            </p>
+            <p>
+              <strong>Initial Minimum Payment:</strong> £
+              {resultData.initialMinPayment}
+            </p>
             {resultData.fixedPaymentForTarget && (
-              <p><strong>Fixed Payment for Target:</strong> £{resultData.fixedPaymentForTarget}</p>
+              <p>
+                <strong>Fixed Payment for Target:</strong> £
+                {resultData.fixedPaymentForTarget}
+              </p>
             )}
-            <p><strong>Estimated Payoff Time:</strong> {(resultData.payoffMonths / 12).toFixed(1)} years</p>
-            <p><strong>Total Interest Paid:</strong> £{parseFloat(resultData.totalInterest).toLocaleString(undefined, { minimumFractionDigits: 2 })}</p>
-            <p><strong>Total Paid:</strong> £{parseFloat(resultData.totalPaid).toLocaleString(undefined, { minimumFractionDigits: 2 })}</p>
+            <p>
+              <strong>Estimated Payoff Time:</strong>{" "}
+              {(resultData.payoffMonths / 12).toFixed(1)} years
+            </p>
+            <p>
+              <strong>Total Interest Paid:</strong> £
+              {parseFloat(resultData.totalInterest).toLocaleString(undefined, {
+                minimumFractionDigits: 2,
+              })}
+            </p>
+            <p>
+              <strong>Total Paid:</strong> £
+              {parseFloat(resultData.totalPaid).toLocaleString(undefined, {
+                minimumFractionDigits: 2,
+              })}
+            </p>
 
             <PieChart
               interest={parseFloat(resultData.totalInterest)}
-              principal={parseFloat(balance.replace(/,/g, ''))}
-              colors={['#ff4d4f', '#4aa4e3']}
+              principal={parseFloat(balance.replace(/,/g, ""))}
+              colors={["#ff4d4f", "#4aa4e3"]}
             />
 
-            <p className="chart-labels" style={{ marginTop: '0.8rem', display: 'flex', justifyContent: 'center', gap: '2rem' }}>
-              <span style={{ color: '#ff4d4f', fontWeight: 'bold' }}>Interest Paid</span>
-              <span style={{ color: '#4aa4e3', fontWeight: 'bold' }}>Principal Paid</span>
+            <p
+              className="chart-labels"
+              style={{
+                marginTop: "0.8rem",
+                display: "flex",
+                justifyContent: "center",
+                gap: "2rem",
+              }}
+            >
+              <span style={{ color: "#ff4d4f", fontWeight: "bold" }}>
+                Interest Paid
+              </span>
+              <span style={{ color: "#4aa4e3", fontWeight: "bold" }}>
+                Principal Paid
+              </span>
             </p>
           </div>
         )}
