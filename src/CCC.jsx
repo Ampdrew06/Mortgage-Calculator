@@ -19,7 +19,7 @@ const CreditCardCalculator = () => {
     fixedPaymentForTarget: null,
   });
 
-  const MIN_PAYMENT_PERCENT = 0.01; // 1% of balance
+  const MIN_PAYMENT_PERCENT = 0.015; // 1.5%
   const MIN_PAYMENT_FLOOR = 25;
 
   const parseNumber = (val) => {
@@ -67,9 +67,9 @@ const CreditCardCalculator = () => {
         if (months === 0 && initialMinPayment > 0) {
           payment = initialMinPayment + (overpayment > 0 ? overpayment : 0);
         } else {
-          // New improved min payment logic:
+          // Simplified min payment logic without adding interest separately
           const dynamicMinPayment =
-            interest + Math.max(remaining * MIN_PAYMENT_PERCENT, MIN_PAYMENT_FLOOR);
+            Math.max(remaining * MIN_PAYMENT_PERCENT, MIN_PAYMENT_FLOOR);
           payment = dynamicMinPayment + (overpayment > 0 ? overpayment : 0);
         }
       }
@@ -129,10 +129,8 @@ const CreditCardCalculator = () => {
       targetYears && targetYears > 0 ? Math.round(targetYears * 12) : null;
 
     if (!minPayment || minPayment <= 0) {
-      // Auto-calc initial min payment using new logic:
-      const monthlyRate = apr / 12 / 100;
-      const interest = principal * monthlyRate;
-      minPayment = interest + Math.max(principal * MIN_PAYMENT_PERCENT, MIN_PAYMENT_FLOOR);
+      // Auto-calc initial min payment using simplified logic
+      minPayment = Math.max(principal * MIN_PAYMENT_PERCENT, MIN_PAYMENT_FLOOR);
     }
 
     const sim = simulatePayoff(
