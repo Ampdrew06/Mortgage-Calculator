@@ -11,8 +11,8 @@ const CreditCardCalculator = () => {
 
   const [errorMsg, setErrorMsg] = useState("");
   const [resultsVisible, setResultsVisible] = useState(false);
-  const [userSimData, setUserSimData] = useState(null);
-  const [suggestedSimData, setSuggestedSimData] = useState(null);
+  const [simData, setSimData] = useState(null);
+  const [warningMsg, setWarningMsg] = useState("");
 
   const parseNumber = (val) => {
     if (!val) return NaN;
@@ -21,13 +21,13 @@ const CreditCardCalculator = () => {
     return isNaN(num) ? NaN : num;
   };
 
-  // Improved simulation with max 600 months (50 years) and detect growing debt if balance increases 3 months in a row
+  // Simulate payoff with realistic min payment calc
   const simulatePayoff = (
     principal,
     annualRate,
     floorPayment,
-    minPercent,
-    paymentOverride,
+    percentPayment,
+    userPayment,
     overpayment,
     targetMonths
   ) => {
@@ -35,47 +35,54 @@ const CreditCardCalculator = () => {
     let balance = principal;
     let months = 0;
     let totalInterest = 0;
+    let lastBalance = balance;
+    let consecutiveGrowthMonths = 0;
 
-    const initialMinPayment =
-      paymentOverride && paymentOverride > 0
-        ? paymentOverride
-        : Math.max(floorPayment, balance * minPercent);
+    // Determine initial min payment: userPayment overridden if below real min payment
+    const initialInterest = balance * monthlyRate;
+    const realMinPaymentInitial = Math.max(floorPayment, balance * percentPayment + initialInterest);
+    let paymentUsed =
+      userPayment && userPayment > realMinPaymentInitial
+        ? userPayment
+        : realMinPaymentInitial;
 
-    const initialBalance = balance;
-
-    let previousBalance = balance;
-    let growingDebtCount = 0;
+    // For initial MMP display
+    const initialMinPayment = paymentUsed;
 
     while (months < 600 && balance > 0) {
       const interest = balance * monthlyRate;
       totalInterest += interest;
       balance += interest;
 
-      const currentMinPayment = Math.max(floorPayment, balance * minPercent);
+      const realMinPayment = Math.max(floorPayment, balance * percentPayment + interest);
+      // Use userPayment only for first payment, then simulate payments as realMinPayment + overpayment
+      let paymentThisMonth =
+        months === 0
+          ? paymentUsed + (overpayment > 0 ? overpayment : 0)
+          : realMinPayment + (overpayment > 0 ? overpayment : 0);
 
-      let payment =
-        months === 0 && paymentOverride && paymentOverride > 0
-          ? initialMinPayment + (overpayment > 0 ? overpayment : 0)
-          : currentMinPayment + (overpayment > 0 ? overpayment : 0);
+      if (paymentThisMonth < 0) paymentThisMonth = 0;
 
-      balance -= payment;
+      balance -= paymentThisMonth;
       if (balance < 0) balance = 0;
 
       months++;
 
+      // Target payoff logic
       if (targetMonths && months >= targetMonths) break;
 
-      // Check if debt is growing
-      if (balance > previousBalance) {
-        growingDebtCount++;
-        if (growingDebtCount >= 3) break; // stop simulation if balance grows 3 consecutive months
+      // Detect growing debt (balance increasing 3 months in a row)
+      if (balance > lastBalance) {
+        consecutiveGrowthMonths++;
+        if (consecutiveGrowthMonths >= 3) break;
       } else {
-        growingDebtCount = 0;
+        consecutiveGrowthMonths = 0;
       }
-      previousBalance = balance;
+
+      lastBalance = balance;
     }
 
-    const growingDebt = balance > initialBalance;
+    const growingDebt = balance > principal;
 
     return {
       canPayOff: !growingDebt && balance <= 0,
@@ -98,9 +105,9 @@ const CreditCardCalculator = () => {
   const handleSubmit = (e) => {
     e.preventDefault();
     setErrorMsg("");
+    setWarningMsg("");
     setResultsVisible(false);
-    setUserSimData(null);
-    setSuggestedSimData(null);
+    setSimData(null);
 
     const principal = parseNumber(balance);
     let apr = parseNumber(aprInput);
@@ -121,64 +128,40 @@ const CreditCardCalculator = () => {
     }
 
     const floorPayment = 25; // floor minimum payment £25
-    const minPercent = 0.015; // 1.5% min payment
+    const percentPayment = 0.015; // 1.5% typical min payment percent of balance
 
-    // Monthly interest for warning and suggestion
     const monthlyInterest = principal * (apr / 100) / 12;
 
-    // Auto-calc min payment if user did not enter it
-    let paymentOverride = userMinPayment;
-    if (!paymentOverride || paymentOverride <= 0) {
-      paymentOverride = Math.max(floorPayment, principal * minPercent);
-      setMinPaymentInput(paymentOverride.toFixed(2));
-    }
-
-    // Simulate with user payment (or auto-calc)
-    const simUser = simulatePayoff(
+    // Simulate payoff with current inputs and logic
+    const sim = simulatePayoff(
       principal,
       apr,
       floorPayment,
-      minPercent,
-      paymentOverride,
+      percentPayment,
+      userMinPayment,
       overpayment,
       targetMonths
     );
 
-    // Suggested payment to avoid debt growth (1% above monthly interest)
-    const suggestedPayment = monthlyInterest * 1.01;
-    const simSuggested = simulatePayoff(
-      principal,
-      apr,
-      floorPayment,
-      minPercent,
-      suggestedPayment,
-      overpayment,
-      targetMonths
-    );
-
-    if (simUser.growingDebt) {
-      // Fix display for NaN min payment
-      const enteredPaymentDisplay = !isNaN(userMinPayment) ? userMinPayment.toFixed(2) : "not entered";
-      const suggestedPaymentDisplay = simSuggested.initialMinPayment.toFixed(2);
-      const payoffYearsUser = simUser.payoffMonths ? simUser.payoffMonths / 12 : 0;
-      const payoffYearsSuggested = simSuggested.payoffMonths / 12;
-
-      setErrorMsg(
-        `Your entered minimum payment (£${enteredPaymentDisplay}) is less than the monthly interest (£${monthlyInterest.toFixed(
+    // Warning if user min payment less than real min payment on first month
+    if (
+      userMinPayment &&
+      userMinPayment > 0 &&
+      userMinPayment < sim.initialMinPayment - 0.01 // small tolerance
+    ) {
+      setWarningMsg(
+        `Your entered minimum payment (£${userMinPayment.toFixed(
           2
-        )}). Paying only this amount will increase your debt over time.\n\n` +
-          `Estimated payoff time with your payment: >${payoffYearsUser > 80 ? 80 : payoffYearsUser.toFixed(1)} years (debt grows).\n` +
-          `Suggested minimum payment to pay off in ${payoffYearsSuggested.toFixed(1)} years: £${suggestedPaymentDisplay}`
+        )}) is less than the calculated minimum payment needed (£${sim.initialMinPayment.toFixed(
+          2
+        )}). This may lead to increasing debt over time.`
       );
-      setUserSimData(simUser);
-      setSuggestedSimData(simSuggested);
-      setResultsVisible(true);
-      return;
+    } else {
+      setWarningMsg("");
     }
 
-    // No growing debt — just normal results with user payment
-    setUserSimData(simUser);
-    setSuggestedSimData(null);
+    // Show results
+    setSimData(sim);
     setResultsVisible(true);
   };
 
@@ -189,9 +172,9 @@ const CreditCardCalculator = () => {
     setOverpaymentInput("");
     setTargetYearsInput("");
     setErrorMsg("");
+    setWarningMsg("");
     setResultsVisible(false);
-    setUserSimData(null);
-    setSuggestedSimData(null);
+    setSimData(null);
   };
 
   return (
@@ -312,8 +295,12 @@ const CreditCardCalculator = () => {
           </div>
 
           {errorMsg && (
-            <p style={{ color: "red", fontWeight: "bold", marginTop: "0.5rem", whiteSpace: "pre-line" }}>
-              {errorMsg}
+            <p style={{ color: "red", fontWeight: "bold", marginTop: "0.5rem" }}>{errorMsg}</p>
+          )}
+
+          {warningMsg && (
+            <p style={{ color: "orange", fontWeight: "bold", marginTop: "0.5rem", whiteSpace: "pre-line" }}>
+              {warningMsg}
             </p>
           )}
 
@@ -342,64 +329,35 @@ const CreditCardCalculator = () => {
           </div>
         </form>
 
-        {resultsVisible && (
+        {resultsVisible && simData && (
           <div className="results-box">
             <p>
               <strong>APR Used:</strong> {aprInput ? aprInput : "25"}%
             </p>
 
             <p>
-              <strong>Initial Minimum Payment:</strong> £
-              {userSimData?.initialMinPayment
-                ? userSimData.initialMinPayment.toFixed(2)
-                : "N/A"}
+              <strong>Initial Minimum Payment:</strong> £{simData.initialMinPayment.toFixed(2)}
             </p>
 
             <p>
               <strong>Estimated Payoff Time with your payment:</strong>{" "}
-              {userSimData
-                ? (userSimData.payoffMonths / 12).toFixed(1) + " years"
-                : "N/A"}
+              {(simData.payoffMonths / 12).toFixed(1)} years
             </p>
-
-            {suggestedSimData && (
-              <>
-                <p>
-                  <strong>Suggested Minimum Payment (to avoid debt growth):</strong> £
-                  {suggestedSimData.initialMinPayment.toFixed(2)}
-                </p>
-
-                <p>
-                  <strong>Estimated Payoff Time with suggested payment:</strong>{" "}
-                  {(suggestedSimData.payoffMonths / 12).toFixed(1)} years
-                </p>
-              </>
-            )}
 
             <p>
               <strong>Total Interest Paid:</strong> £
-              {userSimData
-                ? parseFloat(userSimData.totalInterest).toLocaleString(undefined, {
-                    minimumFractionDigits: 2,
-                  })
-                : "N/A"}
+              {simData.totalInterest.toLocaleString(undefined, { minimumFractionDigits: 2 })}
             </p>
             <p>
               <strong>Total Paid:</strong> £
-              {userSimData
-                ? parseFloat(userSimData.totalPaid).toLocaleString(undefined, {
-                    minimumFractionDigits: 2,
-                  })
-                : "N/A"}
+              {simData.totalPaid.toLocaleString(undefined, { minimumFractionDigits: 2 })}
             </p>
 
-            {userSimData && (
-              <PieChart
-                interest={parseFloat(userSimData.totalInterest)}
-                principal={parseFloat(balance.replace(/,/g, ""))}
-                colors={["#ff4d4f", "#4aa4e3"]}
-              />
-            )}
+            <PieChart
+              interest={simData.totalInterest}
+              principal={parseFloat(balance.replace(/,/g, ""))}
+              colors={["#ff4d4f", "#4aa4e3"]}
+            />
 
             <p
               className="chart-labels"
