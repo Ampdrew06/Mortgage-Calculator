@@ -25,8 +25,7 @@ const CreditCardCalculator = () => {
     return isNaN(num) ? NaN : num;
   };
 
-  // Simulate payoff allowing balance growth but tracking payoff or no payoff after max months
-  const simulateWithPossibleBalanceGrowth = (
+  const simulatePayoff = (
     principal,
     annualRate,
     floorPayment,
@@ -40,24 +39,20 @@ const CreditCardCalculator = () => {
     let months = 0;
     let totalInterest = 0;
 
-    // Use user min payment or calc first payment
-    const initialMinPayment = userMinPayment && userMinPayment > 0
-      ? userMinPayment
-      : Math.max(floorPayment, balance * minPercent);
+    const initialMinPayment =
+      userMinPayment && userMinPayment > 0
+        ? userMinPayment
+        : Math.max(floorPayment, balance * minPercent);
 
-    // We'll track balance trend to detect infinite growth
-    let previousBalances = [];
+    const initialBalance = balance;
 
     while (months < 1000 && balance > 0) {
-      // 1. Add interest
       const interest = balance * monthlyRate;
       totalInterest += interest;
       balance += interest;
 
-      // 2. Calculate current min payment
       const currentMinPayment = Math.max(floorPayment, balance * minPercent);
 
-      // 3. Payment for this month
       let payment =
         months === 0 && userMinPayment && userMinPayment > 0
           ? initialMinPayment + (overpayment > 0 ? overpayment : 0)
@@ -68,25 +63,14 @@ const CreditCardCalculator = () => {
 
       months++;
 
-      // Store last 12 months balances to detect no reduction
-      previousBalances.push(balance);
-      if (previousBalances.length > 12) previousBalances.shift();
-
-      // Check if balance hasn't decreased in last 12 months => no payoff
-      if (
-        previousBalances.length === 12 &&
-        previousBalances.every((b) => b >= previousBalances[0])
-      ) {
-        // Balance is not decreasing
-        break;
-      }
-
-      // Stop if target months reached
       if (targetMonths && months >= targetMonths) break;
     }
 
+    const growingDebt = balance > initialBalance;
+
     return {
-      canPayOff: balance <= 0,
+      canPayOff: !growingDebt && balance <= 0,
+      growingDebt,
       payoffMonths: months,
       totalInterest,
       totalPaid: principal + totalInterest,
@@ -121,10 +105,10 @@ const CreditCardCalculator = () => {
 
     if (!apr || apr <= 0) apr = 25;
 
-    const floorPayment = 25; // typical floor payment
-    const minPercent = 0.015; // 1.5% of balance
+    const floorPayment = 25; // floor minimum payment £25
+    const minPercent = 0.015; // 1.5% min payment
 
-    const sim = simulateWithPossibleBalanceGrowth(
+    const sim = simulatePayoff(
       principal,
       apr,
       floorPayment,
@@ -134,9 +118,9 @@ const CreditCardCalculator = () => {
       targetMonths
     );
 
-    if (!sim.canPayOff) {
+    if (sim.growingDebt) {
       setErrorMsg(
-        `Payment too low to pay off balance within 1000 months. Remaining balance after simulation: £${sim.balanceRemaining.toFixed(
+        `Payment too low to pay off balance; debt grows. Balance after simulation: £${sim.balanceRemaining.toFixed(
           2
         )}`
       );
@@ -194,11 +178,7 @@ const CreditCardCalculator = () => {
               autoCorrect="off"
               spellCheck="false"
             />
-            <button
-              type="button"
-              className="clear-btn"
-              onClick={() => setBalance("")}
-            >
+            <button type="button" className="clear-btn" onClick={() => setBalance("")}>
               Clear
             </button>
           </div>
@@ -220,11 +200,7 @@ const CreditCardCalculator = () => {
               autoCorrect="off"
               spellCheck="false"
             />
-            <button
-              type="button"
-              className="clear-btn"
-              onClick={() => setAprInput("")}
-            >
+            <button type="button" className="clear-btn" onClick={() => setAprInput("")}>
               Clear
             </button>
           </div>
@@ -246,11 +222,7 @@ const CreditCardCalculator = () => {
               autoCorrect="off"
               spellCheck="false"
             />
-            <button
-              type="button"
-              className="clear-btn"
-              onClick={() => setMinPaymentInput("")}
-            >
+            <button type="button" className="clear-btn" onClick={() => setMinPaymentInput("")}>
               Clear
             </button>
           </div>
@@ -272,11 +244,7 @@ const CreditCardCalculator = () => {
               autoCorrect="off"
               spellCheck="false"
             />
-            <button
-              type="button"
-              className="clear-btn"
-              onClick={() => setOverpaymentInput("")}
-            >
+            <button type="button" className="clear-btn" onClick={() => setOverpaymentInput("")}>
               Clear
             </button>
           </div>
@@ -298,11 +266,7 @@ const CreditCardCalculator = () => {
               autoCorrect="off"
               spellCheck="false"
             />
-            <button
-              type="button"
-              className="clear-btn"
-              onClick={() => setTargetYearsInput("")}
-            >
+            <button type="button" className="clear-btn" onClick={() => setTargetYearsInput("")}>
               Clear
             </button>
           </div>
@@ -313,10 +277,7 @@ const CreditCardCalculator = () => {
             </p>
           )}
 
-          <div
-            className="button-row"
-            style={{ display: "flex", gap: "0.5rem" }}
-          >
+          <div className="button-row" style={{ display: "flex", gap: "0.5rem" }}>
             <button
               className="submit-btn ccc"
               type="submit"
@@ -330,12 +291,7 @@ const CreditCardCalculator = () => {
             >
               Submit
             </button>
-            <button
-              type="button"
-              className="reset-btn"
-              onClick={resetAll}
-              style={{ flex: 1 }}
-            >
+            <button type="button" className="reset-btn" onClick={resetAll} style={{ flex: 1 }}>
               Reset All
             </button>
           </div>
@@ -347,24 +303,18 @@ const CreditCardCalculator = () => {
               <strong>APR Used:</strong> {aprInput}%
             </p>
             <p>
-              <strong>Initial Minimum Payment:</strong> £
-              {resultData.initialMinPayment}
+              <strong>Initial Minimum Payment:</strong> £{resultData.initialMinPayment}
             </p>
             <p>
-              <strong>Estimated Payoff Time:</strong>{" "}
-              {(resultData.payoffMonths / 12).toFixed(1)} years
+              <strong>Estimated Payoff Time:</strong> {(resultData.payoffMonths / 12).toFixed(1)} years
             </p>
             <p>
               <strong>Total Interest Paid:</strong> £
-              {parseFloat(resultData.totalInterest).toLocaleString(undefined, {
-                minimumFractionDigits: 2,
-              })}
+              {parseFloat(resultData.totalInterest).toLocaleString(undefined, { minimumFractionDigits: 2 })}
             </p>
             <p>
               <strong>Total Paid:</strong> £
-              {parseFloat(resultData.totalPaid).toLocaleString(undefined, {
-                minimumFractionDigits: 2,
-              })}
+              {parseFloat(resultData.totalPaid).toLocaleString(undefined, { minimumFractionDigits: 2 })}
             </p>
 
             <PieChart
@@ -375,19 +325,10 @@ const CreditCardCalculator = () => {
 
             <p
               className="chart-labels"
-              style={{
-                marginTop: "0.8rem",
-                display: "flex",
-                justifyContent: "center",
-                gap: "2rem",
-              }}
+              style={{ marginTop: "0.8rem", display: "flex", justifyContent: "center", gap: "2rem" }}
             >
-              <span style={{ color: "#ff4d4f", fontWeight: "bold" }}>
-                Interest Paid
-              </span>
-              <span style={{ color: "#4aa4e3", fontWeight: "bold" }}>
-                Principal Paid
-              </span>
+              <span style={{ color: "#ff4d4f", fontWeight: "bold" }}>Interest Paid</span>
+              <span style={{ color: "#4aa4e3", fontWeight: "bold" }}>Principal Paid</span>
             </p>
           </div>
         )}
