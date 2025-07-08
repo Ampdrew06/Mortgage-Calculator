@@ -25,8 +25,8 @@ const CreditCardCalculator = () => {
     return isNaN(num) ? NaN : num;
   };
 
-  // Simulate payoff month-by-month with Barclaycard-like min payment
-  const simulateBarclaycard = (
+  // Simulate payoff allowing balance growth but tracking payoff or no payoff after max months
+  const simulateWithPossibleBalanceGrowth = (
     principal,
     annualRate,
     floorPayment,
@@ -40,47 +40,49 @@ const CreditCardCalculator = () => {
     let months = 0;
     let totalInterest = 0;
 
-    // If user provided min payment, use it as initial payment
+    // Use user min payment or calc first payment
     const initialMinPayment = userMinPayment && userMinPayment > 0
       ? userMinPayment
       : Math.max(floorPayment, balance * minPercent);
 
-    while (balance > 0 && months < 1000) {
-      // 1. Add interest on current balance
+    // We'll track balance trend to detect infinite growth
+    let previousBalances = [];
+
+    while (months < 1000 && balance > 0) {
+      // 1. Add interest
       const interest = balance * monthlyRate;
       totalInterest += interest;
       balance += interest;
 
-      // 2. Calculate current min payment (floor or percent of balance)
+      // 2. Calculate current min payment
       const currentMinPayment = Math.max(floorPayment, balance * minPercent);
 
-      // 3. Payment amount this month = user first payment on month 0, else currentMinPayment + overpayment
+      // 3. Payment for this month
       let payment =
         months === 0 && userMinPayment && userMinPayment > 0
           ? initialMinPayment + (overpayment > 0 ? overpayment : 0)
           : currentMinPayment + (overpayment > 0 ? overpayment : 0);
 
-      // 4. If payment less than interest, cannot pay off
-      if (payment < interest) {
-        return {
-          canPayOff: false,
-          payoffMonths: months,
-          totalInterest,
-          totalPaid: principal + totalInterest,
-          initialMinPayment,
-        };
-      }
-
-      // 5. Subtract payment
       balance -= payment;
       if (balance < 0) balance = 0;
 
       months++;
 
-      // 6. If target months given, stop simulation at target
-      if (targetMonths && months >= targetMonths) {
+      // Store last 12 months balances to detect no reduction
+      previousBalances.push(balance);
+      if (previousBalances.length > 12) previousBalances.shift();
+
+      // Check if balance hasn't decreased in last 12 months => no payoff
+      if (
+        previousBalances.length === 12 &&
+        previousBalances.every((b) => b >= previousBalances[0])
+      ) {
+        // Balance is not decreasing
         break;
       }
+
+      // Stop if target months reached
+      if (targetMonths && months >= targetMonths) break;
     }
 
     return {
@@ -89,6 +91,7 @@ const CreditCardCalculator = () => {
       totalInterest,
       totalPaid: principal + totalInterest,
       initialMinPayment,
+      balanceRemaining: balance,
     };
   };
 
@@ -118,10 +121,10 @@ const CreditCardCalculator = () => {
 
     if (!apr || apr <= 0) apr = 25;
 
-    const floorPayment = 25; // typical minimum floor payment
-    const minPercent = 0.015; // 1.5% of balance minimum payment
+    const floorPayment = 25; // typical floor payment
+    const minPercent = 0.015; // 1.5% of balance
 
-    const sim = simulateBarclaycard(
+    const sim = simulateWithPossibleBalanceGrowth(
       principal,
       apr,
       floorPayment,
@@ -132,7 +135,11 @@ const CreditCardCalculator = () => {
     );
 
     if (!sim.canPayOff) {
-      setErrorMsg("Payment too low to ever pay off the balance.");
+      setErrorMsg(
+        `Payment too low to pay off balance within 1000 months. Remaining balance after simulation: £${sim.balanceRemaining.toFixed(
+          2
+        )}`
+      );
       return;
     }
 
