@@ -19,7 +19,8 @@ const CreditCardCalculator = () => {
     fixedPaymentForTarget: null,
   });
 
-  const MIN_PAYMENT_PERCENT = 0.015; // 1.5%
+  // Tweak this percent to get ~£78 min payment on £5000 balance:
+  const MIN_PAYMENT_PERCENT = 0.0156; // 1.56%
   const MIN_PAYMENT_FLOOR = 25;
 
   const parseNumber = (val) => {
@@ -37,11 +38,7 @@ const CreditCardCalculator = () => {
     return principal * (numerator / denominator);
   };
 
-  // Simulates payoff month-by-month
-  // Uses minPaymentInput only for the first payment
-  // Subsequent payments are max of floor or % balance (no interest added to payment)
-  // Interest accrues monthly and is deducted from payment
-  // Supports overpayment and optional fixed payment if targetMonths is set
+  // Enhanced simulation with console logs for debugging:
   const simulatePayoff = (principal, annualRate, initialMinPayment, overpayment, targetMonths) => {
     const monthlyRate = annualRate / 12 / 100;
     let remaining = principal;
@@ -52,6 +49,7 @@ const CreditCardCalculator = () => {
     if (targetMonths && targetMonths > 0) {
       fixedPayment = calculateFixedPayment(principal, monthlyRate, targetMonths);
       if (overpayment > 0) fixedPayment += overpayment;
+      console.log(`Using fixed payment for target: £${fixedPayment.toFixed(2)} per month`);
     }
 
     while (remaining > 0 && months < 1000) {
@@ -74,7 +72,9 @@ const CreditCardCalculator = () => {
         }
       }
 
+      // Prevent payment < interest to avoid infinite loop:
       if (payment < interest) {
+        console.log(`Month ${months + 1}: Payment (£${payment.toFixed(2)}) < Interest (£${interest.toFixed(2)}). Cannot pay off.`);
         return {
           canPayOff: false,
           payoffMonths: months,
@@ -87,6 +87,9 @@ const CreditCardCalculator = () => {
 
       const principalPaid = payment - interest;
       remaining -= principalPaid;
+
+      console.log(`Month ${months + 1}: Payment £${payment.toFixed(2)}, Interest £${interest.toFixed(2)}, Principal Paid £${principalPaid.toFixed(2)}, Remaining £${remaining.toFixed(2)}`);
+
       months++;
     }
 
@@ -130,6 +133,8 @@ const CreditCardCalculator = () => {
     if (!minPayment || minPayment <= 0) {
       minPayment = Math.max(MIN_PAYMENT_FLOOR, principal * MIN_PAYMENT_PERCENT);
     }
+
+    console.log(`Starting simulation with Principal: £${principal}, APR: ${apr}%, Initial Min Payment: £${minPayment}, Overpayment: £${overpayment}, Target Months: ${targetMonths}`);
 
     const sim = simulatePayoff(principal, apr, minPayment, overpayment, targetMonths);
 
