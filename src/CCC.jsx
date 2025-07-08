@@ -19,8 +19,9 @@ const CreditCardCalculator = () => {
     fixedPaymentForTarget: null,
   });
 
+  // Constants for minimum payment calculation
   const MIN_PAYMENT_FLOOR = 25;
-  const MIN_PAYMENT_PERCENT = 0.015;
+  const MIN_PAYMENT_PERCENT = 0.015; // 1.5%
 
   const parseNumber = (val) => {
     if (!val) return NaN;
@@ -37,7 +38,12 @@ const CreditCardCalculator = () => {
     return principal * (numerator / denominator);
   };
 
-  const simulatePayoff = (principal, annualRate, minPaymentOverride, overpayment, targetMonths) => {
+  // Simulates payoff month-by-month
+  // Uses minPaymentInput only for the first month payment (initial payment)
+  // Subsequent months min payment is dynamically calculated as max floor or percent of balance
+  // Adds overpayment each month if specified
+  // If targetMonths given, uses fixed payment calculated for that target (plus overpayment)
+  const simulatePayoff = (principal, annualRate, initialMinPayment, overpayment, targetMonths) => {
     const monthlyRate = annualRate / 12 / 100;
     let remaining = principal;
     let months = 0;
@@ -49,8 +55,6 @@ const CreditCardCalculator = () => {
       if (overpayment > 0) fixedPayment += overpayment;
     }
 
-    let firstMonthMinPayment = 0;
-
     while (remaining > 0 && months < 1000) {
       const interest = remaining * monthlyRate;
       totalInterest += interest;
@@ -60,14 +64,13 @@ const CreditCardCalculator = () => {
       if (fixedPayment !== null) {
         payment = fixedPayment;
       } else {
-        let calcMinPayment = Math.max(MIN_PAYMENT_FLOOR, remaining * MIN_PAYMENT_PERCENT);
-
-        if (months === 0 && minPaymentOverride > 0) {
-          payment = minPaymentOverride + (overpayment > 0 ? overpayment : 0);
-          firstMonthMinPayment = payment;
+        if (months === 0 && initialMinPayment > 0) {
+          // Use user input MMP for first payment
+          payment = initialMinPayment + (overpayment > 0 ? overpayment : 0);
         } else {
-          payment = calcMinPayment + (overpayment > 0 ? overpayment : 0);
-          if (months === 0) firstMonthMinPayment = payment;
+          // For subsequent months calculate min payment dynamically
+          const dynamicMinPayment = Math.max(MIN_PAYMENT_FLOOR, remaining * MIN_PAYMENT_PERCENT);
+          payment = dynamicMinPayment + (overpayment > 0 ? overpayment : 0);
         }
       }
 
@@ -77,7 +80,7 @@ const CreditCardCalculator = () => {
           payoffMonths: months,
           totalInterest,
           totalPaid: principal + totalInterest,
-          firstMonthMinPayment,
+          firstMonthMinPayment: initialMinPayment,
           fixedPaymentForTarget: fixedPayment,
         };
       }
@@ -92,7 +95,7 @@ const CreditCardCalculator = () => {
       payoffMonths: months,
       totalInterest,
       totalPaid: principal + totalInterest,
-      firstMonthMinPayment,
+      firstMonthMinPayment: initialMinPayment,
       fixedPaymentForTarget: fixedPayment,
     };
   };
@@ -111,7 +114,7 @@ const CreditCardCalculator = () => {
 
     const principal = parseNumber(balance);
     let apr = parseNumber(aprInput);
-    let minPaymentOverride = parseNumber(minPaymentInput);
+    let minPayment = parseNumber(minPaymentInput);
     const overpayment = parseNumber(overpaymentInput) || 0;
     const targetYears = parseNumber(targetYearsInput);
 
@@ -124,11 +127,12 @@ const CreditCardCalculator = () => {
 
     const targetMonths = targetYears && targetYears > 0 ? Math.round(targetYears * 12) : null;
 
-    if (!minPaymentOverride || minPaymentOverride <= 0) {
-      minPaymentOverride = Math.max(MIN_PAYMENT_FLOOR, principal * MIN_PAYMENT_PERCENT);
+    // If user left minPayment blank, calculate it for first month as max floor or 1.5% balance
+    if (!minPayment || minPayment <= 0) {
+      minPayment = Math.max(MIN_PAYMENT_FLOOR, principal * MIN_PAYMENT_PERCENT);
     }
 
-    const sim = simulatePayoff(principal, apr, minPaymentOverride, overpayment, targetMonths);
+    const sim = simulatePayoff(principal, apr, minPayment, overpayment, targetMonths);
 
     if (!sim.canPayOff) {
       setErrorMsg('Payment too low to ever pay off the balance.');
@@ -177,7 +181,6 @@ const CreditCardCalculator = () => {
             <label htmlFor="balance-input">Amount Outstanding (£)</label>
             <input
               id="balance-input"
-              name="balance"
               type="text"
               inputMode="decimal"
               value={balance}
@@ -193,7 +196,6 @@ const CreditCardCalculator = () => {
             <label htmlFor="apr-input">APR (%)</label>
             <input
               id="apr-input"
-              name="aprInput"
               type="text"
               inputMode="decimal"
               placeholder="Enter if known or leave blank for 25%"
@@ -210,10 +212,9 @@ const CreditCardCalculator = () => {
             <label htmlFor="min-payment-input">Minimum Monthly Payment (£)</label>
             <input
               id="min-payment-input"
-              name="minPaymentInput"
               type="text"
               inputMode="decimal"
-              placeholder="Enter if known, or leave blank to auto-calc"
+              placeholder="Enter if known, or leave blank to auto-calc first payment"
               value={minPaymentInput}
               onChange={e => { setMinPaymentInput(e.target.value); setErrorMsg(''); setResultsVisible(false); }}
               autoComplete="off"
@@ -227,7 +228,6 @@ const CreditCardCalculator = () => {
             <label htmlFor="overpayment-input">Overpayment (£, optional)</label>
             <input
               id="overpayment-input"
-              name="overpaymentInput"
               type="text"
               inputMode="decimal"
               placeholder="Extra monthly payment"
@@ -244,7 +244,6 @@ const CreditCardCalculator = () => {
             <label htmlFor="target-years-input">Target Payoff Time (Years, optional)</label>
             <input
               id="target-years-input"
-              name="targetYearsInput"
               type="text"
               inputMode="decimal"
               placeholder="Leave blank if no target"
