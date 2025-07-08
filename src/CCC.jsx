@@ -21,6 +21,7 @@ const CreditCardCalculator = () => {
     return isNaN(num) ? NaN : num;
   };
 
+  // Improved simulation with max 600 months (50 years) and detect growing debt if balance increases 3 months in a row
   const simulatePayoff = (
     principal,
     annualRate,
@@ -42,7 +43,10 @@ const CreditCardCalculator = () => {
 
     const initialBalance = balance;
 
-    while (months < 1000 && balance > 0) {
+    let previousBalance = balance;
+    let growingDebtCount = 0;
+
+    while (months < 600 && balance > 0) {
       const interest = balance * monthlyRate;
       totalInterest += interest;
       balance += interest;
@@ -60,6 +64,15 @@ const CreditCardCalculator = () => {
       months++;
 
       if (targetMonths && months >= targetMonths) break;
+
+      // Check if debt is growing
+      if (balance > previousBalance) {
+        growingDebtCount++;
+        if (growingDebtCount >= 3) break; // stop simulation if balance grows 3 consecutive months
+      } else {
+        growingDebtCount = 0;
+      }
+      previousBalance = balance;
     }
 
     const growingDebt = balance > initialBalance;
@@ -101,7 +114,11 @@ const CreditCardCalculator = () => {
       return;
     }
 
-    if (!apr || apr <= 0) apr = 25;
+    // Default APR to 25% if blank or invalid
+    if (!apr || apr <= 0) {
+      apr = 25;
+      setAprInput("25.00");
+    }
 
     const floorPayment = 25; // floor minimum payment £25
     const minPercent = 0.015; // 1.5% min payment
@@ -109,18 +126,25 @@ const CreditCardCalculator = () => {
     // Monthly interest for warning and suggestion
     const monthlyInterest = principal * (apr / 100) / 12;
 
-    // Simulate with user payment if provided, else auto-calc first payment
+    // Auto-calc min payment if user did not enter it
+    let paymentOverride = userMinPayment;
+    if (!paymentOverride || paymentOverride <= 0) {
+      paymentOverride = Math.max(floorPayment, principal * minPercent);
+      setMinPaymentInput(paymentOverride.toFixed(2));
+    }
+
+    // Simulate with user payment (or auto-calc)
     const simUser = simulatePayoff(
       principal,
       apr,
       floorPayment,
       minPercent,
-      userMinPayment,
+      paymentOverride,
       overpayment,
       targetMonths
     );
 
-    // Simulate with suggested minimum payment = monthlyInterest * 1.01 (1% buffer)
+    // Suggested payment to avoid debt growth (1% above monthly interest)
     const suggestedPayment = monthlyInterest * 1.01;
     const simSuggested = simulatePayoff(
       principal,
@@ -148,7 +172,6 @@ const CreditCardCalculator = () => {
       );
       setUserSimData(simUser);
       setSuggestedSimData(simSuggested);
-      setAprInput(apr.toFixed(2));
       setResultsVisible(true);
       return;
     }
@@ -156,7 +179,6 @@ const CreditCardCalculator = () => {
     // No growing debt — just normal results with user payment
     setUserSimData(simUser);
     setSuggestedSimData(null);
-    setAprInput(apr.toFixed(2));
     setResultsVisible(true);
   };
 
