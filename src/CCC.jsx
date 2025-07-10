@@ -28,15 +28,6 @@ const CreditCardCalculator = () => {
     return isNaN(num) ? NaN : num;
   };
 
-  /**
-   * Simulate credit card payoff month by month
-   * @param {number} principal Starting balance
-   * @param {number} annualRate APR in percent (e.g. 26.5)
-   * @param {number} userMinPayment User-entered minimum payment (optional)
-   * @param {number} overpayment Extra payment on top of minimum (optional)
-   * @param {number|null} targetMonths Target payoff period in months (optional)
-   * @returns simulation results object
-   */
   const simulatePayoff = (
     principal,
     annualRate,
@@ -44,7 +35,7 @@ const CreditCardCalculator = () => {
     overpayment,
     targetMonths
   ) => {
-    const monthlyRate = annualRate / 12 / 100; // APR% to monthly decimal
+    const monthlyRate = annualRate / 12 / 100;
     let balance = principal;
     let months = 0;
     let totalInterest = 0;
@@ -52,16 +43,14 @@ const CreditCardCalculator = () => {
     let lastBalance = balance;
     let consecutiveGrowthMonths = 0;
 
-    // Calculate first month min payment to display
+    // Calculate initial minimum payment with softened formula
     const firstInterest = balance * monthlyRate;
-    // Minimum payment rules (from statement):
-    // minPayment = max(interest + 1% balance, £25, 2*interest + £5)
-    const floorPayment = 25;
+    const floorPayment = 20; // lowered floor from 25
     const percentOfBalance = 0.01;
     const minPaymentFirstMonth = Math.max(
       firstInterest + balance * percentOfBalance,
       floorPayment,
-      2 * firstInterest + 5
+      1.5 * firstInterest + 3 // softened multiplier/addition
     );
 
     while (months < 600 && balance > 0) {
@@ -72,12 +61,9 @@ const CreditCardCalculator = () => {
       const minPayment = Math.max(
         interest + balance * percentOfBalance,
         floorPayment,
-        2 * interest + 5
+        1.5 * interest + 3
       );
 
-      // Payment this month:
-      // For first month: use userMinPayment if valid and >= minPayment, else minPayment
-      // For subsequent months: payment = minPayment + overpayment
       let paymentThisMonth;
       if (months === 0) {
         if (userMinPayment && userMinPayment >= minPayment) {
@@ -96,10 +82,8 @@ const CreditCardCalculator = () => {
 
       months++;
 
-      // If targetMonths specified, stop if reached
       if (targetMonths && months >= targetMonths) break;
 
-      // Detect if debt grows 3 months in a row (avoid infinite loops)
       if (balance > lastBalance) {
         consecutiveGrowthMonths++;
         if (consecutiveGrowthMonths >= 3) break;
@@ -126,8 +110,7 @@ const CreditCardCalculator = () => {
   const canSubmit = () => {
     const p = parseNumber(balance);
     const a = parseNumber(aprInput);
-    // minPaymentInput optional because auto-calc
-    return p > 0 && (a > 0);
+    return p > 0 && a > 0;
   };
 
   const handleSubmit = (e) => {
@@ -149,20 +132,17 @@ const CreditCardCalculator = () => {
       return;
     }
 
-    // Default APR to 25% if blank or invalid (should already be set by useEffect)
     if (!apr || apr <= 0) {
       apr = 25;
       setAprInput("25.00");
     }
 
-    // Run simulation
     const sim = simulatePayoff(principal, apr, userMinPayment, overpayment, targetMonths);
 
-    // Warn if user payment is less than calculated minimum payment first month
     if (
       userMinPayment &&
       userMinPayment > 0 &&
-      userMinPayment < sim.initialMinPayment - 0.01 // tolerance
+      userMinPayment < sim.initialMinPayment - 0.01
     ) {
       setWarningMsg(
         `Your entered minimum payment (£${userMinPayment.toFixed(
@@ -173,7 +153,6 @@ const CreditCardCalculator = () => {
       );
     }
 
-    // Show results
     setSimData(sim);
     setResultsVisible(true);
   };
