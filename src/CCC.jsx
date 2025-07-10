@@ -14,7 +14,6 @@ const CreditCardCalculator = () => {
   const [simData, setSimData] = useState(null);
   const [warningMsg, setWarningMsg] = useState("");
 
-  // Auto-set APR to 25% if balance entered and APR is blank
   useEffect(() => {
     if (balance && !aprInput.trim()) {
       setAprInput("25.00");
@@ -43,14 +42,14 @@ const CreditCardCalculator = () => {
     let lastBalance = balance;
     let consecutiveGrowthMonths = 0;
 
-    // Calculate initial minimum payment with softened formula
+    const percentOfBalance = 0.025; // 2.5% per statement
+    const fixedFloor = 15; // fixed minimum payment floor
+
+    // Calculate initial minimum payment per statement formula
     const firstInterest = balance * monthlyRate;
-    const floorPayment = 20; // lowered floor from 25
-    const percentOfBalance = 0.01;
     const minPaymentFirstMonth = Math.max(
       firstInterest + balance * percentOfBalance,
-      floorPayment,
-      1.5 * firstInterest + 3 // softened multiplier/addition
+      fixedFloor
     );
 
     while (months < 600 && balance > 0) {
@@ -60,8 +59,7 @@ const CreditCardCalculator = () => {
 
       const minPayment = Math.max(
         interest + balance * percentOfBalance,
-        floorPayment,
-        1.5 * interest + 3
+        fixedFloor
       );
 
       let paymentThisMonth;
