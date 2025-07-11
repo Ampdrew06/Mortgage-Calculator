@@ -1,10 +1,11 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import PieChart from "./PieChart";
 import "./App.css";
 
 const CreditCardCalculator = () => {
   const [balance, setBalance] = useState("");
   const [aprInput, setAprInput] = useState("");
+  const [minPaymentInput, setMinPaymentInput] = useState("");
   const [targetYearsInput, setTargetYearsInput] = useState("");
   const [overpaymentInput, setOverpaymentInput] = useState("");
 
@@ -13,7 +14,6 @@ const CreditCardCalculator = () => {
   const [resultsVisible, setResultsVisible] = useState(false);
   const [simData, setSimData] = useState(null);
 
-  // Helper to parse input strings to floats safely
   const parseNumber = (val) => {
     if (!val) return NaN;
     const cleaned = val.toString().replace(/,/g, "").trim();
@@ -21,14 +21,14 @@ const CreditCardCalculator = () => {
     return isNaN(num) ? NaN : num;
   };
 
-  // Simulate payoff with given parameters
+  // Simulate payoff month-by-month
   const simulatePayoff = (principal, annualRate, monthlyPayment, overpayment, targetMonths) => {
     const monthlyRate = annualRate / 12 / 100;
     let balance = principal;
     let months = 0;
     let totalInterest = 0;
-    const minFloor = 15; // fixed minimum payment floor
-    const percentOfBalance = 0.025; // 2.5% of balance
+    const minFloor = 10; // Lower floor closer to typical card min payment
+    const percentOfBalance = 0.015; // 1.5% of balance
 
     let lastBalance = balance;
     let consecutiveGrowthMonths = 0;
@@ -38,14 +38,13 @@ const CreditCardCalculator = () => {
       totalInterest += interest;
       balance += interest;
 
-      // Calculate minimum safe payment for this month (hidden from user)
+      // Safe minimum payment for warning only
       const safeMinPayment = Math.max(minFloor, interest + balance * percentOfBalance);
 
       let paymentThisMonth = monthlyPayment + overpayment;
 
-      // Prevent payments below safe minimum leading to growing debt warning
       if (paymentThisMonth < safeMinPayment) {
-        // Here we allow user to proceed but can warn in UI
+        // Allow but warn
       }
 
       if (paymentThisMonth <= 0) break;
@@ -57,7 +56,7 @@ const CreditCardCalculator = () => {
 
       if (targetMonths && months >= targetMonths) break;
 
-      // Detect if balance grows for 3 consecutive months → break loop
+      // Detect balance growth 3 months in a row → break
       if (balance > lastBalance) {
         consecutiveGrowthMonths++;
         if (consecutiveGrowthMonths >= 3) break;
@@ -80,7 +79,7 @@ const CreditCardCalculator = () => {
     };
   };
 
-  // Calculate monthly payment needed for target payoff using amortization formula
+  // Calculate monthly payment for target payoff period
   const calculateTargetPayment = (principal, annualRate, months) => {
     if (months <= 0) return 0;
     const monthlyRate = annualRate / 12 / 100;
@@ -92,8 +91,7 @@ const CreditCardCalculator = () => {
 
   const canSubmit = () => {
     const p = parseNumber(balance);
-    const a = parseNumber(aprInput);
-    return p > 0 && a > 0;
+    return p > 0;
   };
 
   const handleSubmit = (e) => {
@@ -105,6 +103,7 @@ const CreditCardCalculator = () => {
 
     const principal = parseNumber(balance);
     let apr = parseNumber(aprInput);
+    const minPaymentUser = parseNumber(minPaymentInput);
     const targetYears = parseNumber(targetYearsInput);
     const targetMonths = targetYears && targetYears > 0 ? Math.round(targetYears * 12) : null;
     const overpayment = parseNumber(overpaymentInput) || 0;
@@ -119,22 +118,35 @@ const CreditCardCalculator = () => {
       setAprInput("25");
     }
 
-    // Calculate monthly payment: if target given, calculate required payment; else use safe minimum
-    let monthlyPayment = targetMonths
-      ? calculateTargetPayment(principal, apr, targetMonths)
-      : Math.max(
-          15,
-          principal * (apr / 100 / 12 + 0.025)
-        ); // min floor or interest + 2.5%
+    // Calculate minimum payment: user input overrides auto-calculated (safe) payment
+    let autoMinPayment = Math.max(
+      10,
+      principal * (apr / 100 / 12 + 0.015)
+    );
 
-    const sim = simulatePayoff(principal, apr, monthlyPayment, overpayment, targetMonths);
+    let monthlyPayment = minPaymentUser && minPaymentUser > 0 ? minPaymentUser : autoMinPayment;
 
-    // Warn if user payment less than safe minimum (only if no target)
-    if (!targetMonths && monthlyPayment < sim.safeMinPayment) {
+    // If target payoff given, calculate required monthly payment to meet target
+    if (targetMonths) {
+      monthlyPayment = calculateTargetPayment(principal, apr, targetMonths) + overpayment;
+    } else {
+      // Add overpayment to monthly payment if no target
+      monthlyPayment += overpayment;
+    }
+
+    if (monthlyPayment <= 0) {
+      setErrorMsg("Monthly payment must be greater than zero.");
+      return;
+    }
+
+    const sim = simulatePayoff(principal, apr, monthlyPayment, 0, targetMonths);
+
+    // Warn if monthly payment less than safe minimum and no target
+    if (!targetMonths && monthlyPayment < autoMinPayment) {
       setWarningMsg(
-        `Warning: Calculated monthly payment (£${monthlyPayment.toFixed(
+        `Warning: Your monthly payment (£${monthlyPayment.toFixed(
           2
-        )}) may be too low to reduce debt due to interest and fees. Debt could grow over time.`
+        )}) may be too low to reduce your balance over time at this APR. Debt could grow.`
       );
     }
 
@@ -142,6 +154,7 @@ const CreditCardCalculator = () => {
       ...sim,
       usedAPR: apr,
       monthlyPayment,
+      autoMinPayment,
     });
 
     setResultsVisible(true);
@@ -150,6 +163,7 @@ const CreditCardCalculator = () => {
   const resetAll = () => {
     setBalance("");
     setAprInput("");
+    setMinPaymentInput("");
     setTargetYearsInput("");
     setOverpaymentInput("");
     setErrorMsg("");
@@ -176,11 +190,13 @@ const CreditCardCalculator = () => {
               onChange={(e) => {
                 setBalance(e.target.value);
                 setErrorMsg("");
+                setWarningMsg("");
                 setResultsVisible(false);
               }}
               autoComplete="off"
               autoCorrect="off"
               spellCheck="false"
+              placeholder="e.g. 5000"
             />
             <button type="button" className="clear-btn" onClick={() => setBalance("")}>
               Clear
@@ -198,6 +214,7 @@ const CreditCardCalculator = () => {
               onChange={(e) => {
                 setAprInput(e.target.value);
                 setErrorMsg("");
+                setWarningMsg("");
                 setResultsVisible(false);
               }}
               autoComplete="off"
@@ -210,23 +227,24 @@ const CreditCardCalculator = () => {
           </div>
 
           <div className="input-row">
-            <label htmlFor="target-years-input">Target Payoff Time (Years, optional)</label>
+            <label htmlFor="min-payment-input">Minimum Monthly Payment (£)</label>
             <input
-              id="target-years-input"
+              id="min-payment-input"
               type="text"
               inputMode="decimal"
-              placeholder="Leave blank if no target"
-              value={targetYearsInput}
+              placeholder="Enter if known, or leave blank to auto-calc"
+              value={minPaymentInput}
               onChange={(e) => {
-                setTargetYearsInput(e.target.value);
+                setMinPaymentInput(e.target.value);
                 setErrorMsg("");
+                setWarningMsg("");
                 setResultsVisible(false);
               }}
               autoComplete="off"
               autoCorrect="off"
               spellCheck="false"
             />
-            <button type="button" className="clear-btn" onClick={() => setTargetYearsInput("")}>
+            <button type="button" className="clear-btn" onClick={() => setMinPaymentInput("")}>
               Clear
             </button>
           </div>
@@ -242,6 +260,7 @@ const CreditCardCalculator = () => {
               onChange={(e) => {
                 setOverpaymentInput(e.target.value);
                 setErrorMsg("");
+                setWarningMsg("");
                 setResultsVisible(false);
               }}
               autoComplete="off"
@@ -249,6 +268,29 @@ const CreditCardCalculator = () => {
               spellCheck="false"
             />
             <button type="button" className="clear-btn" onClick={() => setOverpaymentInput("")}>
+              Clear
+            </button>
+          </div>
+
+          <div className="input-row">
+            <label htmlFor="target-years-input">Target Payoff Time (Years, optional)</label>
+            <input
+              id="target-years-input"
+              type="text"
+              inputMode="decimal"
+              placeholder="Leave blank if no target"
+              value={targetYearsInput}
+              onChange={(e) => {
+                setTargetYearsInput(e.target.value);
+                setErrorMsg("");
+                setWarningMsg("");
+                setResultsVisible(false);
+              }}
+              autoComplete="off"
+              autoCorrect="off"
+              spellCheck="false"
+            />
+            <button type="button" className="clear-btn" onClick={() => setTargetYearsInput("")}>
               Clear
             </button>
           </div>
@@ -274,7 +316,7 @@ const CreditCardCalculator = () => {
               className="submit-btn ccc"
               type="submit"
               disabled={!canSubmit()}
-              title={!canSubmit() ? "Enter Amount Outstanding and APR" : "Submit"}
+              title={!canSubmit() ? "Enter Amount Outstanding" : "Submit"}
               style={{ flex: 1 }}
             >
               Submit
@@ -296,7 +338,7 @@ const CreditCardCalculator = () => {
               <strong>APR Used:</strong> {simData.usedAPR.toFixed(2)}%
             </p>
             <p>
-              <strong>Initial Monthly Payment:</strong> £{simData.monthlyPayment.toFixed(2)}
+              <strong>Monthly Payment Used:</strong> £{simData.monthlyPayment.toFixed(2)}
             </p>
             <p>
               <strong>Estimated Payoff Time:</strong> {(simData.payoffMonths / 12).toFixed(1)} years
