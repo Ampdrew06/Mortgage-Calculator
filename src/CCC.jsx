@@ -5,12 +5,7 @@ import "./App.css";
 const CreditCardCalculator = () => {
   const [balance, setBalance] = useState("");
   const [aprInput, setAprInput] = useState("");
-  const [minPaymentInput, setMinPaymentInput] = useState("");
-  const [overpaymentInput, setOverpaymentInput] = useState("");
-  const [targetYearsInput, setTargetYearsInput] = useState("");
-
   const [errorMsg, setErrorMsg] = useState("");
-  const [warningMsg, setWarningMsg] = useState("");
   const [resultsVisible, setResultsVisible] = useState(false);
   const [simData, setSimData] = useState(null);
 
@@ -21,23 +16,16 @@ const CreditCardCalculator = () => {
     return isNaN(num) ? NaN : num;
   };
 
-  // Month-by-month simulation with real-world min payment logic:
-  // min payment = max(fixedFloor, balance * minPercent + interest)
-  // plus any overpayment
-  const simulatePayoff = (
-    principal,
-    annualRate,
-    userMinPayment,
-    overpayment,
-    targetMonths
-  ) => {
+  // Simulate month-by-month payoff with realistic min payment logic:
+  // monthly min payment = max(10, balance * 0.015 + interest)
+  const simulatePayoff = (principal, annualRate) => {
     const monthlyRate = annualRate / 12 / 100;
     let balance = principal;
     let months = 0;
     let totalInterest = 0;
 
+    const fixedFloor = 10; // £10 floor
     const minPercent = 0.015; // 1.5% of balance
-    const fixedFloor = 10; // £10 minimum payment floor
 
     let lastBalance = balance;
     let consecutiveGrowth = 0;
@@ -47,28 +35,14 @@ const CreditCardCalculator = () => {
       totalInterest += interest;
       balance += interest;
 
-      // Real card min payment for this month:
-      const calcMinPayment = Math.max(fixedFloor, balance * minPercent);
+      const minPayment = Math.max(fixedFloor, balance * minPercent);
 
-      // Use userMinPayment override only on first month if given, else calc monthly min payment:
-      let thisMonthPayment =
-        months === 0 && userMinPayment && userMinPayment > 0
-          ? userMinPayment + overpayment
-          : calcMinPayment + overpayment;
+      if (minPayment <= 0) break;
 
-      if (thisMonthPayment <= 0) break;
-
-      // Warn if first payment < calc min payment
-      if (months === 0 && userMinPayment && userMinPayment < calcMinPayment) {
-        // We'll handle warning in caller
-      }
-
-      balance -= thisMonthPayment;
+      balance -= minPayment;
       if (balance < 0) balance = 0;
 
       months++;
-
-      if (targetMonths && months >= targetMonths) break;
 
       // Detect growing debt 3 months in a row
       if (balance > lastBalance) {
@@ -77,7 +51,6 @@ const CreditCardCalculator = () => {
       } else {
         consecutiveGrowth = 0;
       }
-
       lastBalance = balance;
     }
 
@@ -89,19 +62,8 @@ const CreditCardCalculator = () => {
       payoffMonths: months,
       totalInterest,
       totalPaid: principal + totalInterest,
-      finalBalance: balance,
-      firstCalcMinPayment: Math.max(fixedFloor, principal * minPercent),
+      firstMonthPayment: Math.max(fixedFloor, principal * minPercent),
     };
-  };
-
-  // Calculate required payment to meet target payoff in given months (ignores min payment logic)
-  const calculateTargetPayment = (principal, annualRate, months) => {
-    if (months <= 0) return 0;
-    const monthlyRate = annualRate / 12 / 100;
-    if (monthlyRate === 0) return principal / months;
-    const numerator = monthlyRate * Math.pow(1 + monthlyRate, months);
-    const denominator = Math.pow(1 + monthlyRate, months) - 1;
-    return principal * (numerator / denominator);
   };
 
   const canSubmit = () => {
@@ -112,84 +74,37 @@ const CreditCardCalculator = () => {
   const handleSubmit = (e) => {
     e.preventDefault();
     setErrorMsg("");
-    setWarningMsg("");
     setResultsVisible(false);
     setSimData(null);
 
     const principal = parseNumber(balance);
-    let apr = parseNumber(aprInput);
-    const userMinPayment = parseNumber(minPaymentInput);
-    const overpayment = parseNumber(overpaymentInput) || 0;
-    const targetYears = parseNumber(targetYearsInput);
-    const targetMonths = targetYears && targetYears > 0 ? Math.round(targetYears * 12) : null;
-
     if (!principal || principal <= 0) {
       setErrorMsg("Please enter a valid Amount Outstanding.");
       return;
     }
 
-    if (!apr || apr <= 0) {
-      apr = 25; // default APR assumption
-      setAprInput("25");
-    }
+    let apr = parseNumber(aprInput);
+    if (!apr || apr <= 0) apr = 25;
 
-    // If target payoff given, calculate required payment to meet target
-    let monthlyPayment = userMinPayment && userMinPayment > 0 ? userMinPayment : null;
-    if (targetMonths) {
-      monthlyPayment = calculateTargetPayment(principal, apr, targetMonths) + overpayment;
-    } else if (!monthlyPayment) {
-      // If no user min payment & no target, start with first month min payment calc plus overpayment
-      monthlyPayment = Math.max(10, principal * 0.015) + overpayment;
-    } else {
-      // add overpayment to user payment if no target
-      monthlyPayment += overpayment;
-    }
+    const sim = simulatePayoff(principal, apr);
 
-    if (monthlyPayment <= 0) {
-      setErrorMsg("Monthly payment must be greater than zero.");
-      return;
-    }
-
-    const sim = simulatePayoff(principal, apr, monthlyPayment, 0, targetMonths);
-
-    if (
-      !targetMonths &&
-      userMinPayment &&
-      userMinPayment > 0 &&
-      userMinPayment < sim.firstCalcMinPayment
-    ) {
-      setWarningMsg(
-        `Warning: Your entered minimum payment (£${userMinPayment.toFixed(
-          2
-        )}) is less than the typical minimum payment (£${sim.firstCalcMinPayment.toFixed(
-          2
-        )}). Paying only this amount may cause debt to grow.`
-      );
-    } else if (!targetMonths && monthlyPayment < sim.firstCalcMinPayment) {
-      setWarningMsg(
-        `Warning: Your minimum payment (£${monthlyPayment.toFixed(
-          2
-        )}) may be too low to reduce your balance over time at this APR. Debt could grow.`
+    if (sim.debtGrowing) {
+      setErrorMsg(
+        `Warning: Minimum payments may be too low to reduce your debt. Balance could grow over time.`
       );
     }
 
     setSimData({
       ...sim,
       usedAPR: apr,
-      monthlyPayment,
     });
-
     setResultsVisible(true);
   };
 
   const resetAll = () => {
     setBalance("");
     setAprInput("");
-    setMinPaymentInput("");
-    setOverpaymentInput("");
-    setTargetYearsInput("");
     setErrorMsg("");
-    setWarningMsg("");
     setResultsVisible(false);
     setSimData(null);
   };
@@ -212,12 +127,9 @@ const CreditCardCalculator = () => {
               onChange={(e) => {
                 setBalance(e.target.value);
                 setErrorMsg("");
-                setWarningMsg("");
                 setResultsVisible(false);
               }}
               autoComplete="off"
-              autoCorrect="off"
-              spellCheck="false"
               placeholder="e.g. 5000"
             />
             <button type="button" className="clear-btn" onClick={() => setBalance("")}>
@@ -236,101 +148,17 @@ const CreditCardCalculator = () => {
               onChange={(e) => {
                 setAprInput(e.target.value);
                 setErrorMsg("");
-                setWarningMsg("");
                 setResultsVisible(false);
               }}
               autoComplete="off"
-              autoCorrect="off"
-              spellCheck="false"
             />
             <button type="button" className="clear-btn" onClick={() => setAprInput("")}>
               Clear
             </button>
           </div>
 
-          <div className="input-row">
-            <label htmlFor="min-payment-input">Minimum Monthly Payment (£)</label>
-            <input
-              id="min-payment-input"
-              type="text"
-              inputMode="decimal"
-              placeholder="Enter if known, or leave blank to auto-calc"
-              value={minPaymentInput}
-              onChange={(e) => {
-                setMinPaymentInput(e.target.value);
-                setErrorMsg("");
-                setWarningMsg("");
-                setResultsVisible(false);
-              }}
-              autoComplete="off"
-              autoCorrect="off"
-              spellCheck="false"
-            />
-            <button type="button" className="clear-btn" onClick={() => setMinPaymentInput("")}>
-              Clear
-            </button>
-          </div>
-
-          <div className="input-row">
-            <label htmlFor="overpayment-input">Overpayment (£, optional)</label>
-            <input
-              id="overpayment-input"
-              type="text"
-              inputMode="decimal"
-              placeholder="Extra monthly payment"
-              value={overpaymentInput}
-              onChange={(e) => {
-                setOverpaymentInput(e.target.value);
-                setErrorMsg("");
-                setWarningMsg("");
-                setResultsVisible(false);
-              }}
-              autoComplete="off"
-              autoCorrect="off"
-              spellCheck="false"
-            />
-            <button type="button" className="clear-btn" onClick={() => setOverpaymentInput("")}>
-              Clear
-            </button>
-          </div>
-
-          <div className="input-row">
-            <label htmlFor="target-years-input">Target Payoff Time (Years, optional)</label>
-            <input
-              id="target-years-input"
-              type="text"
-              inputMode="decimal"
-              placeholder="Leave blank if no target"
-              value={targetYearsInput}
-              onChange={(e) => {
-                setTargetYearsInput(e.target.value);
-                setErrorMsg("");
-                setWarningMsg("");
-                setResultsVisible(false);
-              }}
-              autoComplete="off"
-              autoCorrect="off"
-              spellCheck="false"
-            />
-            <button type="button" className="clear-btn" onClick={() => setTargetYearsInput("")}>
-              Clear
-            </button>
-          </div>
-
           {errorMsg && (
             <p style={{ color: "red", fontWeight: "bold", marginTop: "0.5rem" }}>{errorMsg}</p>
-          )}
-          {warningMsg && (
-            <p
-              style={{
-                color: "orange",
-                fontWeight: "bold",
-                marginTop: "0.5rem",
-                whiteSpace: "pre-line",
-              }}
-            >
-              {warningMsg}
-            </p>
           )}
 
           <div className="button-row" style={{ display: "flex", gap: "0.5rem" }}>
@@ -360,7 +188,7 @@ const CreditCardCalculator = () => {
               <strong>APR Used:</strong> {simData.usedAPR.toFixed(2)}%
             </p>
             <p>
-              <strong>Monthly Payment Used:</strong> £{simData.monthlyPayment.toFixed(2)}
+              <strong>First Month Minimum Payment:</strong> £{simData.firstMonthPayment.toFixed(2)}
             </p>
             <p>
               <strong>Estimated Payoff Time:</strong> {(simData.payoffMonths / 12).toFixed(1)} years
