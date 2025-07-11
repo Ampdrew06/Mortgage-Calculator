@@ -1,19 +1,17 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, useLocation, useNavigate } from 'react-router-dom';
 import MC from './MC';
-import CCC from './CCC';
 import InfoPage from './InfoPage';
-import CCCInfoPage from './CCCInfoPage';
 import './App.css';
 
 const HeaderNav = () => {
   const location = useLocation();
   const navigate = useNavigate();
 
-  const isCCC = location.pathname.startsWith('/ccc');
+  const isMC = location.pathname === '/';
 
+  // Theme colors for MC tab only
   const green = '#4caf50';
-  const blue = '#4aa4e3';
   const grey = '#ddd';
   const darkText = '#333';
 
@@ -34,41 +32,25 @@ const HeaderNav = () => {
         <button
           onClick={() => navigate('/')}
           style={{
-            backgroundColor: isCCC ? grey : green,
-            color: isCCC ? darkText : 'white',
-            fontWeight: isCCC ? 'normal' : 'bold',
+            backgroundColor: isMC ? green : grey,
+            color: isMC ? 'white' : darkText,
+            fontWeight: isMC ? 'bold' : 'normal',
             borderRadius: '8px 8px 0 0',
             padding: '0.5rem 1.25rem',
             border: 'none',
             cursor: 'pointer',
-            boxShadow: isCCC ? 'none' : `0 2px 6px ${green}88`,
+            boxShadow: isMC ? `0 2px 6px ${green}88` : 'none',
             transition: 'background-color 0.3s',
           }}
-          aria-current={isCCC ? undefined : 'page'}
+          aria-current={isMC ? 'page' : undefined}
         >
           Mortgage Calculator
         </button>
-        <button
-          onClick={() => navigate('/ccc')}
-          style={{
-            backgroundColor: isCCC ? blue : grey,
-            color: isCCC ? 'white' : darkText,
-            fontWeight: isCCC ? 'bold' : 'normal',
-            borderRadius: '8px 8px 0 0',
-            padding: '0.5rem 1.25rem',
-            border: 'none',
-            cursor: 'pointer',
-            boxShadow: isCCC ? `0 2px 6px ${blue}88` : 'none',
-            transition: 'background-color 0.3s',
-          }}
-          aria-current={isCCC ? 'page' : undefined}
-        >
-          Credit Card Calculator
-        </button>
+        {/* CCC tab removed */}
       </nav>
 
       <button
-        onClick={() => navigate(isCCC ? '/ccc-info' : '/info')}
+        onClick={() => navigate('/info')}
         title="Info"
         aria-label="Info"
         style={{
@@ -85,8 +67,8 @@ const HeaderNav = () => {
           transition: 'color 0.3s, border-color 0.3s',
         }}
         onMouseEnter={e => {
-          e.currentTarget.style.color = isCCC ? blue : green;
-          e.currentTarget.style.borderColor = isCCC ? blue : green;
+          e.currentTarget.style.color = green;
+          e.currentTarget.style.borderColor = green;
         }}
         onMouseLeave={e => {
           e.currentTarget.style.color = '#666';
@@ -105,9 +87,8 @@ const App = () => {
       <HeaderNav />
       <Routes>
         <Route path="/" element={<MC />} />
-        <Route path="/ccc" element={<CCC />} />
         <Route path="/info" element={<InfoPage />} />
-        <Route path="/ccc-info" element={<CCCInfoPage />} />
+        {/* No CCC routes */}
       </Routes>
     </Router>
   );
