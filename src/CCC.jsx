@@ -6,8 +6,8 @@ const CreditCardCalculator = () => {
   const [balance, setBalance] = useState("");
   const [aprInput, setAprInput] = useState("");
   const [minPaymentInput, setMinPaymentInput] = useState("");
-  const [targetYearsInput, setTargetYearsInput] = useState("");
   const [overpaymentInput, setOverpaymentInput] = useState("");
+  const [targetYearsInput, setTargetYearsInput] = useState("");
 
   const [errorMsg, setErrorMsg] = useState("");
   const [warningMsg, setWarningMsg] = useState("");
@@ -21,65 +21,80 @@ const CreditCardCalculator = () => {
     return isNaN(num) ? NaN : num;
   };
 
-  // Simulate payoff month-by-month
-  const simulatePayoff = (principal, annualRate, monthlyPayment, overpayment, targetMonths) => {
+  // Month-by-month simulation with real-world min payment logic:
+  // min payment = max(fixedFloor, balance * minPercent + interest)
+  // plus any overpayment
+  const simulatePayoff = (
+    principal,
+    annualRate,
+    userMinPayment,
+    overpayment,
+    targetMonths
+  ) => {
     const monthlyRate = annualRate / 12 / 100;
     let balance = principal;
     let months = 0;
     let totalInterest = 0;
-    const minFloor = 10; // Lower floor closer to typical card min payment
-    const percentOfBalance = 0.015; // 1.5% of balance
+
+    const minPercent = 0.015; // 1.5% of balance
+    const fixedFloor = 10; // £10 minimum payment floor
 
     let lastBalance = balance;
-    let consecutiveGrowthMonths = 0;
+    let consecutiveGrowth = 0;
 
     while (months < 600 && balance > 0) {
       const interest = balance * monthlyRate;
       totalInterest += interest;
       balance += interest;
 
-      // Safe minimum payment for warning only
-      const safeMinPayment = Math.max(minFloor, interest + balance * percentOfBalance);
+      // Real card min payment for this month:
+      const calcMinPayment = Math.max(fixedFloor, balance * minPercent);
 
-      let paymentThisMonth = monthlyPayment + overpayment;
+      // Use userMinPayment override only on first month if given, else calc monthly min payment:
+      let thisMonthPayment =
+        months === 0 && userMinPayment && userMinPayment > 0
+          ? userMinPayment + overpayment
+          : calcMinPayment + overpayment;
 
-      if (paymentThisMonth < safeMinPayment) {
-        // Allow but warn
+      if (thisMonthPayment <= 0) break;
+
+      // Warn if first payment < calc min payment
+      if (months === 0 && userMinPayment && userMinPayment < calcMinPayment) {
+        // We'll handle warning in caller
       }
 
-      if (paymentThisMonth <= 0) break;
-
-      balance -= paymentThisMonth;
+      balance -= thisMonthPayment;
       if (balance < 0) balance = 0;
 
       months++;
 
       if (targetMonths && months >= targetMonths) break;
 
-      // Detect balance growth 3 months in a row → break
+      // Detect growing debt 3 months in a row
       if (balance > lastBalance) {
-        consecutiveGrowthMonths++;
-        if (consecutiveGrowthMonths >= 3) break;
+        consecutiveGrowth++;
+        if (consecutiveGrowth >= 3) break;
       } else {
-        consecutiveGrowthMonths = 0;
+        consecutiveGrowth = 0;
       }
+
       lastBalance = balance;
     }
 
-    const growingDebt = balance > principal;
+    const debtGrowing = balance > principal;
 
     return {
-      canPayOff: !growingDebt && balance <= 0,
-      growingDebt,
+      canPayOff: !debtGrowing && balance <= 0,
+      debtGrowing,
       payoffMonths: months,
       totalInterest,
       totalPaid: principal + totalInterest,
       finalBalance: balance,
-      safeMinPayment: Math.max(minFloor, principal * percentOfBalance + principal * monthlyRate),
+      firstCalcMinPayment: Math.max(fixedFloor, principal * minPercent),
     };
   };
 
-  // Calculate monthly payment for target payoff period
+  // Calculate required payment to meet target payoff in given months (ignores min payment logic)
   const calculateTargetPayment = (principal, annualRate, months) => {
     if (months <= 0) return 0;
     const monthlyRate = annualRate / 12 / 100;
@@ -103,10 +118,10 @@ const CreditCardCalculator = () => {
 
     const principal = parseNumber(balance);
     let apr = parseNumber(aprInput);
-    const minPaymentUser = parseNumber(minPaymentInput);
+    const userMinPayment = parseNumber(minPaymentInput);
+    const overpayment = parseNumber(overpaymentInput) || 0;
     const targetYears = parseNumber(targetYearsInput);
     const targetMonths = targetYears && targetYears > 0 ? Math.round(targetYears * 12) : null;
-    const overpayment = parseNumber(overpaymentInput) || 0;
 
     if (!principal || principal <= 0) {
       setErrorMsg("Please enter a valid Amount Outstanding.");
@@ -118,19 +133,15 @@ const CreditCardCalculator = () => {
       setAprInput("25");
     }
 
-    // Calculate minimum payment: user input overrides auto-calculated (safe) payment
-    let autoMinPayment = Math.max(
-      10,
-      principal * (apr / 100 / 12 + 0.015)
-    );
-
-    let monthlyPayment = minPaymentUser && minPaymentUser > 0 ? minPaymentUser : autoMinPayment;
-
-    // If target payoff given, calculate required monthly payment to meet target
+    // If target payoff given, calculate required payment to meet target
+    let monthlyPayment = userMinPayment && userMinPayment > 0 ? userMinPayment : null;
     if (targetMonths) {
       monthlyPayment = calculateTargetPayment(principal, apr, targetMonths) + overpayment;
+    } else if (!monthlyPayment) {
+      // If no user min payment & no target, start with first month min payment calc plus overpayment
+      monthlyPayment = Math.max(10, principal * 0.015) + overpayment;
     } else {
-      // Add overpayment to monthly payment if no target
+      // add overpayment to user payment if no target
       monthlyPayment += overpayment;
     }
 
@@ -141,10 +152,22 @@ const CreditCardCalculator = () => {
 
     const sim = simulatePayoff(principal, apr, monthlyPayment, 0, targetMonths);
 
-    // Warn if monthly payment less than safe minimum and no target
-    if (!targetMonths && monthlyPayment < autoMinPayment) {
+    if (
+      !targetMonths &&
+      userMinPayment &&
+      userMinPayment > 0 &&
+      userMinPayment < sim.firstCalcMinPayment
+    ) {
       setWarningMsg(
-        `Warning: Your monthly payment (£${monthlyPayment.toFixed(
+        `Warning: Your entered minimum payment (£${userMinPayment.toFixed(
+          2
+        )}) is less than the typical minimum payment (£${sim.firstCalcMinPayment.toFixed(
+          2
+        )}). Paying only this amount may cause debt to grow.`
+      );
+    } else if (!targetMonths && monthlyPayment < sim.firstCalcMinPayment) {
+      setWarningMsg(
+        `Warning: Your minimum payment (£${monthlyPayment.toFixed(
           2
         )}) may be too low to reduce your balance over time at this APR. Debt could grow.`
       );
@@ -154,7 +177,6 @@ const CreditCardCalculator = () => {
       ...sim,
       usedAPR: apr,
       monthlyPayment,
-      autoMinPayment,
     });
 
     setResultsVisible(true);
@@ -164,8 +186,8 @@ const CreditCardCalculator = () => {
     setBalance("");
     setAprInput("");
     setMinPaymentInput("");
-    setTargetYearsInput("");
     setOverpaymentInput("");
+    setTargetYearsInput("");
     setErrorMsg("");
     setWarningMsg("");
     setResultsVisible(false);
