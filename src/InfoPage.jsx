@@ -70,7 +70,11 @@ const InfoPage = () => {
         <li><span>Initial Rate (%):</span> Introductory interest rate.</li>
         <li><span>Fixed Term (Years):</span> Time the fixed rate lasts (if any).</li>
         <li><span>Secondary Rate (%):</span> The rate after the fixed term ends.</li>
-        <li><span>Overpayment (£):</span> Optional extra payment to decrease loan term.</li>
+        <li>
+          <span>Overpayment (£):</span> Optional <strong>regular monthly overpayments</strong> to decrease loan term.
+          <br />
+          <em>Note: Lump sum overpayments are not supported currently.</em>
+        </li>
         <li><span>Target (Years):</span> Enter a goal if you want to repay early.</li>
       </ul>
 
@@ -103,8 +107,13 @@ const InfoPage = () => {
         This calculator is a <strong>forecasting tool</strong> for illustrative purposes only.
         It is not financial advice. Always consult a qualified mortgage advisor before making decisions.
       </p>
+
+      {/* New fees disclaimer */}
+      <p style={{ fontStyle: 'italic', marginTop: '1rem' }}>
+        <strong>Note:</strong> This calculation <em>does not</em> include broker fees, solicitor fees, valuation fees, insurance, or any other related costs.
+      </p>
     </div>
   );
 };
 
-export default InfoPage; 
+export default InfoPage;
