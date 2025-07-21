@@ -33,7 +33,19 @@ function MC() {
     const P = parseNumber(loanAmount);
     const n = parseFloat(loanTerm) * 12;
     const r1 = parseFloat(initialRate) / 100 / 12;
-    const r2 = parseFloat(secondaryRate) / 100 / 12 || 0;
+
+    // New secondary rate logic:
+    let r2 = 0;
+    if (fixedTerm && fixedTerm.trim() !== '') {
+      r2 = parseFloat(secondaryRate);
+      if (isNaN(r2) || r2 === 0) {
+        r2 = 7.5; // Default to 7.5% if blank or 0
+      }
+      r2 = r2 / 100 / 12;
+    } else {
+      r2 = 0;
+    }
+
     const fixedN = parseFloat(fixedTerm) * 12 || 0;
     const extra = parseNumber(overpayment);
     const target = parseFloat(targetYears) || null;
@@ -278,7 +290,7 @@ function MC() {
               type="text"
               inputMode="decimal"
               pattern="[0-9]*"
-              placeholder="e.g. 100 (Every Month (Optional))"
+              placeholder="e.g. 100 (Optional)"
               value={overpayment}
               onChange={(e) => setOverpayment(e.target.value)}
             />
