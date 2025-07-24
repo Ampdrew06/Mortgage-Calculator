@@ -7,4 +7,5 @@ const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(<App />);
 
 // Register the service worker for PWA offline support
-serviceWorkerRegistration.register();
+serviceWorkerRegistration.unregister();
+
