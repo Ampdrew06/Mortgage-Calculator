@@ -1,7 +1,5 @@
 // serviceWorkerRegistration.js
 
-// This code registers a service worker for offline caching and PWA support.
-
 const isLocalhost = Boolean(
   window.location.hostname === 'localhost' ||
   window.location.hostname === '[::1]' ||
@@ -12,20 +10,16 @@ const isLocalhost = Boolean(
 
 export function register(config) {
   if ('serviceWorker' in navigator) {
-    // The URL of the service worker file, relative to the public folder
     const swUrl = `${process.env.PUBLIC_URL}/service-worker.js`;
 
     if (isLocalhost) {
-      // This is running on localhost. Check if a service worker still exists or not.
       checkValidServiceWorker(swUrl, config);
-
       navigator.serviceWorker.ready.then(() => {
         console.log(
           'Service worker is ready on localhost. App is being served cache-first.'
         );
       });
     } else {
-      // Register service worker on production
       registerValidSW(swUrl, config);
     }
   }
@@ -37,20 +31,25 @@ function registerValidSW(swUrl, config) {
     .then((registration) => {
       registration.onupdatefound = () => {
         const installingWorker = registration.installing;
-        if (!installingWorker) {
-          return;
-        }
+        if (!installingWorker) return;
+
         installingWorker.onstatechange = () => {
           if (installingWorker.state === 'installed') {
             if (navigator.serviceWorker.controller) {
-              // New content is available; please refresh.
-              console.log('New content is available and will be used when all tabs are closed.');
+              console.log('New content is available; prompting user to refresh.');
+
+              // Optional: show user a prompt
+              const confirmRefresh = window.confirm(
+                'A new version of the app is available. Would you like to refresh?'
+              );
+              if (confirmRefresh) {
+                window.location.reload();
+              }
 
               if (config && config.onUpdate) {
                 config.onUpdate(registration);
               }
             } else {
-              // Content is cached for offline use.
               console.log('Content is cached for offline use.');
 
               if (config && config.onSuccess) {
@@ -67,32 +66,24 @@ function registerValidSW(swUrl, config) {
 }
 
 function checkValidServiceWorker(swUrl, config) {
-  // Check if the service worker can be found.
-  fetch(swUrl, {
-    headers: { 'Service-Worker': 'script' },
-  })
+  fetch(swUrl, { headers: { 'Service-Worker': 'script' } })
     .then((response) => {
-      // Ensure service worker exists and the content is JS.
       const contentType = response.headers.get('content-type');
       if (
         response.status === 404 ||
-        (contentType != null && contentType.indexOf('javascript') === -1)
+        (contentType && contentType.indexOf('javascript') === -1)
       ) {
-        // No service worker found, reload the page.
         navigator.serviceWorker.ready.then((registration) => {
           registration.unregister().then(() => {
             window.location.reload();
           });
         });
       } else {
-        // Service worker found, proceed as normal.
         registerValidSW(swUrl, config);
       }
     })
     .catch(() => {
-      console.log(
-        'No internet connection found. App is running in offline mode.'
-      );
+      console.log('No internet connection. App is running in offline mode.');
     });
 }
 
