@@ -34,16 +34,11 @@ function MC() {
     const n = parseFloat(loanTerm) * 12;
     const r1 = parseFloat(initialRate) / 100 / 12;
 
-    // New secondary rate logic:
     let r2 = 0;
     if (fixedTerm && fixedTerm.trim() !== '') {
       r2 = parseFloat(secondaryRate);
-      if (isNaN(r2) || r2 === 0) {
-        r2 = 7.5; // Default to 7.5% if blank or 0
-      }
+      if (isNaN(r2) || r2 === 0) r2 = 7.5;
       r2 = r2 / 100 / 12;
-    } else {
-      r2 = 0;
     }
 
     const fixedN = parseFloat(fixedTerm) * 12 || 0;
@@ -66,9 +61,7 @@ function MC() {
     if (target) {
       const months = target * 12;
       const rate = r1;
-      payment = rate
-        ? (P * rate) / (1 - Math.pow(1 + rate, -months))
-        : P / months;
+      payment = rate ? (P * rate) / (1 - Math.pow(1 + rate, -months)) : P / months;
       let tempBalance = P;
       let totalInterestLocal = 0;
       let totalPrincipalLocal = 0;
@@ -98,11 +91,8 @@ function MC() {
       return;
     }
 
-    // Full version with fixed and secondary rate
     if (fixedN && r2) {
-      const basePayment = r1
-        ? (P * r1) / (1 - Math.pow(1 + r1, -n))
-        : P / n;
+      const basePayment = r1 ? (P * r1) / (1 - Math.pow(1 + r1, -n)) : P / n;
       monthly1 = basePayment + extra;
 
       for (let i = 0; i < fixedN; i++) {
@@ -119,7 +109,6 @@ function MC() {
       }
 
       const balanceAtFixedTerm = balance;
-
       const baseSecondary = r2
         ? (balanceAtFixedTerm * r2) / (1 - Math.pow(1 + r2, -(n - fixedN)))
         : balanceAtFixedTerm / (n - fixedN);
@@ -148,11 +137,8 @@ function MC() {
       return;
     }
 
-    // Simple mortgage
     const months = n;
-    const basePaymentSimple = r1
-      ? (P * r1) / (1 - Math.pow(1 + r1, -months))
-      : P / months;
+    const basePaymentSimple = r1 ? (P * r1) / (1 - Math.pow(1 + r1, -months)) : P / months;
     const monthlySimple = basePaymentSimple + extra;
     let tempBalance = P;
 
@@ -276,10 +262,7 @@ function MC() {
               value={secondaryRate}
               onChange={(e) => setSecondaryRate(e.target.value)}
             />
-            <button
-              className="clear-btn"
-              onClick={() => setSecondaryRate('')}
-            >
+            <button className="clear-btn" onClick={() => setSecondaryRate('')}>
               Clear
             </button>
           </div>
@@ -318,7 +301,11 @@ function MC() {
             <button className="submit-btn" onClick={handleSubmit}>
               Submit
             </button>
-            <button className="reset-btn" onClick={handleReset}>
+            <button
+              className="reset-btn"
+              onClick={handleReset}
+              style={{ color: 'black' }}
+            >
               Reset All
             </button>
           </div>
@@ -339,8 +326,7 @@ function MC() {
               )}
               {yearsRemaining && (
                 <p>
-                  <strong>Time to Complete Mortgage:</strong> {yearsRemaining}{' '}
-                  years
+                  <strong>Time to Complete Mortgage:</strong> {yearsRemaining} years
                 </p>
               )}
               {remainingBalance && (
@@ -364,14 +350,10 @@ function MC() {
                       gap: '2rem',
                     }}
                   >
-                    <span
-                      style={{ color: '#e74c3c', fontWeight: 'bold' }}
-                    >
+                    <span style={{ color: '#e74c3c', fontWeight: 'bold' }}>
                       Interest Paid
                     </span>
-                    <span
-                      style={{ color: '#4caf50', fontWeight: 'bold' }}
-                    >
+                    <span style={{ color: '#4caf50', fontWeight: 'bold' }}>
                       Principal Paid
                     </span>
                   </p>

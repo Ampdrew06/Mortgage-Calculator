@@ -25,14 +25,23 @@ const InfoPage = () => {
 
   return (
     <div className="info-page full-width-info">
-      <h1>Info & Disclaimer</h1>
+      {/* Logo and Header */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1rem' }}>
+        <img
+          src="/icon-192.png"
+          alt="Mortgage Calculator Logo"
+          style={{ height: '40px', borderRadius: '8px' }}
+        />
+        <h1 style={{ margin: 0 }}>Info & Disclaimer</h1>
+      </div>
 
+      {/* Buttons */}
       <div className="header-buttons" style={{ display: 'flex', gap: '0.5rem', marginBottom: '1rem' }}>
         <button
           className="back-btn"
           style={{
             flex: 1,
-            backgroundColor: '#4caf50', // green
+            backgroundColor: '#4caf50',
             color: 'white',
             padding: '0.5rem',
             border: 'none',
@@ -49,7 +58,7 @@ const InfoPage = () => {
           className="share-btn"
           style={{
             flex: 1,
-            backgroundColor: '#4aa4e3', // blue
+            backgroundColor: '#4aa4e3',
             color: 'white',
             padding: '0.5rem',
             border: 'none',
@@ -63,6 +72,7 @@ const InfoPage = () => {
         </button>
       </div>
 
+      {/* Usage Instructions */}
       <h2>How to Use This Calculator</h2>
       <ul>
         <li><span>Loan Amount (£):</span> The total mortgage you’re borrowing.</li>
@@ -78,6 +88,7 @@ const InfoPage = () => {
         <li><span>Target (Years):</span> Enter a goal if you want to repay early.</li>
       </ul>
 
+      {/* Results Section */}
       <h2>Results Explained</h2>
       <ul>
         <li>
@@ -102,13 +113,13 @@ const InfoPage = () => {
         </li>
       </ul>
 
+      {/* Disclaimer */}
       <h2>Disclaimer</h2>
       <p>
         This calculator is a <strong>forecasting tool</strong> for illustrative purposes only.
         It is not financial advice. Always consult a qualified mortgage advisor before making decisions.
       </p>
 
-      {/* New fees disclaimer */}
       <p style={{ fontStyle: 'italic', marginTop: '1rem' }}>
         <strong>Note:</strong> This calculation <em>does not</em> include broker fees, solicitor fees, valuation fees, insurance, or any other related costs.
       </p>
