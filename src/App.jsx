@@ -8,12 +8,7 @@ const HeaderNav = () => {
   const location = useLocation();
   const navigate = useNavigate();
 
-  const isMC = location.pathname === '/';
-
-  // Theme colors for MC tab only
   const green = '#4caf50';
-  const grey = '#ddd';
-  const darkText = '#333';
 
   return (
     <header
@@ -32,29 +27,19 @@ const HeaderNav = () => {
         <button
           onClick={() => navigate('/')}
           style={{
-            backgroundColor: isMC ? green : grey,
-            color: isMC ? 'white' : darkText,
-            fontWeight: isMC ? 'bold' : 'normal',
+            backgroundColor: green,
+            color: 'white',
+            fontWeight: 'bold',
             borderRadius: '8px 8px 0 0',
             padding: '0.5rem 1.25rem',
             border: 'none',
             cursor: 'pointer',
-            boxShadow: isMC ? `0 2px 6px ${green}88` : 'none',
+            boxShadow: `0 2px 6px ${green}88`,
             transition: 'background-color 0.3s',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '0.5rem',
           }}
-          aria-current={isMC ? 'page' : undefined}
         >
-          <img
-            src="/icon-192.png"
-            alt="App Icon"
-            style={{ height: '20px', borderRadius: '4px' }}
-          />
           Mortgage Calculator
         </button>
-        {/* CCC tab removed */}
       </nav>
 
       <button
@@ -96,7 +81,6 @@ const App = () => {
       <Routes>
         <Route path="/" element={<MC />} />
         <Route path="/info" element={<InfoPage />} />
-        {/* No CCC routes */}
       </Routes>
     </Router>
   );
