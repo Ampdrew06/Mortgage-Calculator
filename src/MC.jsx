@@ -273,7 +273,7 @@ function MC() {
               type="text"
               inputMode="decimal"
               pattern="[0-9]*"
-              placeholder="e.g. 100 (Every Month (Optional))"
+              placeholder="e.g. 50 (Each Month (Optional))"
               value={overpayment}
               onChange={(e) => setOverpayment(e.target.value)}
             />
