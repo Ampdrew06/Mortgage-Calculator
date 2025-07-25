@@ -4,44 +4,57 @@ const urlsToCache = [
   "/index.html",
   "/manifest.json",
   "/favicon.ico",
+  "/icon-192.png",
+  "/icon-512.png",
+  "/screenshot1.png",
   "/logo192.png",
-  "/logo512.png",
-  // Add any other static assets you want cached here
+  "/logo512.png"
+  // Add other static assets like CSS/JS here if needed
 ];
 
-// Install service worker and cache assets
+// Install and cache necessary assets
 self.addEventListener("install", (event) => {
+  self.skipWaiting(); // Forces SW activation after install
   event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => {
-      return cache.addAll(urlsToCache);
-    })
+    caches.open(CACHE_NAME).then((cache) => cache.addAll(urlsToCache))
   );
 });
 
-// Activate service worker and clean old caches
+// Activate and clean old caches
 self.addEventListener("activate", (event) => {
   event.waitUntil(
-    caches.keys().then((cacheNames) => {
-      return Promise.all(
-        cacheNames.map((cacheName) => {
-          if (cacheName !== CACHE_NAME) {
-            return caches.delete(cacheName);
+    caches.keys().then((keys) =>
+      Promise.all(
+        keys.map((key) => {
+          if (key !== CACHE_NAME) {
+            return caches.delete(key);
           }
         })
-      );
-    })
+      )
+    )
   );
+  self.clients.claim(); // Takes control of open pages
 });
 
-// Fetch handler to serve cached content first, fallback to network
+// Serve cache-first, fallback to network, then fallback to offline
 self.addEventListener("fetch", (event) => {
+  if (event.request.method !== "GET") return;
+
   event.respondWith(
-    caches.match(event.request).then((response) => {
+    caches.match(event.request).then((cached) => {
       return (
-        response ||
-        fetch(event.request).catch(() =>
-          caches.match("/index.html") // Fallback to index.html for SPA routing
-        )
+        cached ||
+        fetch(event.request)
+          .then((response) => {
+            // Optionally cache new resources here if needed
+            return response;
+          })
+          .catch(() => {
+            // Fallback: SPA routing or offline
+            if (event.request.mode === "navigate") {
+              return caches.match("/index.html");
+            }
+          })
       );
     })
   );
