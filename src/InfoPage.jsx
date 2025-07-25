@@ -25,18 +25,14 @@ const InfoPage = () => {
 
   return (
     <div className="info-page full-width-info">
-      {/* Logo and Header */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1rem' }}>
-        <img
-          src="/icon-192.png"
-          alt="Mortgage Calculator Logo"
-          style={{ height: '40px', borderRadius: '8px' }}
-        />
-        <h1 style={{ margin: 0 }}>Info & Disclaimer</h1>
-      </div>
+      {/* Header Title (icon removed) */}
+      <h1 style={{ marginBottom: '1rem' }}>Info & Disclaimer</h1>
 
       {/* Buttons */}
-      <div className="header-buttons" style={{ display: 'flex', gap: '0.5rem', marginBottom: '1rem' }}>
+      <div
+        className="header-buttons"
+        style={{ display: 'flex', gap: '0.5rem', marginBottom: '1rem' }}
+      >
         <button
           className="back-btn"
           style={{

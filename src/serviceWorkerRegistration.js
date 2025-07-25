@@ -40,12 +40,12 @@ function registerValidSW(swUrl, config) {
             if (navigator.serviceWorker.controller) {
               console.log('New content is available; prompting user to refresh.');
 
-              // Optional: show user a prompt
+              // 🔁 Prompt user to reload the new version
               const confirmRefresh = window.confirm(
-                'A new version of the app is available. Would you like to refresh?'
+                'A new version of the app is available. Refresh now?'
               );
               if (confirmRefresh) {
-                window.location.reload();
+                window.location.reload(true); // 🔁 Forces reload bypassing cache
               }
 
               if (config && config.onUpdate) {
@@ -73,7 +73,7 @@ function checkValidServiceWorker(swUrl, config) {
       const contentType = response.headers.get('content-type');
       if (
         response.status === 404 ||
-        (contentType && contentType.indexOf('javascript') === -1)
+        (contentType && !contentType.includes('javascript'))
       ) {
         navigator.serviceWorker.ready.then((registration) => {
           registration.unregister().then(() => {
@@ -99,4 +99,4 @@ export function unregister() {
         console.error(error.message);
       });
   }
-} 
+}
