@@ -1,11 +1,19 @@
 {
   "short_name": "MortgageCalc",
   "name": "Mortgage Calculator",
+  "description": "A fast, easy-to-use mortgage calculator with overpayment and target term options.",
+  "id": "/",
   "start_url": ".",
+  "scope": "/",
   "display": "standalone",
   "orientation": "portrait",
   "theme_color": "#4caf50",
   "background_color": "#ffffff",
+  "lang": "en-GB",
+  "dir": "ltr",
+  "launch_handler": {
+    "client_mode": "auto"
+  },
   "icons": [
     {
       "src": "/icon-192.png",
@@ -16,6 +24,14 @@
       "src": "/icon-512.png",
       "sizes": "512x512",
       "type": "image/png"
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "/screenshot1.png",
+      "sizes": "540x720",
+      "type": "image/png",
+      "label": "Main calculator screen"
     }
   ],
   "shortcuts": [
@@ -33,5 +49,9 @@
       "url": "/info",
       "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }]
     }
-  ]
+  ],
+  "categories": ["finance", "tools", "productivity"],
+  "prefer_related_applications": false,
+  "related_applications": [],
+  "iarc_rating_id": ""
 }
