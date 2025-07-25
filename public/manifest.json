@@ -17,5 +17,21 @@
       "sizes": "512x512",
       "type": "image/png"
     }
+  ],
+  "shortcuts": [
+    {
+      "name": "Mortgage Calculator",
+      "short_name": "Calculator",
+      "description": "Jump straight to the calculator",
+      "url": "/",
+      "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Info & Disclaimer",
+      "short_name": "Info",
+      "description": "Read usage guidance and disclaimer",
+      "url": "/info",
+      "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }]
+    }
   ]
-} 
+}
