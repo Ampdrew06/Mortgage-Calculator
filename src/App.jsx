@@ -41,9 +41,17 @@ const HeaderNav = () => {
             cursor: 'pointer',
             boxShadow: isMC ? `0 2px 6px ${green}88` : 'none',
             transition: 'background-color 0.3s',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.5rem',
           }}
           aria-current={isMC ? 'page' : undefined}
         >
+          <img
+            src="/icon-192.png"
+            alt="App Icon"
+            style={{ height: '20px', borderRadius: '4px' }}
+          />
           Mortgage Calculator
         </button>
         {/* CCC tab removed */}

@@ -29,7 +29,7 @@ function registerValidSW(swUrl, config) {
   navigator.serviceWorker
     .register(swUrl)
     .then((registration) => {
-      registration.update();
+      registration.update(); // Ensure it checks for updates immediately
 
       registration.onupdatefound = () => {
         const installingWorker = registration.installing;
@@ -40,12 +40,13 @@ function registerValidSW(swUrl, config) {
             if (navigator.serviceWorker.controller) {
               console.log('New content is available; prompting user to refresh.');
 
-              // 🔁 Prompt user to reload the new version
+              // 🔁 Prompt user to reload
               const confirmRefresh = window.confirm(
                 'A new version of the app is available. Refresh now?'
               );
               if (confirmRefresh) {
-                window.location.reload(true); // 🔁 Forces reload bypassing cache
+                // This will reload without relying on cache
+                window.location.href = window.location.href;
               }
 
               if (config && config.onUpdate) {
